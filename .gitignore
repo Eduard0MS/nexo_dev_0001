@@ -1,0 +1,18 @@
+# Ambiente virtual
+venv/
+ENV/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs e arquivos temporários
+*.log
+temp_files/
+
+# Repositório Git aninhado
+nexo_dev/
+
+# Arquivos de configuração local
+.env 

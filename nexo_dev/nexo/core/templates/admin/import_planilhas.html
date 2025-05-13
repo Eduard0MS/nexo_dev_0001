@@ -1,0 +1,93 @@
+{% extends "admin/base_site.html" %}
+{% load static i18n %}
+
+{% block title %}Importar Planilhas de Estrutura{% endblock %}
+
+{% block content %}
+<div class="app-core model-unidadecargo change-list">
+    <h1>Importar Planilhas de Estrutura</h1>
+    
+    <div class="module">
+        <h2>Instruções de Importação</h2>
+        <p>Esta ação irá:</p>
+        <ul>
+            <li>Importar dados da planilha de hierarquia</li>
+            <li>Importar dados da planilha de estrutura viva</li>
+            <li>Processar e combinar os dados</li>
+            <li>Atualizar o banco de dados com as informações mais recentes</li>
+            <li>Gerar um arquivo <strong>dados.json</strong> atualizado com todos os cargos e valores</li>
+        </ul>
+
+        <div class="description">
+            <p><strong>Observações importantes:</strong></p>
+            <ul>
+                <li>O processo pode levar alguns segundos</li>
+                <li>Todos os dados anteriores serão substituídos</li>
+                <li>Os arquivos devem estar no formato CSV ou Excel (.xlsx)</li>
+                <li>Em caso de erro, nenhum dado será alterado</li>
+                <li>O arquivo dados.json será atualizado automaticamente ao final do processo</li>
+            </ul>
+        </div>
+
+        <div class="technical-info">
+            <p><strong>Informações técnicas:</strong></p>
+            <ul>
+                <li>Planilha de Hierarquia: Estrutura hierárquica das unidades</li>
+                <li>Planilha de Estrutura Viva: Detalhes dos cargos e unidades</li>
+                <li>Formatos aceitos: CSV ou Excel (.xlsx)</li>
+                <li>Codificação: UTF-8</li>
+                <li>Caminho do arquivo dados.json: <code>/raiz_do_projeto/dados.json</code></li>
+            </ul>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="submit-row">
+                <input type="submit" value="Importar Planilhas de Estrutura" class="default" />
+                <a href="{% url 'admin:core_unidadecargo_changelist' %}" class="closelink">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .description, .technical-info {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .technical-info {
+        background-color: #e9ecef;
+    }
+    .description ul, .technical-info ul {
+        margin-left: 20px;
+    }
+    code {
+        background-color: #dee2e6;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+    .submit-row {
+        margin-top: 20px;
+    }
+    form p {
+        padding: 10px;
+        margin: 0;
+    }
+    form p label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    form p input[type="file"] {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}

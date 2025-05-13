@@ -1,0 +1,1160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Simulador{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/organograma.css' %}">
+<link rel="stylesheet" href="{% static 'css/organograma_fix.css' %}?v=1.0.0">
+<!-- Adiciona Select2 para o dropdown com busca -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+  /* Layout principal */
+  .main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+  
+  .card {
+    border-radius: 0;
+    border: none;
+    margin: 0 !important;
+    box-shadow: none;
+    height: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .card-header {
+    border-radius: 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+  }
+  
+  .card-body {
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  
+  /* Container principal */
+  .comparison-container {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    width: 100%;
+    flex: 1;
+    overflow: visible;
+  }
+  
+  /* Barra de ações */
+  .actions-bar {
+    padding: 6px 12px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  /* Container para as tabelas */
+  .tables-container {
+    display: flex;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 30vh;
+    max-height: 40vh;
+    overflow: auto;
+    border-bottom: 3px solid #4e73df;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px -2px rgba(0,0,0,0.05);
+    position: relative;
+  }
+  
+  /* Para casos com poucos dados, garantir que a tabela não ocupe mais espaço que o necessário */
+  .tables-container:has(tbody tr:nth-child(-n+10):last-child) {
+    min-height: 25vh;
+    max-height: 30vh;
+  }
+
+  /* Para casos com muitos dados no relatório, ajustar a altura da tabela */
+  .report-section:has(.area-container:nth-child(n+15)) ~ .tables-container {
+    min-height: 25vh;
+    max-height: 30vh;
+  }
+  
+  .table-section {
+    flex: 1;
+    padding: 0;
+    overflow: auto;
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+  }
+  
+  .table-section:last-child {
+    border-right: none;
+  }
+  
+  .table-header {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+    padding: 5px 15px; /* Reduzido o padding de 10px para 5px */
+    font-weight: bold;
+    font-size: 1rem;
+    border-bottom: 1px solid #4e73df;
+    margin: 0;
+  }
+  
+  /* Tabelas */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto !important;
+    margin-top: 0; /* Garante que não haja margem superior */
+  }
+  
+  .comparison-table thead {
+    position: sticky;
+    top: 31px; /* Ajustado para alinhar com o cabeçalho reduzido */
+    z-index: 9;
+  }
+  
+  .comparison-table th {
+    background-color: #f8f9fa;
+    padding: 4px 8px; /* Reduzido o padding para mostrar mais linhas */
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6; /* Linha vertical entre colunas */
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.9rem; /* Reduzido o tamanho da fonte */
+  }
+  
+  .comparison-table th:last-child {
+    border-right: none;
+  }
+  
+  .comparison-table td {
+    padding: 3px 8px; /* Reduzido o padding vertical */
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6; /* Linha vertical entre colunas */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem; /* Reduzido o tamanho da fonte */
+    line-height: 1.3; /* Reduzido o line-height */
+  }
+  
+  .comparison-table td:last-child {
+    border-right: none;
+  }
+  
+  .comparison-table tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .comparison-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Otimizações para mostrar mais conteúdo */
+  .comparison-table input[type="number"], 
+  .comparison-table select {
+    padding: 1px 4px;
+    height: 26px; /* Reduzido a altura dos inputs */
+  }
+  
+  /* Diminuir o padding na barra de ações */
+  .actions-bar {
+    padding: 6px 12px;
+  }
+  
+  /* Ajustar o tamanho dos botões para economizar espaço vertical */
+  .actions-bar .btn {
+    padding: 3px 8px;
+    font-size: 0.9rem;
+  }
+  
+  /* Seção de relatório */
+  .report-section {
+    padding: 20px;
+    background-color: white;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    margin-bottom: 30px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .report-title {
+    font-weight: bold;
+    font-size: 1.1rem; /* Aumento do tamanho do título */
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #4e73df; /* Borda do título mais destacada */
+    color: #333;
+  }
+  
+  /* Melhorar a visibilidade do relatório de pontos */
+  #pointsReport {
+    padding-bottom: 15px; /* Espaço interno inferior */
+  }
+  
+  /* Estilo para o relatório de diferenças */
+  .diff-report-section {
+    padding-top: 0;
+  }
+  
+  /* Estilo para os botões de alternância */
+  .report-toggle-container {
+    position: static;
+    top: auto;
+    z-index: 1;
+    background-color: transparent;
+    padding-top: 0;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .report-toggle-container .btn {
+    flex: 1;
+    text-align: center;
+    box-shadow: none;
+    transition: all 0.2s ease;
+  }
+  
+  .report-toggle-container .btn.active {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+  }
+  
+  .report-toggle-container .btn-primary.active {
+    background-color: #4e73df;
+    border-color: #4e73df;
+  }
+  
+  /* Para melhorar a visualização da tabela de diferenças */
+  #diffReport table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  #diffReport table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 1;
+    padding: 8px;
+    border-bottom: 2px solid #4e73df;
+    text-align: left;
+    font-weight: 600;
+  }
+  
+  #diffReport table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  #diffReport .diff-changed {
+    font-weight: 600;
+  }
+  
+  /* Correção para dark mode */
+  body.dark-mode .report-toggle-container {
+    border-color: #444;
+  }
+  
+  body.dark-mode #diffReport table th {
+    background-color: #333;
+    border-color: #4e73df;
+  }
+  
+  body.dark-mode #diffReport table td {
+    border-color: #444;
+  }
+  
+  /* Itens do relatório */
+  .diff-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .diff-added {
+    color: #28a745;
+  }
+  
+  .diff-removed {
+    color: #dc3545;
+  }
+  
+  .diff-changed {
+    color: #fd7e14;
+  }
+  
+  /* Células editáveis */
+  .editable-cell {
+    background-color: #fff8e1;
+    border: 1px solid #ffecb3;
+    padding: 4px !important;
+  }
+  
+  .editable-cell input {
+    width: 100%;
+    border: none;
+    padding: 2px 4px;
+    background: transparent;
+  }
+  
+  .editable-cell input:focus {
+    outline: none;
+    background-color: #ffffff;
+  }
+  
+  /* Estilo específico para o campo tipo cargo editável */
+  .editable-cell.tipo-cargo {
+    background-color: #fff8e1;
+  }
+  
+  .editable-cell select {
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    padding: 2px 4px;
+    border-radius: 0;
+    font-size: 0.875rem;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    appearance: menulist;
+    cursor: pointer;
+  }
+  
+  .editable-cell select:focus {
+    outline: none;
+    background-color: #ffffff;
+    box-shadow: none;
+  }
+  
+  /* Células atualizadas - efeito de destaque */
+  .updated-value {
+    animation: highlight-background 1.5s ease-in-out;
+  }
+  
+  @keyframes highlight-background {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(25, 135, 84, 0.2); }
+  }
+  
+  /* Opções de download */
+  .download-options {
+    display: flex;
+    gap: 8px;
+  }
+  
+  /* Controle de unidades e botão de pesquisa */
+  .unit-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  /* Estilos para o relatório de pontos */
+  .secretaria-item {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .secretaria-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+
+  .secretaria-nome {
+    font-weight: 600;
+  }
+
+  .secretaria-pontos {
+    font-weight: 500;
+  }
+
+  .secretaria-progresso {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #e9ecef;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+
+  .secretaria-barra {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  .secretaria-aviso {
+    font-size: 11px;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+  }
+
+  .secretaria-aviso.excesso {
+    color: #dc3545;
+  }
+
+  .secretaria-aviso.economia {
+    color: #28a745;
+  }
+
+  .secretaria-aviso i {
+    margin-right: 5px;
+  }
+
+  body.dark-mode .secretaria-item {
+    background-color: #222222;
+    border-color: #333333;
+  }
+
+  body.dark-mode .secretaria-progresso {
+    background-color: #444;
+  }
+  
+  /* Estilo para o Select2 */
+  .select2-container {
+    width: 350px !important;
+  }
+  
+  .select2-container--default .select2-selection--single {
+    height: 31px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 31px;
+    padding-left: 10px;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 30px;
+  }
+  
+  /* Redimensionamento de colunas */
+  .column-resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+  }
+  
+  .column-resizer:hover {
+    background-color: #4e73df;
+  }
+  
+  /* Responsividade */
+  @media screen and (max-width: 1200px) {
+    .tables-container {
+      flex-direction: column;
+    }
+    
+    .table-section {
+      border-right: none;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .table-section:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  /* Modo escuro */
+  body.dark-mode .card-header,
+  body.dark-mode .table-header,
+  body.dark-mode .comparison-table th,
+  body.dark-mode .report-section {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode .card,
+  body.dark-mode .actions-bar {
+    background-color: #121212;
+  }
+  
+  body.dark-mode .comparison-table th {
+    border-bottom: 2px solid #333;
+  }
+  
+  body.dark-mode .comparison-table td {
+    border-bottom: 1px solid #333;
+  }
+  
+  body.dark-mode .report-title {
+    border-bottom: 1px solid #333;
+  }
+  
+  body.dark-mode .actions-bar,
+  body.dark-mode .report-section {
+    border-color: #333;
+  }
+  
+  /* Remover seta nativa para evitar duplicação com o ícone do Bootstrap */
+  .editable-cell select.form-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+  }
+  
+  /* Espaçamento extra para coluna Denominação */
+  .comparison-table th.col-denom,
+  .comparison-table td:nth-child(3) {
+    min-width: 200px;
+  }
+  
+  /* Espaço extra para a coluna Denominação (3ª coluna) */
+  .comparison-table th:nth-child(3),
+  .comparison-table td:nth-child(3) {
+    min-width: 200px;
+  }
+
+  /* Ajustar largura da coluna Qtd. (6ª coluna) */
+  .comparison-table th:nth-child(6),
+  .comparison-table td:nth-child(6) {
+    width: 60px;
+    max-width: 60px;
+    white-space: nowrap;
+  }
+
+  /* Ajustar largura da coluna Nvl. (5ª) e Pts. (7ª) também se necessário */
+  .comparison-table th:nth-child(5),
+  .comparison-table td:nth-child(5) {
+    width: 60px;
+    max-width: 60px;
+  }
+  .comparison-table th:nth-child(7),
+  .comparison-table td:nth-child(7) {
+    width: 60px;
+    max-width: 60px;
+  }
+
+  /* Novo estilo para o relatório de pontos */
+  .points-report-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    padding: 18px;
+    margin-bottom: 20px;
+    width: 100%;
+    border-left: 4px solid #4e73df;
+    align-self: flex-start;
+    overflow: visible;
+  }
+  
+  /* Layout otimizado para grade de áreas */
+  .areas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 30px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+  }
+  
+  .area-container {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+    border: none; /* Remover borda sólida */
+    border-radius: 10px; /* Bordas mais arredondadas */
+    padding: 12px; /* Aumentar padding interno */
+    background-color: #fdfdfd;
+    transition: all 0.3s ease;
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Sombra suave para efeito 3D */
+  }
+  
+  .area-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  /* Melhorar o visual da barra de progresso */
+  .progress-bar-container {
+    height: 8px;
+    background-color: #f0f0f0;
+    border-radius: 10px; /* Bordas mais arredondadas */
+    margin: 5px 0 8px 0;
+    overflow: hidden;
+    width: 100%;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Sombra interna sutil */
+  }
+  
+  .progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+  
+  /* Melhorar o visual das mensagens de economia/excesso */
+  .economy-message, .excess-message {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+    font-size: 12px;
+    font-weight: 500; /* Um pouco mais negrito */
+    padding: 2px 0;
+  }
+  
+  .economy-message {
+    color: #28a745; /* Verde para economia */
+  }
+  
+  .excess-message {
+    color: #dc3545; /* Vermelho para excesso */
+  }
+  
+  .economy-message i, .excess-message i {
+    margin-right: 5px;
+  }
+  
+  /* Estilização da barra de rolagem para melhor visibilidade */
+  .areas-grid::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .areas-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .areas-grid::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+  
+  .areas-grid::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+  
+  /* Total Geral mais destacado com melhor espaçamento */
+  .report-total {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    gap: 43px;
+    background-color: #f8f9fa;
+    padding: 8px 20px;
+    border-radius: 10px;
+    margin-top: 60px; /* Aumentado de 40px para 60px para dar muito mais espaço acima */
+    margin-bottom: 20px;
+    border: none;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    /* Adicionar uma borda superior sutil para melhorar a separação visual */
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Estilo para o nome da secretaria no Total Geral */
+  .report-total > div:first-child {
+    width: 100%;
+    margin-bottom: 2px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1;
+    text-align: center; /* Centralizar nome da secretaria */
+  }
+  
+  /* Estilo para o "Total Geral:" */
+  .report-total > div:nth-child(2) {
+    text-align: right;
+    margin-right: 10px;
+    flex: 0 0 auto; /* Não expandir, usar apenas o tamanho necessário */
+  }
+  
+  /* Estilo para os valores de pontos */
+  .report-total > div:nth-child(3) {
+    text-align: left;
+    flex: 0 0 auto; /* Não expandir, usar apenas o tamanho necessário */
+    font-weight: 700;
+  }
+  
+  /* Ajustes para mensagem de economia/excesso no total */
+  .report-total .economy-message,
+  .report-total .excess-message {
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* Formatação padronizada para todas as páginas */
+  .points-report-section {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 40px; /* Aumentado para 40px para mais espaço no final */
+  }
+  
+  /* Card do relatório com visual mais moderno e melhor adaptação */
+  .points-report-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 30px;
+    width: 100%;
+    border-left: 5px solid #4e73df;
+    align-self: flex-start;
+    overflow: visible;
+    position: relative;
+  }
+  
+  .points-report-title {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600; /* Mais negrito */
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  .points-report-title i {
+    margin-right: 8px;
+    color: #4e73df; /* Cor do ícone combinando com a borda */
+  }
+  
+  .area-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  .area-name {
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: none;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  
+  .area-points {
+    font-weight: 500;
+    text-align: right;
+    min-width: 120px;
+    white-space: nowrap;
+  }
+  
+  .report-divider {
+    height: 2px; /* Aumentado de 1px para 2px para maior destaque */
+    background-color: #e0e0e0; /* Cor um pouco mais escura para melhor visibilidade */
+    margin: 20px 0 40px 0; /* Aumentado o espaçamento inferior para 40px */
+    width: 100%;
+  }
+  
+  /* Ajuste para dar visibilidade ao relatório mesmo quando há muitas linhas na tabela */
+  @media screen and (min-height: 768px) {
+    .points-report-card {
+      display: block; /* Mudando para bloco em vez de grid para melhor visualização */
+    }
+  }
+  
+  /* Estilos para modo escuro */
+  body.dark-mode .points-report-card {
+    background-color: #222222;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  body.dark-mode .points-report-title {
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode .progress-bar-container {
+    background-color: #333;
+  }
+  
+  body.dark-mode .report-divider {
+    background-color: #333;
+  }
+  
+  /* Layout responsivo para melhor visualização */
+  @media screen and (min-height: 900px) {
+    .tables-container {
+      min-height: 75vh; /* Mais espaço para telas altas */
+    }
+    
+    .report-section {
+      max-height: 25vh;
+    }
+  }
+  
+  @media screen and (max-height: 700px) {
+    .tables-container {
+      min-height: 65vh; /* Menos espaço para telas baixas */
+    }
+    
+    .report-section {
+      max-height: 35vh;
+    }
+  }
+  
+  /* Para dispositivos móveis em modo paisagem */
+  @media screen and (max-width: 992px) and (orientation: landscape) {
+    .tables-container {
+      min-height: 60vh;
+    }
+    
+    .report-section {
+      max-height: 40vh;
+    }
+  }
+  
+  /* Otimizar a visualização de mais linhas na tabela */
+  @media (min-height: 800px) {
+    .tables-container {
+      min-height: 55vh;
+    }
+    
+    .comparison-table tr {
+      height: 28px; /* Altura fixa para as linhas */
+    }
+  }
+  
+  @media (max-height: 800px) {
+    .comparison-table td,
+    .comparison-table th {
+      padding: 2px 6px; /* Padding ainda menor para telas menores */
+    }
+    
+    .comparison-table tr {
+      height: 24px; /* Altura ainda menor para telas menores */
+    }
+  }
+  
+  /* Garantir que o footer não interfira no relatório */
+  footer {
+    margin-top: 30px; /* Adicionar espaço entre o conteúdo e o footer */
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+  }
+  
+  /* Adicionar margem inferior para evitar que o conteúdo seja cortado */
+  .report-section {
+    margin-bottom: 30px;
+  }
+  
+  /* Ajuste para cards mais largos quando necessário */
+  @media (min-width: 768px) {
+    .area-container {
+      min-width: 250px;
+    }
+  }
+  
+  /* Para telas menores, garantir que apenas um item apareça por linha */
+  @media (max-width: 768px) {
+    .areas-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Para telas médias, ajustar para 2 colunas */
+  @media (min-width: 769px) and (max-width: 1200px) {
+    .areas-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Para telas grandes, manter 4 colunas */
+  @media (min-width: 1201px) {
+    .areas-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  /* Adicionar mais espaço quando há muitos dados */
+  .areas-grid:has(.area-container:nth-child(n+12)) {
+    margin-bottom: 50px; /* Mais espaço após o grid quando há muitos itens */
+  }
+  
+  /* Estilo adicional para o Total Geral quando há muitos dados */
+  .areas-grid:has(.area-container:nth-child(n+12)) ~ .report-total {
+    margin-top: 80px; /* Ainda mais espaço quando há muitos itens */
+  }
+
+  /* Seção de relatório - expandida para usar mais espaço vertical */
+  .report-section {
+    padding: 20px;
+    background-color: white;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    margin-bottom: 30px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Nova seção dedicada de relatório de pontos, independente da tabela */
+  .full-report-section {
+    border-top: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    padding: 30px;
+    margin-top: 20px;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
+  }
+  
+  /* Título da seção de relatório com estilo especial */
+  .full-report-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #333;
+    text-align: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #4e73df;
+  }
+  
+  /* Container para os relatórios na seção completa */
+  .full-reports-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+</style>
+
+<!-- Template HTML para a estrutura da tabela editável -->
+<template id="editableRowTemplate">
+  <tr>
+    <td class="editable-cell"><input type="text" class="form-control form-control-sm" data-field="sigla" style="background-color:#fff8e1; border:none; width:100%;"></td>
+    <td class="editable-cell tipo-cargo">
+      <select class="form-select form-select-sm" data-field="tipo_cargo" style="background-color:#fff8e1; border:none; width:100%;">
+        <option value="FCE">FCE</option>
+        <option value="CCE">CCE</option>
+      </select>
+    </td>
+    <td class="editable-cell col-denom">
+      <input type="text" class="form-control form-control-sm" data-field="denominacao" style="background-color:#fff8e1; border:none; width:100%;">
+    </td>
+    <td class="editable-cell"><input type="number" min="1" max="3" data-field="categoria" style="background-color:#fff8e1; border:none; width:100%;"></td>
+    <td class="editable-cell"><input type="number" min="1" max="18" data-field="nivel" style="background-color:#fff8e1; border:none; width:100%;"></td>
+    <td class="editable-cell"><input type="number" min="1" data-field="quantidade" style="background-color:#fff8e1; border:none; width:100%;"></td>
+    <td></td> <!-- Pontos -->
+    <td class="text-center">
+      <button class="btn btn-sm btn-outline-danger delete-cargo" title="Excluir cargo">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</template>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="m-0">Simulador de Estrutura</h6>
+        </div>
+        
+        <div class="card-body">
+          <div class="comparison-container">
+            <div class="actions-bar">
+              <div class="unit-controls">
+                <select id="unitSelect" class="form-select-sm" style="width: 350px;">
+                  <option value="" selected disabled>Selecione uma unidade</option>
+                  <!-- Opções serão preenchidas via JavaScript -->
+                </select>
+                
+                <button id="searchBtn" class="btn btn-sm btn-primary">
+                  <i class="fas fa-search me-1"></i> Pesquisar
+                </button>
+                <button id="clearFilterBtn" class="btn btn-sm btn-outline-secondary ms-2" title="Limpar filtro">
+                  <i class="fas fa-times me-1"></i> Limpar
+                </button>
+                <button id="addCargoBtn" class="btn btn-sm btn-success ms-2" title="Adicionar Novo Cargo">
+                  <i class="fas fa-plus me-1"></i> Adicionar Cargo
+                </button>
+              </div>
+              <div class="download-options d-flex align-items-center" style="gap: 5px;">
+                <!-- Selector de tipo de exportação -->
+                <select id="exportType" class="form-select form-select-sm w-auto">
+                  <option value="comparacao" selected>Comparação</option>
+                  <option value="nova">Estrutura Nova</option>
+                  <option value="completa">Tabela Completa</option>
+                </select>
+                
+                <button id="downloadCSV" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-file-csv me-1"></i> CSV
+                </button>
+                <button id="downloadHTML" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-file-code me-1"></i> HTML
+                </button>
+                <button id="downloadWord" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-file-word me-1"></i> Word
+                </button>
+                <button id="downloadPDF" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-file-pdf me-1"></i> PDF
+                </button>
+                <button id="downloadXLSX" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-file-excel me-1"></i> XLSX
+                </button>
+              </div>
+            </div>
+            
+            <div class="tables-container">
+              <div class="table-section">
+                <div class="table-header">Estrutura Atual</div>
+                <table id="currentTable" class="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Área</th>
+                      <th>Tipo Cargo</th>
+                      <th style="min-width:200px !important;">Denominação</th>
+                      <th>Cat.</th>
+                      <th>Nvl.</th>
+                      <th>Qtd.</th>
+                      <th>Pts.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Será preenchido dinamicamente -->
+                    <tr>
+                      <td colspan="7" class="text-center">Selecione uma unidade para visualizar os dados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="table-section">
+                <div class="table-header">Estrutura Nova</div>
+                <table id="editableTable" class="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Área</th>
+                      <th>Tipo Cargo</th>
+                      <th style="min-width:200px !important;">Denominação</th>
+                      <th>Cat.</th>
+                      <th>Nvl.</th>
+                      <th>Qtd.</th>
+                      <th>Pts.</th>
+                      <th style="width:50px;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Será preenchido dinamicamente -->
+                    <tr>
+                      <td colspan="8" class="text-center">Selecione uma unidade para visualizar os dados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="report-section">
+              <!-- Os títulos serão substituídos por botões gerados via JavaScript -->
+              <div id="pointsReport" class="mb-3 points-report-section">
+                <!-- Será preenchido dinamicamente -->
+                
+              </div>
+              
+              <div id="diffReport" class="diff-report-section">
+                <!-- Será preenchido dinamicamente -->
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Carrega o D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- Carrega html2pdf para exportação para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Carrega docx.js para exportação para Word -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.34.0/docxtemplater.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.0.6/pizzip.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<!-- Carrega jQuery e Select2 para o dropdown com busca -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Carrega SheetJS para exportar XLSX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Dados do organograma -->
+<script type="text/javascript">
+  window.organogramaData = JSON.parse('{{ organograma_data|escapejs }}');
+</script>
+
+<!-- Script principal do comparador -->
+<script src="{% static 'js/comparador.js' %}?v=1.0.6"></script>
+
+<!-- Inicialização do Select2 -->
+<script>
+  $(document).ready(function() {
+    $('#unitSelect').select2({
+      placeholder: "Digite para pesquisar uma unidade...",
+      allowClear: true,
+      width: '350px',
+      minimumInputLength: 0,
+      minimumResultsForSearch: 0,
+      language: {
+        noResults: function() {
+          return "Nenhuma unidade encontrada";
+        },
+        searching: function() {
+          return "Pesquisando...";
+        },
+        inputTooShort: function(args) {
+          return "";
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

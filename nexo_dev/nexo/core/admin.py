@@ -1,0 +1,349 @@
+from django.contrib import admin, messages
+from django.urls import path
+from django.shortcuts import render, redirect
+from django import forms
+from .models import UnidadeCargo, Perfil, CargoSIORG
+from .utils import processa_planilhas
+from .siorg_scraper import scrape_siorg
+import os
+import json
+from decimal import Decimal
+import math
+import sys
+
+# Importar a função de geração do arquivo JSON
+try:
+    from gerar_dados_json import gerar_dados_json
+    from atualizar_dados_organograma import atualizar_dados_organograma
+except ImportError:
+    # Função para atualizar os dados do organograma
+    def atualizar_dados_organograma():
+        """Atualiza o arquivo organograma.json a partir do dados.json."""
+        try:
+            # Não é mais necessário copiar o arquivo, já que
+            # o organograma agora acessa o dados.json diretamente via API
+            print("Organograma será atualizado via API ao ser carregado")
+            return True
+        except Exception as e:
+            print(f"Erro ao atualizar organograma: {str(e)}")
+            return False
+            
+    # Função para gerar o arquivo dados.json
+    def gerar_dados_json():
+        """
+        Gera um arquivo JSON com dados das tabelas UnidadeCargo e CargoSIORG.
+        O arquivo será salvo como organograma.json.
+        """
+        import os
+        import json
+        from decimal import Decimal
+        from .models import UnidadeCargo, CargoSIORG
+        
+        # Caminho para o arquivo de saída
+        ORGANOGRAMA_JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core', 'static', 'data', 'organograma.json')
+        
+        print("Iniciando geração do arquivo organograma.json...")
+        
+        # Função auxiliar para converter Decimal em float para serialização JSON
+        def decimal_para_float(obj):
+            if isinstance(obj, Decimal):
+                # Arredondar para duas casas decimais
+                return round(float(obj), 2)
+            raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+        
+        # Estrutura para armazenar os dados
+        resultado = {
+            "core_unidadecargo": [],
+            "core_cargosiorg": []
+        }
+        
+        # Obter todos os registros de UnidadeCargo
+        unidades_cargo = UnidadeCargo.objects.all()
+        print(f"Processando {unidades_cargo.count()} registros de UnidadeCargo")
+        
+        # Adicionar cada unidade de cargo ao resultado
+        for unidade in unidades_cargo:
+            unidade_dados = {
+                "tipo_unidade": unidade.tipo_unidade,
+                "denominacao_unidade": unidade.denominacao_unidade,
+                "codigo_unidade": unidade.codigo_unidade,
+                "sigla": unidade.sigla_unidade,
+                "tipo_cargo": unidade.tipo_cargo,
+                "denominacao": unidade.denominacao,
+                "categoria": unidade.categoria,
+                "nivel": unidade.nivel,
+                "quantidade": unidade.quantidade,
+                "grafo": unidade.grafo
+            }
+            resultado["core_unidadecargo"].append(unidade_dados)
+        
+        # Obter todos os registros de CargoSIORG
+        cargos_siorg = CargoSIORG.objects.all()
+        print(f"Processando {cargos_siorg.count()} registros de CargoSIORG")
+        
+        # Adicionar cada cargo ao resultado
+        for cargo in cargos_siorg:
+            cargo_dados = {
+                "cargo": cargo.cargo,
+                "nivel": cargo.nivel,
+                "valor": cargo.valor
+            }
+            resultado["core_cargosiorg"].append(cargo_dados)
+        
+        # Salvar o resultado em JSON
+        with open(ORGANOGRAMA_JSON_PATH, 'w', encoding='utf-8') as f:
+            json.dump(resultado, f, ensure_ascii=False, indent=2, default=decimal_para_float)
+        
+        print(f"Arquivo organograma.json gerado com sucesso em: {ORGANOGRAMA_JSON_PATH}")
+        print(f"Total de registros: {len(resultado['core_unidadecargo'])} unidades e {len(resultado['core_cargosiorg'])} cargos")
+        
+        return True
+
+class ImportPlanilhasForm(forms.Form):
+    file_hierarquia = forms.FileField(label='Planilha de Hierarquia')
+    file_estrutura_viva = forms.FileField(label='Planilha de Estrutura Viva')
+
+    def clean_file_hierarquia(self):
+        file = self.cleaned_data['file_hierarquia']
+        if not file.name.endswith(('.csv', '.xlsx')):
+            raise forms.ValidationError("O arquivo de hierarquia deve ser CSV ou Excel.")
+        return file
+
+    def clean_file_estrutura_viva(self):
+        file = self.cleaned_data['file_estrutura_viva']
+        if not file.name.endswith(('.csv', '.xlsx')):
+            raise forms.ValidationError("O arquivo de estrutura viva deve ser CSV ou Excel.")
+        return file
+
+@admin.register(UnidadeCargo)
+class UnidadeCargoAdmin(admin.ModelAdmin):
+    list_display = ('codigo_unidade', 'denominacao_unidade', 'tipo_cargo', 'categoria', 'nivel', 'grafo')
+    search_fields = ('codigo_unidade', 'denominacao_unidade', 'tipo_cargo')
+    list_filter = ('tipo_cargo', 'categoria', 'nivel')
+    actions = ['limpar_registros_invalidos']
+    
+    def limpar_registros_invalidos(self, request, queryset):
+        """Limpa os registros que não possuem grafo válido (não fazem parte da estrutura do ministério)"""
+        registros_totais = UnidadeCargo.objects.count()
+        
+        # Obter registros sem grafo válido
+        registros_invalidos = UnidadeCargo.objects.filter(grafo__exact='') | UnidadeCargo.objects.filter(grafo__isnull=True)
+        qtd_invalidos = registros_invalidos.count()
+        
+        # Excluir registros inválidos
+        registros_invalidos.delete()
+        
+        # Exibir mensagem de sucesso
+        self.message_user(
+            request, 
+            f'Foram removidos {qtd_invalidos} registros inválidos (sem grafo). Restam {registros_totais - qtd_invalidos} registros válidos no banco de dados.',
+            messages.SUCCESS
+        )
+    
+    limpar_registros_invalidos.short_description = "Remover registros sem grafo válido"
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path(
+                'import-planilhas/',
+                self.admin_site.admin_view(self.import_planilhas_view),
+                name='core_unidadecargo_import_planilhas'
+            ),
+            path(
+                'limpar-registros/',
+                self.admin_site.admin_view(self.limpar_registros_view),
+                name='core_unidadecargo_limpar_registros'
+            ),
+        ]
+        return my_urls + urls
+    
+    def limpar_registros_view(self, request):
+        """View para limpar registros inválidos"""
+        if request.method == 'POST':
+            registros_totais = UnidadeCargo.objects.count()
+            
+            # Obter registros sem grafo válido
+            registros_invalidos = UnidadeCargo.objects.filter(grafo__exact='') | UnidadeCargo.objects.filter(grafo__isnull=True)
+            qtd_invalidos = registros_invalidos.count()
+            
+            # Excluir registros inválidos
+            registros_invalidos.delete()
+            
+            # Exibir mensagem de sucesso
+            self.message_user(
+                request, 
+                f'Foram removidos {qtd_invalidos} registros inválidos (sem grafo). Restam {registros_totais - qtd_invalidos} registros válidos no banco de dados.',
+                messages.SUCCESS
+            )
+            
+            # Gerar arquivo dados.json após a limpeza
+            try:
+                gerar_dados_json()
+                # Atualizar o organograma (não precisa mais copiar o arquivo)
+                atualizar_dados_organograma()
+                self.message_user(
+                    request,
+                    'Arquivo dados.json atualizado com sucesso! O organograma será atualizado automaticamente ao ser visualizado.',
+                    messages.SUCCESS
+                )
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f'Erro ao gerar arquivo dados.json: {str(e)}',
+                    messages.ERROR
+                )
+            
+            return redirect('..')
+        
+        return render(request, 'admin/limpar_registros.html', {
+            'title': 'Limpar Registros Inválidos',
+            'opts': self.model._meta,
+        })
+
+    def import_planilhas_view(self, request):
+        if request.method == 'POST':
+            form = ImportPlanilhasForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    # Processar planilhas usando a função do utils.py
+                    df_resultado = processa_planilhas(
+                        form.cleaned_data['file_hierarquia'],
+                        form.cleaned_data['file_estrutura_viva']
+                    )
+                    
+                    # Limpar a tabela antes de inserir novos registros
+                    UnidadeCargo.objects.all().delete()
+                    
+                    # Contador para registros processados e registros válidos
+                    total_registros = len(df_resultado)
+                    registros_importados = 0
+                    
+                    # Inserir os dados no banco de dados
+                    for _, row in df_resultado.iterrows():
+                        # Verificar se o grafo é válido antes de importar
+                        grafo = row.get('Grafo', '')
+                        if not grafo or grafo.strip() == '':
+                            continue  # Pular registros sem grafo válido
+                            
+                        # Criar o objeto UnidadeCargo
+                        UnidadeCargo.objects.create(
+                            nivel_hierarquico=row.get('Nível Hierárquico', 0),
+                            tipo_unidade=row.get('Tipo Unidade', ''),
+                            denominacao_unidade=row.get('Deno Unidade', ''),
+                            codigo_unidade=row.get('Código Unidade', ''),
+                            sigla_unidade=row.get('Sigla Unidade', ''),
+                            categoria_unidade=row.get('Categoria Unidade', ''),
+                            orgao_entidade=row.get('Órgão/Entidade', ''),
+                            tipo_cargo=row.get('Tipo do Cargo', ''),
+                            denominacao=row.get('Denominação', ''),
+                            complemento_denominacao=row.get('Complemento Denominação', ''),
+                            categoria=row.get('Categoria', 0),
+                            nivel=row.get('Nível', 0),
+                            quantidade=row.get('Quantidade', 0),
+                            grafo=grafo,
+                            sigla=row.get('Sigla', '')
+                        )
+                        registros_importados += 1
+                    
+                    # Após a importação, limpar quaisquer registros inválidos que possam ter entrado
+                    registros_invalidos = UnidadeCargo.objects.filter(grafo__exact='') | UnidadeCargo.objects.filter(grafo__isnull=True)
+                    qtd_invalidos = registros_invalidos.count()
+                    if qtd_invalidos > 0:
+                        registros_invalidos.delete()
+                        mensagem_extra = f" Foram removidos {qtd_invalidos} registros inválidos adicionais."
+                    else:
+                        mensagem_extra = ""
+                    
+                    # Gerar arquivo dados.json após a importação
+                    try:
+                        gerar_dados_json()
+                        # Atualizar o organograma (não precisa mais copiar o arquivo)
+                        atualizar_dados_organograma()
+                        mensagem_dados_json = " Arquivo dados.json atualizado com sucesso! O organograma será atualizado automaticamente ao ser visualizado."
+                    except Exception as e:
+                        mensagem_dados_json = f" Erro ao gerar arquivo dados.json: {str(e)}"
+                    
+                    self.message_user(
+                        request, 
+                        f'Planilhas importadas com sucesso! {registros_importados} de {total_registros} registros foram importados.{mensagem_extra}{mensagem_dados_json}', 
+                        messages.SUCCESS
+                    )
+                    return redirect('..')
+                except Exception as e:
+                    self.message_user(request, f'Erro ao importar planilhas: {str(e)}', messages.ERROR)
+            else:
+                self.message_user(request, 'Por favor, corrija os erros no formulário.', messages.ERROR)
+        else:
+            form = ImportPlanilhasForm()
+        
+        return render(request, 'admin/import_planilhas.html', {
+            'form': form,
+            'title': 'Importar Planilhas de Estrutura',
+            'opts': self.model._meta,
+        })
+
+@admin.register(Perfil)
+class PerfilAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'cargo', 'departamento', 'telefone', 'data_atualizacao')
+    search_fields = ('usuario__username', 'usuario__email', 'cargo', 'departamento')
+    list_filter = ('cargo', 'departamento', 'data_atualizacao')
+    readonly_fields = ('data_atualizacao',)
+    
+    fieldsets = (
+        ('Informações do Usuário', {
+            'fields': ('usuario', 'foto')
+        }),
+        ('Informações Profissionais', {
+            'fields': ('cargo', 'departamento', 'telefone')
+        }),
+        ('Informações Adicionais', {
+            'fields': ('bio', 'data_atualizacao')
+        }),
+    )
+
+@admin.register(CargoSIORG)
+class CargoSIORGAdmin(admin.ModelAdmin):
+    list_display = ('cargo', 'nivel', 'quantidade', 'valor', 'unitario', 'data_atualizacao')
+    search_fields = ('cargo', 'nivel')
+    list_filter = ('nivel', 'data_atualizacao')
+    readonly_fields = ('data_atualizacao',)
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path(
+                'scrape-siorg/',
+                self.admin_site.admin_view(self.scrape_siorg_view),
+                name='core_cargosiorg_scrape'
+            ),
+        ]
+        return my_urls + urls
+
+    def scrape_siorg_view(self, request):
+        if request.method == 'POST':
+            result = scrape_siorg()
+            if result['success']:
+                # Gerar arquivo dados.json após a atualização do SIORG
+                try:
+                    gerar_dados_json()
+                    # Atualizar o organograma (não precisa mais copiar o arquivo)
+                    atualizar_dados_organograma()
+                    self.message_user(
+                        request, 
+                        f"{result['message']} Arquivo dados.json atualizado com sucesso! O organograma será atualizado automaticamente ao ser visualizado.", 
+                        level=messages.SUCCESS
+                    )
+                except Exception as e:
+                    self.message_user(
+                        request, 
+                        f"{result['message']} Erro ao gerar arquivo dados.json: {str(e)}", 
+                        level=messages.WARNING
+                    )
+            else:
+                self.message_user(request, result['message'], level=messages.ERROR)
+            return redirect('..')
+        return render(request, 'admin/scrape_siorg.html', {
+            'opts': self.model._meta,
+            'title': "Atualizar Dados do SIORG"
+        })

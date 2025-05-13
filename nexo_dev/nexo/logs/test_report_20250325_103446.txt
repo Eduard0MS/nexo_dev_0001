@@ -1,0 +1,19 @@
+
+================================================================================
+RELATÓRIO DE TESTES - 2025-03-25 10:34:46
+================================================================================
+
+Total de testes executados: 5
+Testes bem-sucedidos: 1
+Testes falhos: 4
+Tempo total de execução: 27.12 segundos
+
+Detalhes dos testes:
+--------------------------------------------------------------------------------
+scripts/test_ransomware_protection.py - SUCESSO - 18.18s
+scripts/test_backup_system.py - FALHA - 5.26s
+scripts/test_organograma.py - FALHA - 1.61s
+scripts/test_financeiro.py - FALHA - 1.54s
+scripts/test_autenticacao.py - FALHA - 0.52s
+
+================================================================================

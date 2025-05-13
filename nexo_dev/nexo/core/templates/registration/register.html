@@ -1,0 +1,238 @@
+{% extends "base.html" %} {% load static %} {% block title %}
+Cadastro{%endblock%} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}" />
+<style>
+  .password-requirement {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+  }
+  .password-requirement i {
+    margin-right: 8px;
+    font-size: 14px;
+  }
+  .requirement-met {
+    color: #28a745;
+  }
+  .requirement-not-met {
+    color: #dc3545;
+  }
+  .password-strength-meter {
+    height: 5px;
+    background-color: #e9ecef;
+    margin-top: 10px;
+    border-radius: 3px;
+    position: relative;
+  }
+  .password-strength-meter .meter {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+  .password-strength-text {
+    font-size: 12px;
+    margin-top: 5px;
+    text-align: right;
+  }
+</style>
+{% endblock %} {% block auth_content %}
+<div class="auth-container fade-in">
+  <div class="auth-row">
+    <div class="auth-col-form">
+      <h1 class="auth-title">Cadastre-se</h1>
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}" class="form-label"
+            >Usuário</label
+          >
+          {{ form.username }} {% if form.username.errors %}
+          <div class="error-message">
+            {% for error in form.username.errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %} {% if form.username.help_text %}
+          <div class="help-text">{{ form.username.help_text }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}" class="form-label"
+            >E-mail</label
+          >
+          {{ form.email }} {% if form.email.errors %}
+          <div class="error-message">
+            {% for error in form.email.errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.password1.id_for_label }}" class="form-label"
+            >Senha</label
+          >
+          {{ form.password1 }} 
+          
+          <div class="password-strength-meter">
+            <div class="meter" id="strength-meter"></div>
+          </div>
+          <div class="password-strength-text" id="strength-text"></div>
+          
+          <div id="password-requirements" class="mt-2">
+            <div class="password-requirement" id="length-check">
+              <i class="fas fa-times-circle requirement-not-met"></i>
+              <span>Mínimo de 8 caracteres</span>
+            </div>
+            <div class="password-requirement" id="uppercase-check">
+              <i class="fas fa-times-circle requirement-not-met"></i>
+              <span>Pelo menos uma letra maiúscula</span>
+            </div>
+            <div class="password-requirement" id="lowercase-check">
+              <i class="fas fa-times-circle requirement-not-met"></i>
+              <span>Pelo menos uma letra minúscula</span>
+            </div>
+            <div class="password-requirement" id="number-check">
+              <i class="fas fa-times-circle requirement-not-met"></i>
+              <span>Pelo menos um número</span>
+            </div>
+            <div class="password-requirement" id="special-check">
+              <i class="fas fa-times-circle requirement-not-met"></i>
+              <span>Pelo menos um caractere especial</span>
+            </div>
+          </div>
+          
+          {% if form.password1.errors %}
+          <div class="error-message">
+            {% for error in form.password1.errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.password2.id_for_label }}" class="form-label"
+            >Confirme a senha</label
+          >
+          {{ form.password2 }} 
+          <div id="password-match" class="mt-2 d-none">
+            <div class="password-requirement">
+              <i class="fas fa-times-circle requirement-not-met" id="match-icon"></i>
+              <span>As senhas correspondem</span>
+            </div>
+          </div>
+          {% if form.password2.errors %}
+          <div class="error-message">
+            {% for error in form.password2.errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <button type="submit" class="btn-auth" id="submit-btn">Cadastrar</button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <p>Já tem uma conta? <a href="{% url 'login' %}">Entre aqui</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const passwordField = document.getElementById('password1');
+  const confirmField = document.getElementById('password2');
+  const lengthCheck = document.getElementById('length-check');
+  const uppercaseCheck = document.getElementById('uppercase-check');
+  const lowercaseCheck = document.getElementById('lowercase-check');
+  const numberCheck = document.getElementById('number-check');
+  const specialCheck = document.getElementById('special-check');
+  const passwordMatch = document.getElementById('password-match');
+  const matchIcon = document.getElementById('match-icon');
+  const strengthMeter = document.getElementById('strength-meter');
+  const strengthText = document.getElementById('strength-text');
+  
+  const updateRequirement = (element, valid) => {
+    const icon = element.querySelector('i');
+    if (valid) {
+      icon.classList.remove('fa-times-circle', 'requirement-not-met');
+      icon.classList.add('fa-check-circle', 'requirement-met');
+    } else {
+      icon.classList.remove('fa-check-circle', 'requirement-met');
+      icon.classList.add('fa-times-circle', 'requirement-not-met');
+    }
+  };
+  
+  const calculateStrength = (password) => {
+    let strength = 0;
+    const checks = [
+      password.length >= 8,
+      /[A-Z]/.test(password),
+      /[a-z]/.test(password),
+      /[0-9]/.test(password),
+      /[^A-Za-z0-9]/.test(password)
+    ];
+    
+    strength = checks.filter(Boolean).length * 20;
+    
+    // Update meter
+    strengthMeter.style.width = strength + '%';
+    
+    // Set color based on strength
+    if (strength <= 20) {
+      strengthMeter.style.backgroundColor = '#dc3545'; // Fraca - vermelho
+      strengthText.textContent = 'Muito fraca';
+      strengthText.style.color = '#dc3545';
+    } else if (strength <= 40) {
+      strengthMeter.style.backgroundColor = '#ffc107'; // Média - amarelo
+      strengthText.textContent = 'Fraca';
+      strengthText.style.color = '#ffc107';
+    } else if (strength <= 60) {
+      strengthMeter.style.backgroundColor = '#fd7e14'; // Média alta - laranja
+      strengthText.textContent = 'Média';
+      strengthText.style.color = '#fd7e14';
+    } else if (strength <= 80) {
+      strengthMeter.style.backgroundColor = '#20c997'; // Forte - verde claro
+      strengthText.textContent = 'Forte';
+      strengthText.style.color = '#20c997';
+    } else {
+      strengthMeter.style.backgroundColor = '#28a745'; // Muito forte - verde
+      strengthText.textContent = 'Muito forte';
+      strengthText.style.color = '#28a745';
+    }
+    
+    return strength;
+  };
+  
+  passwordField.addEventListener('input', function() {
+    const password = this.value;
+    
+    // Check each requirement
+    updateRequirement(lengthCheck, password.length >= 8);
+    updateRequirement(uppercaseCheck, /[A-Z]/.test(password));
+    updateRequirement(lowercaseCheck, /[a-z]/.test(password));
+    updateRequirement(numberCheck, /[0-9]/.test(password));
+    updateRequirement(specialCheck, /[^A-Za-z0-9]/.test(password));
+    
+    // Calculate and update strength
+    calculateStrength(password);
+    
+    // Check if passwords match if confirm field has a value
+    if (confirmField.value) {
+      passwordMatch.classList.remove('d-none');
+      updateRequirement(passwordMatch, password === confirmField.value);
+    }
+  });
+  
+  confirmField.addEventListener('input', function() {
+    if (this.value) {
+      passwordMatch.classList.remove('d-none');
+      updateRequirement(passwordMatch, this.value === passwordField.value);
+    } else {
+      passwordMatch.classList.add('d-none');
+    }
+  });
+});
+</script>
+{% endblock %}

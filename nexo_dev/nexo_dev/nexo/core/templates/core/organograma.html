@@ -1,0 +1,164 @@
+  // Função para inicializar a tabela com dados manuais caso tudo falhe
+  function inicializarTabelaComDadosManuais() {
+    console.log('Inicializando tabela com dados manuais');
+    // Acessar organogramaData diretamente
+    if (window.organogramaData && window.organogramaData.core_unidadecargo) {
+      const dados = window.organogramaData.core_unidadecargo;
+      console.log('Dados encontrados:', dados.length);
+      
+      // Filtrar para mostrar apenas unidades da SE
+      const unidadesSE = dados.filter(unidade => 
+        unidade.sigla === 'SE' || 
+        unidade.sigla_unidade === 'SE' || 
+        (unidade.grafo && unidade.grafo.includes('-310410-'))
+      );
+      
+      // Converter para o formato esperado pela tabela
+      const dadosTabela = unidadesSE.map(u => ({
+        area: u.sigla || u.sigla_unidade || '',
+        categoria_unidade: u.tipo_unidade || '',
+        tipo_cargo: u.tipo_cargo || '',
+        denominacao: u.denominacao || '',
+        categoria: u.categoria !== undefined ? u.categoria : '',
+        nivel: u.nivel !== undefined ? u.nivel : '',
+        quantidade: u.quantidade || 0,
+        pontos_totais: u.pontos_total || 0,
+        gasto_totais: u.gasto_total || 0
+      }));
+      
+      console.log('Dados manuais formatados:', dadosTabela.length);
+      if (dadosTabela.length > 0) {
+        atualizarTabela(dadosTabela);
+      } else {
+        // Se ainda não houver dados da SE, mostrar todos os dados
+        const todosDados = dados.map(u => ({
+          area: u.sigla || u.sigla_unidade || '',
+          categoria_unidade: u.tipo_unidade || '',
+          tipo_cargo: u.tipo_cargo || '',
+          denominacao: u.denominacao || '',
+          categoria: u.categoria !== undefined ? u.categoria : '',
+          nivel: u.nivel !== undefined ? u.nivel : '',
+          quantidade: u.quantidade || 0,
+          pontos_totais: u.pontos_total || 0,
+          gasto_totais: u.gasto_total || 0
+        }));
+        
+        atualizarTabela(todosDados.slice(0, 20)); // Mostrar apenas os primeiros 20
+      }
+    } else {
+      document.getElementById('tabelaUnidadesBody').innerHTML = 
+        '<tr><td colspan="9" class="text-center">Não foi possível carregar os dados. Tente recarregar a página.</td></tr>';
+    }
+  }
+  
+  // Inicializar imediatamente ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded: Verificando dados disponíveis');
+    
+    // Tentar inicializar tabela imediatamente
+    setTimeout(function() {
+      inicializarTabelaComDadosManuais();
+    }, 500);
+  });
+  
+  // Listener para o evento dadosOrganogramaDisponivel
+  document.addEventListener('dadosOrganogramaDisponivel', function(e) {
+    console.log('Evento dadosOrganogramaDisponivel recebido:', e.detail);
+    
+    if (e.detail && e.detail.dados && e.detail.dados.length > 0) {
+      const dados = e.detail.dados;
+      
+      // Filtrar para mostrar apenas unidades da SE
+      const unidadesSE = dados.filter(unidade => 
+        unidade.sigla === 'SE' || 
+        unidade.sigla_unidade === 'SE' || 
+        (unidade.grafo && unidade.grafo.includes('-310410-'))
+      );
+      
+      // Converter para o formato esperado pela tabela
+      const dadosTabela = unidadesSE.map(u => ({
+        area: u.sigla || u.sigla_unidade || '',
+        categoria_unidade: u.tipo_unidade || '',
+        tipo_cargo: u.tipo_cargo || '',
+        denominacao: u.denominacao || '',
+        categoria: u.categoria !== undefined ? u.categoria : '',
+        nivel: u.nivel !== undefined ? u.nivel : '',
+        quantidade: u.quantidade || 0,
+        pontos_totais: u.pontos_total || 0,
+        gasto_totais: u.gasto_total || 0
+      }));
+      
+      console.log('Dados SE encontrados via evento:', dadosTabela.length);
+      
+      if (dadosTabela.length > 0) {
+        atualizarTabela(dadosTabela);
+      } else {
+        console.log('Nenhuma unidade SE encontrada, mostrando todos os dados');
+        // Se não houver unidades SE, mostrar todas as unidades (limitado a 20)
+        const todosDados = dados.map(u => ({
+          area: u.sigla || u.sigla_unidade || '',
+          categoria_unidade: u.tipo_unidade || '',
+          tipo_cargo: u.tipo_cargo || '',
+          denominacao: u.denominacao || '',
+          categoria: u.categoria !== undefined ? u.categoria : '',
+          nivel: u.nivel !== undefined ? u.nivel : '',
+          quantidade: u.quantidade || 0,
+          pontos_totais: u.pontos_total || 0,
+          gasto_totais: u.gasto_total || 0
+        }));
+        
+        atualizarTabela(todosDados.slice(0, 20));
+      }
+    }
+  }); 
+
+  <div class="card-body px-0 pt-0 pb-2">
+    <div id="organogramaContainer" class="organograma-container"></div>
+  </div>
+</div>
+
+<!-- Tabela de Unidades e Cargos -->
+<div class="card mb-4">
+  <div class="card-header pb-0">
+    <h6>Detalhamento das Unidades e Cargos</h6>
+    <p class="text-sm">Exibindo dados das unidades visíveis no organograma acima</p>
+  </div>
+  <div class="card-body px-0 pt-0 pb-2">
+    <div class="table-responsive p-0">
+      <table class="table align-items-center mb-0 unidades-table" id="tabelaUnidades">
+        <thead>
+          <tr>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Área</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria Unidade</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo Cargo</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Denominação</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nível</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantidade</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pontos Totais</th>
+            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Gastos Totais</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaUnidadesBody">
+          <!-- O conteúdo será preenchido dinamicamente via JavaScript -->
+          <tr>
+            <td colspan="9" class="text-center">Carregando dados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span class="text-sm">Exibindo <span id="quantidadeItens">0</span> unidades</span>
+      </div>
+      <div>
+        <button id="carregarMais" class="btn btn-sm btn-outline-primary">
+          Carregar mais itens
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</div> 

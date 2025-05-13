@@ -1,0 +1,687 @@
+{% extends "base.html" %} {% load static %} {% block title %} Início{%endblock %} {% block extra_css %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  .card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    margin-bottom: 24px;
+    background-color: #ffffff;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+  }
+
+  .card-body {
+    padding: 1.75rem;
+  }
+
+  .info-icon {
+    margin-right: 12px;
+    color: #4a90e2;
+    opacity: 0.9;
+  }
+
+  .feature-icon {
+    font-size: 3rem;
+    color: #4a90e2;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+    opacity: 0.9;
+  }
+  
+  .feature-card:hover .feature-icon {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  .feature-card {
+    text-align: center;
+    padding: 30px 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    border-radius: 16px;
+    background-color: #f8fafd;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+  
+  .feature-card:hover {
+    background-color: #f0f7ff;
+  }
+  
+  .feature-card h5 {
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+  
+  .feature-card p {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .quick-link {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    background-color: #f8fafd;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .quick-link:hover {
+    background-color: #f0f7ff;
+    transform: translateX(5px);
+  }
+
+  .quick-link i {
+    margin-right: 14px;
+    color: #4a90e2;
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+  
+  .quick-link span {
+    font-weight: 500;
+  }
+
+  .stats-card {
+    background-color: #f8fafd;
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+    background-color: #f0f7ff;
+  }
+
+  .stats-number {
+    font-size: 3rem;
+    font-weight: 600;
+    color: #4a90e2;
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+  }
+
+  .stats-label {
+    color: #666;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+    font-weight: 500;
+  }
+
+  /* Efeitos de botões melhorados */
+  .btn-outline-primary {
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-outline-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.2);
+  }
+
+  /* Melhorias nas transições para suavidade */
+  .feature-card,
+  .stats-card,
+  .quick-link {
+    will-change: transform;
+  }
+
+  /* Animação de carregamento para as estatísticas */
+  .stats-loading {
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stats-loading .spinner-border {
+    color: #4a90e2;
+    margin-bottom: 10px;
+  }
+  
+  .stats-error {
+    padding: 15px;
+    border-radius: 10px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+  }
+  
+  .stats-error i {
+    color: #ffc107;
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+  
+  .stats-status {
+    font-size: 0.85rem;
+    color: #666;
+    text-align: center;
+    margin-top: 6px;
+  }
+  
+  .refresh-btn {
+    background: none;
+    border: none;
+    color: #4a90e2;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-top: 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .refresh-btn:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+  }
+  
+  .refresh-btn i {
+    margin-right: 5px;
+  }
+  
+  /* Container principal com padding menor */
+  .main-container {
+    padding: 0.5rem;
+  }
+  
+  /* Guia de uso mais compacto */
+  .guide-item {
+    margin-bottom: 0.75rem;
+  }
+  
+  .guide-icon {
+    min-width: 24px;
+    display: inline-block;
+  }
+  
+  /* Ajustar espaçamento geral */
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="row fade-in main-container">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h4 class="mb-0 d-flex align-items-center">
+          <span class="info-icon"><i class="fas fa-home"></i></span>
+          Bem-vindo ao Sistema Nexo
+        </h4>
+      </div>
+      <div class="card-body">
+        <p>
+          O Sistema Nexo é uma plataforma integrada para gerenciamento
+          organizacional, permitindo visualizar a estrutura hierárquica,
+          gerenciar recursos financeiros e realizar simulações de cenários.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recursos do Sistema -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0 d-flex align-items-center section-title">
+          <span class="info-icon"><i class="fas fa-cubes"></i></span>
+          Recursos do Sistema
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="feature-card h-100">
+              <div>
+              <div class="feature-icon">
+                <i class="fas fa-project-diagram"></i>
+              </div>
+              <h5>Organograma</h5>
+              <p>
+                Visualize a estrutura hierárquica da organização de forma
+                  interativa e explore seus componentes.
+              </p>
+              </div>
+              <div class="mt-3">
+              <a
+                href="{% url 'organograma' %}"
+                class="btn btn-sm btn-outline-primary"
+                >Acessar</a
+              >
+            </div>
+          </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="feature-card h-100">
+              <div>
+              <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <h5>Painel de Bordo</h5>
+              <p>
+                Gerencie recursos financeiros, orçamentos e relatórios
+                  contábeis com ferramentas analíticas avançadas.
+              </p>
+              </div>
+              <div class="mt-3">
+              <a href="{% url 'financeira' %}" class="btn btn-sm btn-outline-primary">Acessar</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="feature-card h-100">
+              <div>
+              <div class="feature-icon">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <h5>Simulador</h5>
+              <p>
+                Realize simulações de cenários para tomada de decisões
+                  estratégicas com base em dados reais.
+              </p>
+              </div>
+              <div class="mt-3">
+              <a
+                href="{% url 'simulador' %}"
+                class="btn btn-sm btn-outline-primary"
+                >Acessar</a
+              >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Links Rápidos e Estatísticas -->
+  <div class="row mt-3">
+    <div class="col-md-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 d-flex align-items-center section-title">
+            <span class="info-icon"><i class="fas fa-link"></i></span>
+            Links Rápidos
+          </h5>
+        </div>
+        <div class="card-body">
+          <a href="{% url 'organograma' %}" class="quick-link">
+            <i class="fas fa-sitemap"></i>
+            <span>Visualizar Organograma</span>
+          </a>
+          <a href="{% url 'financeira' %}" class="quick-link">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Painel de Bordo</span>
+          </a>
+          <a href="{% url 'simulador' %}" class="quick-link">
+            <i class="fas fa-calculator"></i>
+            <span>Simulador de Organograma</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 d-flex align-items-center section-title">
+            <span class="info-icon"><i class="fas fa-chart-pie"></i></span>
+            Estatísticas do Sistema
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row" id="estatisticas-container">
+            <div class="col-12 stats-loading">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+              <div class="mt-2 text-center text-muted">
+                <small>Conectando à API do organograma...</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guia de Uso -->
+  <div class="col-12 mt-3">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0 d-flex align-items-center section-title">
+          <span class="info-icon"><i class="fas fa-book"></i></span>
+          Guia de Uso do Sistema
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="mb-3">
+          Para utilizar o sistema de forma eficiente, siga estas orientações:
+        </p>
+        <ul class="list-unstyled">
+          <li class="guide-item">
+            <i class="fas fa-check-circle text-success guide-icon"></i>
+            <strong>Organograma:</strong> Visualize a estrutura organizacional,
+            expanda ou colapse nós para ver detalhes.
+          </li>
+          <li class="guide-item">
+            <i class="fas fa-check-circle text-success guide-icon"></i>
+            <strong>Financeiro:</strong> Acesse relatórios, orçamentos e
+            análises financeiras da organização.
+          </li>
+          <li class="guide-item">
+            <i class="fas fa-check-circle text-success guide-icon"></i>
+            <strong>Simulação:</strong> Crie cenários hipotéticos para análise
+            de impacto em decisões estratégicas.
+          </li>
+          <li class="guide-item">
+            <i class="fas fa-check-circle text-success guide-icon"></i>
+            <strong>Navegação:</strong> Use o menu superior para acessar as
+            diferentes seções do sistema.
+          </li>
+        </ul>
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-info-circle me-2"></i>
+          Para mais informações ou suporte, entre em contato com o administrador
+          do sistema.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<!-- Scripts personalizados para a página inicial -->
+<script>
+  // Animação para os cards
+  document.addEventListener('DOMContentLoaded', function () {
+    const cards = document.querySelectorAll('.card')
+    cards.forEach((card, index) => {
+      setTimeout(() => {
+        card.style.opacity = '1'
+      }, 100 * index)
+    })
+    
+    // Carregar dados do organograma para estatísticas
+    carregarEstatisticas();
+  })
+  
+  // Função para carregar estatísticas do organograma
+  function carregarEstatisticas() {
+    // Mostrar indicador de carregamento com mensagem
+    const container = document.getElementById('estatisticas-container');
+    container.innerHTML = `
+      <div class="col-12 stats-loading">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <div class="mt-2 text-center text-muted">
+          <small>Conectando à API do organograma...</small>
+        </div>
+      </div>
+    `;
+    
+    fetch('/api/organograma/')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Erro na resposta da API: ${response.status} ${response.statusText}`);
+        }
+        container.innerHTML = `
+          <div class="col-12 stats-loading">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <div class="mt-2 text-center text-muted">
+              <small>Processando dados...</small>
+            </div>
+          </div>
+        `;
+        return response.json();
+      })
+      .then(data => {
+        // Detectar o formato dos dados e mostrar visualmente
+        let formato = 'desconhecido';
+        let dadosProcessaveis = null;
+        
+        // Verificar os diferentes formatos possíveis da resposta
+        if (data.success === true && Array.isArray(data.data)) {
+          formato = 'success+data';
+          dadosProcessaveis = data.data;
+        } else if (data.data && Array.isArray(data.data)) {
+          formato = 'data';
+          dadosProcessaveis = data.data;
+        } else if (Array.isArray(data)) {
+          formato = 'array';
+          dadosProcessaveis = data;
+        } else if (data.core_unidadecargo && Array.isArray(data.core_unidadecargo)) {
+          formato = 'core_unidadecargo';
+          dadosProcessaveis = data.core_unidadecargo;
+        }
+        
+        // Log para debug
+        console.info(`Formato detectado: ${formato}`);
+        console.info('Estrutura de dados:', data);
+        
+        // Processar os dados de acordo com o formato detectado
+        if (formato === 'success+data' || formato === 'data' || formato === 'array') {
+          processarEstatisticas(dadosProcessaveis);
+        } else if (formato === 'core_unidadecargo') {
+          processarEstatisticasUnidades(dadosProcessaveis);
+        } else {
+          // Se chegamos aqui, não conseguimos determinar o formato
+          console.error('Formato de dados não reconhecido:', data);
+          mostrarErroEstatisticas(`Formato de dados não reconhecido (${getObjectType(data)})`);
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao carregar estatísticas:', error);
+        mostrarErroEstatisticas(error.message || 'Erro ao carregar estatísticas');
+      });
+  }
+  
+  // Função auxiliar para identificar o tipo de objeto recebido
+  function getObjectType(obj) {
+    if (obj === null) return 'null';
+    if (obj === undefined) return 'undefined';
+    if (Array.isArray(obj)) return `Array[${obj.length}]`;
+    if (typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      return `Object{${keys.slice(0, 3).join(', ')}${keys.length > 3 ? '...' : ''}}`;
+    }
+    return typeof obj;
+  }
+  
+  // Função para processar dados do formato core_unidadecargo
+  function processarEstatisticasUnidades(unidades) {
+    if (!Array.isArray(unidades) || unidades.length === 0) {
+      mostrarErroEstatisticas('Dados de unidades vazios ou inválidos');
+      return;
+    }
+    
+    // Contador para tipos de cargos (apenas FCE e CCE)
+    const tiposCargos = new Set();
+    // Contador para secretarias
+    const secretarias = new Set();
+    // Contador total de unidades
+    let totalUnidades = unidades.length;
+    // Contador de níveis de cargos (deve ser fixado em 18)
+    
+    // Processar cada unidade
+    unidades.forEach(unidade => {
+      // Contar tipo de cargo (apenas FCE e CCE)
+      const tipoCargo = unidade.tipo_cargo || 'Não definido';
+      if (tipoCargo === 'FCE' || tipoCargo === 'CCE') {
+        tiposCargos.add(tipoCargo);
+      }
+      
+      // Identificar secretarias (pelo nome/tipo)
+      const denominacao = unidade.denominacao_unidade || '';
+      const sigla = unidade.sigla || '';
+      
+      if (denominacao.includes('Secretaria') || 
+          denominacao.includes('SECRETARIA') || 
+          sigla.startsWith('SE') || 
+          sigla.includes('SEC') ||
+          unidade.tipo_unidade === 'Secretaria') {
+        secretarias.add(sigla || denominacao);
+      }
+    });
+    
+    // Atualizar a interface com os dados calculados
+    atualizarInterfaceEstatisticas(
+      totalUnidades, 
+      15, 
+      tiposCargos.size, 
+      18 // Fixado em 18 níveis de cargos, conforme solicitado
+    );
+  }
+  
+  // Função para processar os dados do formato hierárquico
+  function processarEstatisticas(dados) {
+    if (!Array.isArray(dados) || dados.length === 0) {
+      mostrarErroEstatisticas('Dados hierárquicos vazios ou inválidos');
+      return;
+    }
+    
+    // Contador para tipos de cargos (apenas FCE e CCE)
+    const tiposCargos = new Set();
+    // Contador para secretarias
+    const secretarias = new Set();
+    // Contador total de unidades
+    let totalUnidades = 0;
+    
+    // Função recursiva para percorrer a árvore do organograma
+    function processarNo(no) {
+      totalUnidades++;
+      
+      // Contar tipo de cargo (apenas FCE e CCE)
+      const tipoCargo = no.tipo_cargo || 'Não definido';
+      if (tipoCargo === 'FCE' || tipoCargo === 'CCE') {
+        tiposCargos.add(tipoCargo);
+      }
+      
+      // Identificar secretarias
+      const nome = no.nome || '';
+      const sigla = no.sigla || '';
+      
+      if (nome.includes('Secretaria') || 
+          nome.includes('SECRETARIA') || 
+          sigla.startsWith('SE') || 
+          sigla.includes('SEC') ||
+          no.tipo_unidade === 'Secretaria') {
+        secretarias.add(sigla || nome);
+      }
+      
+      // Processar filhos recursivamente
+      if (no.children && Array.isArray(no.children) && no.children.length > 0) {
+        no.children.forEach(filho => processarNo(filho));
+      }
+    }
+    
+    // Processar todos os nós raiz
+    dados.forEach(no => processarNo(no));
+    
+    // Atualizar a interface com os dados calculados
+    atualizarInterfaceEstatisticas(
+      totalUnidades, 
+      15, 
+      tiposCargos.size, 
+      18 // Fixado em 18 níveis de cargos, conforme solicitado
+    );
+  }
+  
+  // Função para atualizar a interface com os dados calculados
+  function atualizarInterfaceEstatisticas(totalUnidades, totalSecretarias, tiposCargos, niveisCargos) {
+    const container = document.getElementById('estatisticas-container');
+    container.innerHTML = `
+      <div class="col-6 mb-3">
+        <div class="stats-card">
+          <div class="stats-number">${totalUnidades}</div>
+          <div class="stats-label">Unidades Totais</div>
+        </div>
+      </div>
+      <div class="col-6 mb-3">
+        <div class="stats-card">
+          <div class="stats-number">15</div>
+          <div class="stats-label">Secretarias</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stats-card">
+          <div class="stats-number">${tiposCargos}</div>
+          <div class="stats-label">Tipos de Cargos</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stats-card">
+          <div class="stats-number">${niveisCargos}</div>
+          <div class="stats-label">Níveis de Cargos</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Função para mostrar mensagem de erro
+  function mostrarErroEstatisticas(mensagem) {
+    const container = document.getElementById('estatisticas-container');
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="stats-error">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+              <strong>Não foi possível carregar as estatísticas</strong>
+              <div class="mt-1">${mensagem}</div>
+            </div>
+          </div>
+          <div class="text-center mt-3">
+            <button class="refresh-btn" onclick="carregarEstatisticas()">
+              <i class="fas fa-sync-alt"></i> Tentar novamente
+            </button>
+          </div>
+        </div>
+        <p class="stats-status mt-2">
+          <i class="fas fa-info-circle me-1"></i>
+          Verifique o console do navegador para mais detalhes
+        </p>
+      </div>
+    `;
+  }
+</script>
+{% endblock %}

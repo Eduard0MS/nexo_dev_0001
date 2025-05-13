@@ -11,8 +11,5 @@ __pycache__/
 *.log
 temp_files/
 
-# Repositório Git aninhado
-nexo_dev/
-
 # Arquivos de configuração local
 .env 

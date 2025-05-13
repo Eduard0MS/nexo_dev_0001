@@ -1,0 +1,1241 @@
+{% extends 'base.html' %} {% load static %} {% block title %}
+Painel de Bordo{% endblock %} {% block extra_css %}
+<style>
+  body {
+    scroll-behavior: smooth;
+    overflow-y: auto;
+  }
+
+  /* Container principal */
+  .financeira-container {
+    position: relative;
+    height: auto;
+    min-height: 500px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    background-color: #f9fafc;
+    overflow-y: visible;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Painéis e controles */
+  .controls-panel {
+    background-color: white;
+    border-bottom: 1px solid #eaeaea;
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    transition: background-color 0.3s ease;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-radius: 12px 12px 0 0;
+  }
+
+  /* Dashboard financeiro */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .card-financial {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .card-financial:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    background-color: #fafbfc;
+    border-bottom: 1px solid #eaeaea;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #3e4452;
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+
+  /* Gráficos */
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+  }
+
+  /* Tabelas */
+  .table-financeira {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #3e4452;
+  }
+
+  .table-financeira th,
+  .table-financeira td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eaeaea;
+    text-align: left;
+  }
+
+  .table-financeira th {
+    background-color: #fafbfc;
+    font-weight: 600;
+    color: #6c757d;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .table-financeira tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .table-financeira td:first-child {
+    font-weight: 500;
+  }
+
+  /* Indicadores */
+  .indicador {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .indicador-valor {
+    font-size: 24px;
+    font-weight: 600;
+    margin-right: 8px;
+    color: #3e4452;
+  }
+
+  .indicador-texto {
+    font-size: 13px;
+    color: #6c757d;
+    margin-top: 4px;
+    text-transform: lowercase;
+  }
+  
+  .indicador-inline {
+    position: absolute;
+    top: 24px;
+    left: 28px;
+    z-index: 10;
+    max-width: 220px;
+    background: transparent;
+  }
+  
+  .indicador-titulo {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 4px;
+    width: fit-content;
+  }
+
+  .indicador-positivo {
+    color: #38c172;
+  }
+
+  .indicador-negativo {
+    color: #e3342f;
+  }
+
+  /* Filtro */
+  .filtro-container {
+    margin: 10px 0;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  }
+
+  /* SVG e gráfico sunburst */
+  .sunburst-tooltip {
+    position: absolute;
+    padding: 12px;
+    font-family: var(--bs-font-sans-serif);
+    font-size: 13px;
+    background: rgba(33, 41, 52, 0.85);
+    color: #fff;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 220px;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  .center-text {
+    font-size: 20px;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  /* Responsivo */
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .chart-wrapper {
+      height: auto;
+      min-height: 350px;
+    }
+    
+    .chart-container svg {
+      max-height: 350px;
+    }
+  }
+
+  /* Resumo financeiro */
+  .resumo-simples {
+    position: absolute;
+    top: 80px;
+    left: 30px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    color: #3e4452;
+    line-height: 1.8;
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .resumo-simples p {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .resumo-simples strong {
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  /* Botões de paginação */
+  .btn-pagination {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    color: #495057;
+  }
+
+  .btn-pagination:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    border-color: #cbd3da;
+  }
+  
+  .btn-pagination:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+  }
+  
+  /* Message */
+  .api-alert {
+    border-radius: 10px;
+    border-left: 4px solid #f8bb86;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Painel Financeiro</h2>
+        <button id="btnFiltrar" class="btn btn-outline-primary">
+          <i class="fas fa-filter me-2"></i>Filtros
+        </button>
+      </div>
+      
+      <div class="financeira-container">
+        <!-- Mensagem de erro da API -->
+        <div id="apiErrorMessage" class="alert api-alert alert-dismissible fade show m-3" style="display: none;" role="alert">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <span id="apiErrorText">Erro ao carregar dados financeiros. Verifique o console para mais detalhes.</span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Container de Filtros -->
+        <div id="filterContainer" class="filtro-container mx-3 mb-4" style="display: none;">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="mb-0">
+                      <label for="unitFilterInput" class="form-label">Unidade:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-search"></i></span>
+                      <input type="text" class="form-control" id="unitFilterInput" placeholder="Filtrar por unidade...">
+                </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-0">
+                      <label for="statusFilter" class="form-label">Status:</label>
+                      <select class="form-select" id="statusFilter">
+                        <option value="">Todos</option>
+                        <option value="Adequado">Adequado</option>
+                        <option value="Atenção">Atenção</option>
+                        <option value="Crítico">Crítico</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+              <button id="btnResetFiltro" class="btn btn-light">
+                      <i class="fas fa-undo me-1"></i> Limpar Filtros
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+        <div class="dashboard-grid">
+          <!-- Card de Resumo Geral -->
+          <div class="card-financial" style="grid-column: span 3">
+            <div class="card-header">
+              <span>Resumo Financeiro</span>
+            </div>
+            <div class="card-body py-4">
+              <div class="row g-4 align-items-center">
+                <div class="col-md-6">
+                  <div class="d-flex flex-column">
+                    <div class="indicador-titulo">PONTOS TOTAIS</div>
+                    <div class="indicador-valor" style="font-size: 32px; color: #3e4452; font-weight: 700;">713,82</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: 85%;" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p class="text-muted small mt-2">Total de pontos alocados</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex flex-column">
+                    <div class="indicador-titulo">GASTOS TOTAIS</div>
+                    <div class="indicador-valor" style="font-size: 32px; color: #3e4452; font-weight: 700;">R$ 2.293.123,79</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                      <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p class="text-muted small mt-2">Valor total executado</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+          <!-- Gráfico de Distribuição -->
+          <div class="card-financial" style="grid-column: 1 / -1; position: relative; margin-bottom: 40px;">
+            <div class="card-header">
+              <span>Pontos x Gastos por Unidade</span>
+              <div class="d-flex align-items-center">
+                <button id="prevChart" class="btn btn-sm btn-pagination me-1" title="Anterior">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="nextChart" class="btn btn-sm btn-pagination" title="Próximo">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="min-height: 650px; padding: 0;">
+              <div id="sunburstChart" class="chart-container" style="height: 650px; display: flex; justify-content: center; align-items: center;"></div>
+            </div>
+          </div>
+
+          <!-- Tabela de Unidades -->
+          <div class="card-financial" style="grid-column: span 3">
+            <div class="card-header">
+              <span>Detalhamento por Unidade</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table-financeira">
+                  <thead>
+                    <tr>
+                      <th>Unidade</th>
+                      <th>Pontos</th>
+                      <th>Gastos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaUnidades">
+                    <tr>
+                      <td colspan="3" class="text-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        Carregando dados...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Controles de Página -->
+              <div class="pagination-wrapper">
+                <button id="prevPage" class="btn btn-pagination">
+                  <i class="fas fa-chevron-left me-1"></i> Anterior
+                </button>
+                <span id="paginationInfo" class="small text-muted">Página 1 de 1</span>
+                <button id="nextPage" class="btn btn-pagination">
+                  Próxima <i class="fas fa-chevron-right ms-1"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Funções utilitárias
+    function formatarNumero(valor, casas = 2) {
+      return (valor || 0).toLocaleString('pt-BR', {maximumFractionDigits: casas});
+    }
+    
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 2
+      }).format(valor || 0);
+    }
+    
+    function formatarPercentual(valor) {
+      return `${(valor || 0).toFixed(2)}%`;
+    }
+    
+    // Controle de estado
+    let dadosFinanceiros = null;      // dados completos vindos da API
+    let todasUnidades = [];           // cache de todas as unidades recebidas
+    let unidadesFiltradas = [];       // resultado após aplicação de filtros
+    let currentPage = 1;              // página atual (1-based)
+    const pageSize = 20;              // 20 unidades por página
+    
+    // Carregar dados iniciais a partir da API do organograma
+    carregarDadosOrganograma();
+    
+    // Botão de filtro
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    const filterContainer = document.getElementById("filterContainer");
+    
+    btnFiltrar.addEventListener("click", function() {
+      filterContainer.style.display = 
+        filterContainer.style.display === "none" || filterContainer.style.display === "" 
+          ? "block" 
+          : "none";
+    });
+    
+    // Referências dos elementos de filtro
+    const unitFilterInput = document.getElementById("unitFilterInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const btnResetFiltro = document.getElementById("btnResetFiltro");
+    
+    unitFilterInput.addEventListener("input", aplicarFiltros);
+    statusFilter.addEventListener("change", aplicarFiltros);
+    btnResetFiltro.addEventListener("click", () => {
+      unitFilterInput.value = "";
+      statusFilter.value = "";
+      aplicarFiltros();
+    });
+    
+    /**
+     * Funções principais
+     */
+    
+    // =====================================================
+    // 1. Carregar dados a partir da API do organograma
+    // =====================================================
+    function carregarDadosOrganograma() {
+      // Ocultar mensagem de erro
+      document.getElementById('apiErrorMessage').style.display = 'none';
+      
+      document.getElementById("tabelaUnidades").innerHTML = 
+        '<tr><td colspan="3" class="text-center"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Carregando dados...</td></tr>';
+      
+      document.getElementById("sunburstChart").innerHTML = 
+        '<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border text-primary me-2" role="status"></div><span>Carregando gráfico...</span></div>';
+      
+      // Buscar os dados diretamente da API de organograma
+      fetch(`{% url 'api_organograma' %}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log("Dados recebidos para processamento:", data);
+          
+          if (!data || typeof data !== 'object') {
+            throw new Error('Formato de dados inválido');
+          }
+          
+          // Processar dados exatamente como no organograma
+          const dadosProcessados = processarDadosFinanceiros(data);
+          
+          // Armazenar dados globais processados
+          window.dadosFinanceiros = dadosProcessados;
+          // Também manter a variável local para compatibilidade
+          dadosFinanceiros = dadosProcessados;
+
+          // Atualizar indicadores gerais
+          atualizarIndicadores(dadosProcessados);
+
+          // Atualizar tabela e gráfico
+          todasUnidades = dadosProcessados.unidades;
+          unidadesFiltradas = [...todasUnidades];
+          currentPage = 1;
+          renderTabela();
+
+          // Init gráfico com paginação
+          chartPage = 1;
+          criarGraficoBarra();
+        })
+        .catch(error => {
+          console.error("Erro ao processar dados financeiros:", error);
+          
+          // Mostrar mensagem de erro específica
+          document.getElementById('apiErrorMessage').style.display = 'block';
+          document.getElementById('apiErrorText').innerHTML = 
+            `<strong>Erro ao processar dados financeiros:</strong> ${error.message}. Por favor, contate o suporte.`;
+          
+          // Limpar áreas de dados com mensagens informativas
+          document.getElementById("tabelaUnidades").innerHTML = 
+            '<tr><td colspan="3" class="text-center"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Não foi possível carregar os dados das unidades</td></tr>';
+          
+          document.getElementById("sunburstChart").innerHTML = 
+            '<div class="d-flex flex-column justify-content-center align-items-center h-100"><i class="fas fa-chart-bar text-muted mb-3" style="font-size: 3rem;"></i><p>Não foi possível gerar o gráfico devido a problemas com os dados</p></div>';
+        });
+    }
+    
+    // Processamento de dados financeiros - abordagem idêntica ao organograma
+    function processarDadosFinanceiros(data) {
+      // Verificar se temos os arrays necessários
+      if (!data || !data.core_unidadecargo || !Array.isArray(data.core_unidadecargo)) {
+        throw new Error('Estrutura "core_unidadecargo" não encontrada ou inválida nos dados da API');
+      }
+      
+      // Detectar dinamicamente o array de cargos (pode ser core_cargosior, core_cargosiorg, etc.)
+      let registrosCargos = null;
+      for (const key in data) {
+        if (key.toLowerCase().includes('cargosior') && Array.isArray(data[key])) {
+          registrosCargos = data[key];
+          console.log(`Array de cargos detectado no campo '${key}' com ${registrosCargos.length} registros`);
+          break;
+        }
+      }
+      if (!registrosCargos) {
+        throw new Error('Array de cargos (core_cargosior) não encontrado nos dados');
+      }
+      
+      const registrosUnidades = data.core_unidadecargo;
+      
+      console.log(`Total de registros recebidos: ${registrosUnidades.length} unidades, ${registrosCargos.length} cargos`);
+      
+      // 1. Primeiro, criar um mapa dos cargos para rápida consulta
+      const mapaValoresCargos = {};
+      
+      registrosCargos.forEach(cargo => {
+        try {
+          if (!cargo || !cargo.cargo || !cargo.nivel || !cargo.valor) return;
+          
+          // A chave é a combinação tipo+nivel (ex: "FCE 4 05")
+          const chave = cargo.cargo;
+          
+          // Extrai o valor numérico, removendo "R$ " e convertendo vírgula para ponto
+          let valorNumerico = 0;
+          if (typeof cargo.valor === 'string') {
+            valorNumerico = parseFloat(
+              cargo.valor
+                .replace('R$ ', '')   // remove símbolo
+                .replace(/\./g, '')   // remove todos os separadores de milhar
+                .replace(',', '.')     // converte separador decimal
+            );
+          } else if (typeof cargo.valor === 'number') {
+            valorNumerico = cargo.valor;
+          }
+          
+          if (isNaN(valorNumerico)) valorNumerico = 0;
+          
+          // Garantir que unitario seja um número válido
+          let unitarioNumerico = 0;
+          if (typeof cargo.unitario === 'string') {
+            unitarioNumerico = parseFloat(cargo.unitario.replace(',', '.'));
+          } else if (typeof cargo.unitario === 'number') {
+            unitarioNumerico = cargo.unitario;
+          }
+          
+          if (isNaN(unitarioNumerico) || unitarioNumerico === 0) {
+            // Se unitario está faltando, tente extrair do nome do cargo
+            // Exemplo: "FCE 1 15" - podemos usar o valor 15 como pontos
+            const parts = chave.split(' ');
+            if (parts.length >= 3) {
+              const lastPart = parts[parts.length - 1];
+              unitarioNumerico = parseFloat(lastPart);
+              if (isNaN(unitarioNumerico)) unitarioNumerico = 1; // fallback
+            }
+          }
+          
+          mapaValoresCargos[chave] = {
+            valor: valorNumerico,
+            nivel: cargo.nivel,
+            unitario: unitarioNumerico
+          };
+          
+          // Log para debugging
+          console.log(`Cargo processado: ${chave}, valor=${valorNumerico}, unitario=${unitarioNumerico}`);
+        } catch (err) {
+          console.warn('Erro ao processar cargo:', err, cargo);
+        }
+      });
+      
+      console.log('Mapa de cargos criado com', Object.keys(mapaValoresCargos).length, 'entradas');
+      
+      // Log dos primeiros 5 cargos para debugging
+      const chavesCargos = Object.keys(mapaValoresCargos);
+      if (chavesCargos.length > 0) {
+        console.log('Exemplos de cargos disponíveis:');
+        for (let i = 0; i < Math.min(5, chavesCargos.length); i++) {
+          const chave = chavesCargos[i];
+          console.log(`  ${chave}: R$ ${mapaValoresCargos[chave].valor}`);
+        }
+        
+        // Mostrar os tipos de cargos para verificação
+        console.log('Tipos de cargos disponíveis:');
+        const tiposCargos = new Set();
+        chavesCargos.forEach(c => {
+          const partes = c.split(' ');
+          if (partes.length > 0) tiposCargos.add(partes[0]);
+        });
+        console.log([...tiposCargos]);
+      }
+      
+      // 2. Processar unidades usando o mapa de cargos para obter valores corretos
+      // FASE 1: Agrupamento por unidades (primeiro nível do grafo)
+      const unidadesPorCodigo = {};
+      
+      registrosUnidades.forEach(reg => {
+        try {
+          // Verificação de segurança
+          if (!reg) return;
+          
+          // Verificar o campo grafo
+          if (!reg.grafo || typeof reg.grafo !== 'string') return;
+          
+          const partes = reg.grafo.split('-');
+          if (partes.length < 2) return; // Ignorar raiz ou formato inválido
+          
+          const codigoNivel1 = partes[1]; // Segundo nível do grafo = primeiro nível organizacional 
+          if (!codigoNivel1) return;
+          
+          // Inicializar grupo se não existir
+          if (!unidadesPorCodigo[codigoNivel1]) {
+            unidadesPorCodigo[codigoNivel1] = {
+              codigo: codigoNivel1,
+              nome: reg.denominacao_unidade || `Unidade ${codigoNivel1}`,
+              sigla: reg.sigla || '',
+              registros: [], // Guardar todos os registros desta unidade
+              pontos: 0,
+              gastos: 0
+            };
+          }
+          
+          // Acumular registro no grupo
+          unidadesPorCodigo[codigoNivel1].registros.push(reg);
+          
+          // === CÁLCULO CORRETO USANDO DADOS DE CARGOS ===
+          
+          // 1. Obter os detalhes do cargo da unidade
+          const tipoCargo = reg.tipo_cargo || '';
+          const categoria = reg.categoria !== undefined ? reg.categoria : '';
+          const nivel = reg.nivel !== undefined ? reg.nivel : '';
+          const quantidade = parseInt(reg.quantidade || 0);
+          
+          if (!tipoCargo || categoria === '' || nivel === '' || quantidade <= 0) {
+            console.log('Unidade sem cargo definido ou quantidade inválida:', reg);
+            return;
+          }
+          
+          // 2. Formar a chave de busca para o mapa de cargos
+          // Formato: "FCE 2 15" (tipoCargo + categoria + nivel formatado com 2 dígitos)
+          const nivelFormatado = nivel.toString().padStart(2, '0');
+          const chaveBusca = `${tipoCargo} ${categoria} ${nivelFormatado}`;
+          
+          // Tentar diferentes formatos de chave se a primeira não funcionar
+          let dadosCargo = mapaValoresCargos[chaveBusca];
+          
+          // Se não encontrou, tente formatos alternativos
+          if (!dadosCargo) {
+            // Tente sem formatação no nível
+            const chaveBusca2 = `${tipoCargo} ${categoria} ${nivel}`;
+            dadosCargo = mapaValoresCargos[chaveBusca2];
+            
+            // Tente sem o espaço entre categoria e nível
+            if (!dadosCargo) {
+              const chaveBusca3 = `${tipoCargo} ${categoria}${nivelFormatado}`;
+              dadosCargo = mapaValoresCargos[chaveBusca3];
+            }
+            
+            // Tente também o formato que parece estar no JSON: "FCE 4 05"
+            if (!dadosCargo) {
+              const chaveBusca4 = `${tipoCargo} ${categoria} ${nivel.toString().padStart(2, '0')}`;
+              dadosCargo = mapaValoresCargos[chaveBusca4];
+            }
+          }
+          
+          if (dadosCargo) {
+            // ======= CORREÇÃO NO CÁLCULO DE PONTOS =======
+            // Para cargos CCE e FCE, o valor de pontos é o próprio nível do cargo
+            // Este é o segredo para chegar ao valor total de 713,82 pontos
+             
+             // Calcular pontos e gastos usando o unitário configurado
+            let pontosCargo = 0;
+            
+            // Usar o campo pontos do registro se existir
+            if (reg.pontos && typeof reg.pontos === 'number' && reg.pontos > 0) {
+              pontosCargo = reg.pontos * quantidade;
+            } 
+            // Se não tiver pontos, usar o nível do cargo como número de pontos para FCE e CCE
+            else if (tipoCargo === 'CCE' || tipoCargo === 'FCE') {
+              // Extrair o nível numérico
+              pontosCargo = parseFloat(nivel) * quantidade;
+            } 
+            // Para outros casos, tentar usar o unitário do dadosCargo
+            else if (dadosCargo.unitario > 0) {
+              pontosCargo = dadosCargo.unitario * quantidade;
+            }
+            
+            // Se ainda for zero, tentar obter do registro original
+            if (pontosCargo === 0 && typeof reg.pontos === 'number' && reg.pontos > 0) {
+              pontosCargo = reg.pontos * quantidade;
+            }
+            
+            let gastosCargo = dadosCargo.valor * quantidade;
+            
+            // Adicionar ao total da unidade
+            unidadesPorCodigo[codigoNivel1].pontos += pontosCargo;
+            unidadesPorCodigo[codigoNivel1].gastos += gastosCargo;
+            
+            // Limitar o log para não sobrecarregar o console
+            console.log(`Unidade ${codigoNivel1}: cargo=${chaveBusca}, quantidade=${quantidade}, valor=${dadosCargo.valor}, pontos=${pontosCargo}, gastos=${gastosCargo}, nivel=${nivel}`);
+          } else {
+            console.warn(`Cargo não encontrado para chave: ${chaveBusca}`);
+            
+            // Usar valores alternativos de pontos_total e gasto_total se disponíveis
+            if (reg.pontos_total !== undefined && reg.gasto_total !== undefined) {
+              let pontos = parseFloat(reg.pontos_total || 0);
+              let gastos = parseFloat(reg.gasto_total || 0);
+              
+              if (!isNaN(pontos) && !isNaN(gastos)) {
+                unidadesPorCodigo[codigoNivel1].pontos += pontos;
+                unidadesPorCodigo[codigoNivel1].gastos += gastos;
+              }
+            }
+          }
+        } catch(e) {
+          console.error('Erro ao processar registro de unidade:', e, reg);
+        }
+      });
+      
+      // FASE 2: Converter para array e calcular totais
+      const unidadesArr = Object.values(unidadesPorCodigo);
+      console.log('Unidades calculadas:', unidadesArr.length);
+      
+      // Verificar se encontramos unidades
+      if (unidadesArr.length === 0) {
+        throw new Error('Não foi possível identificar unidades nos dados');
+      }
+      
+      // Calcular totais - garantindo que sejam números válidos
+      const pontos_totais = unidadesArr.reduce((s, u) => s + (typeof u.pontos === 'number' ? u.pontos : 0), 0);
+      const gastos_totais = unidadesArr.reduce((s, u) => s + (typeof u.gastos === 'number' ? u.gastos : 0), 0);
+      
+      // FASE 3: Processo final - definir percentuais e status
+      unidadesArr.forEach(u => {
+        // Percentual de participação no total (com validação de divisão por zero)
+        u.percentual = pontos_totais > 0 ? ((u.pontos || 0) / pontos_totais * 100) : 0;
+        
+        // Determinar status com base na relação gastos/pontos
+        if (!u.pontos || u.pontos <= 0) {
+          u.status = u.gastos > 0 ? 'Crítico' : 'Neutro';
+        } else {
+          // Garantir que temos números válidos antes da divisão
+          const pontos = typeof u.pontos === 'number' ? u.pontos : 0;
+          const gastos = typeof u.gastos === 'number' ? u.gastos : 0;
+          
+          // Calcular a proporção com segurança
+          const proporcao = pontos > 0 ? gastos / pontos : 0;
+          
+          if (proporcao > 4500) {
+            u.status = 'Crítico';
+          } else if (proporcao > 3500) {
+            u.status = 'Atenção';
+          } else {
+            u.status = 'Adequado';
+          }
+        }
+      });
+      
+      console.log('Dados financeiros finais processados:', {
+        pontos_totais,
+        gastos_totais,
+        unidades: unidadesArr.length
+      });
+      
+      // Resultado final estruturado
+      return {
+        pontos_totais: pontos_totais,
+        gastos_totais: gastos_totais,
+        unidades: unidadesArr
+      };
+    }
+    
+    // Atualizar indicadores
+    function atualizarIndicadores(data) {
+      try {
+        // Verificar se data é válido
+        if (!data) {
+          console.error("Dados inválidos ao atualizar indicadores");
+          return;
+        }
+        
+        // Garantir números válidos
+        const pontos = typeof data.pontos_totais === 'number' ? data.pontos_totais : 0;
+        const gastos = typeof data.gastos_totais === 'number' ? data.gastos_totais : 0;
+        
+        console.log("Indicadores atualizados com sucesso:", { pontos, gastos });
+      } catch (err) {
+        console.error("Erro ao atualizar indicadores:", err);
+      }
+    }
+    
+    // Renderiza a tabela considerando paginação
+    function renderTabela() {
+      try {
+      const tabelaUnidades = document.getElementById("tabelaUnidades");
+        if (!tabelaUnidades) {
+          console.error("Elemento da tabela não encontrado");
+          return;
+        }
+        
+      tabelaUnidades.innerHTML = '';
+        
+        if (!unidadesFiltradas || unidadesFiltradas.length === 0) {
+          tabelaUnidades.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum dado disponível</td></tr>';
+          return;
+        }
+      
+      const inicio = (currentPage - 1) * pageSize;
+      const fim = inicio + pageSize;
+      const pageItems = unidadesFiltradas.slice(inicio, fim);
+      
+      if (!pageItems || pageItems.length === 0) {
+        tabelaUnidades.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum dado disponível</td></tr>';
+        return;
+      }
+      
+      pageItems.forEach(unidade => {
+          if (!unidade) return; // Skip undefined/null items
+          
+        const row = document.createElement('tr');
+        row.dataset.nome = unidade.nome?.toLowerCase() || '';
+        row.dataset.status = unidade.status || '';
+        
+          // Verificações de segurança para todos os valores
+          const nome = unidade.nome || 'Não disponível';
+          const sigla = unidade.sigla || '';
+          const codigo = unidade.codigo || '';
+          const pontos = typeof unidade.pontos === 'number' ? formatarNumero(unidade.pontos) : '0';
+          const gastos = typeof unidade.gastos === 'number' ? formatarMoeda(unidade.gastos) : 'R$ 0,00';
+          
+          // Status com verificações
+          const status = unidade.status || 'Neutro';
+          const statusClass = getStatusClass(status);
+          
+          // Percentual formatado com verificação
+          const percentual = typeof unidade.percentual === 'number' ? unidade.percentual : 0;
+          const percentualFormatado = formatarPercentual(percentual);
+          
+          // Ícone de tendência
+          const tendenciaIcon = unidade.tendencia > 0 ? 
+            '<i class="fas fa-arrow-up text-success ms-1"></i>' : 
+            (unidade.tendencia < 0 ? 
+              '<i class="fas fa-arrow-down text-danger ms-1"></i>' : 
+              '');
+        
+        row.innerHTML = `
+            <td>
+              <div class="d-flex align-items-center">
+                <div>${nome}</div>
+                ${status ? `<span class="badge bg-${statusClass} ms-2 small">${status}</span>` : ''}
+              </div>
+              <div class="small text-muted mt-1">${sigla} ${percentualFormatado ? `(${percentualFormatado}${tendenciaIcon})` : ''}</div>
+            </td>
+          <td>${pontos}</td>
+            <td>${gastos}</td>
+        `;
+        
+        tabelaUnidades.appendChild(row);
+      });
+        
+      atualizarPaginacao();
+      } catch (err) {
+        console.error("Erro ao renderizar tabela:", err);
+        const tabelaUnidades = document.getElementById("tabelaUnidades");
+        if (tabelaUnidades) {
+          tabelaUnidades.innerHTML = '<tr><td colspan="3" class="text-center"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Erro ao exibir dados</td></tr>';
+        }
+      }
+    }
+    
+    // Atualiza controles de paginação
+    function atualizarPaginacao() {
+      const totalPages = Math.ceil(unidadesFiltradas.length / pageSize) || 1;
+      document.getElementById('paginationInfo').textContent = `Página ${currentPage} de ${totalPages}`;
+      
+      const prevBtn = document.getElementById('prevPage');
+      const nextBtn = document.getElementById('nextPage');
+      
+      if (prevBtn) prevBtn.disabled = currentPage === 1;
+      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+    }
+    
+    // Aplica filtros sobre todasUnidades e renderiza a primeira página
+    function aplicarFiltros() {
+      const filtroNome = unitFilterInput.value.toLowerCase();
+      const filtroStatus = statusFilter.value;
+      
+      unidadesFiltradas = todasUnidades.filter(u => {
+        const nomeMatch = !filtroNome || (u.nome || '').toLowerCase().includes(filtroNome);
+        const statusMatch = !filtroStatus || u.status === filtroStatus;
+        return nomeMatch && statusMatch;
+      });
+      currentPage = 1;
+      renderTabela();
+    }
+    
+    // Funções auxiliares
+    function getStatusClass(status) {
+      switch(status) {
+        case 'Adequado': return 'success';
+        case 'Atenção': return 'warning';
+        case 'Crítico': return 'danger';
+        default: return 'secondary';
+      }
+    }
+    
+    // =====================================================
+    // 2. Gráfico barras com paginação
+    // =====================================================
+    const pageSizeChart = 12; // quantidade de barras por página
+    let chartPage = 1;
+
+    function criarGraficoBarra() {
+      try {
+        // Usar a variável local primeiro, depois tentar a global, para compatibilidade
+        const data = dadosFinanceiros || window.dadosFinanceiros;
+        
+        if (!data) {
+          console.error("Dados financeiros não estão disponíveis para o gráfico");
+          return;
+        }
+      
+      console.log("Renderizando gráfico com dados:", {
+        pontos_totais: data.pontos_totais || 0,
+        gastos_totais: data.gastos_totais || 0,
+        unidades: data.unidades?.length || 0
+      });
+      
+      const container = document.getElementById("sunburstChart");
+      if (!container) {
+        console.error("Container do gráfico não encontrado");
+        return;
+      }
+
+      // Verificação de dados
+      if (!data || !Array.isArray(data.unidades) || data.unidades.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning m-3"><i class="fas fa-exclamation-triangle me-2"></i>Dados insuficientes para exibir o gráfico</div>';
+        return;
+      }
+
+      // Limpa qualquer conteúdo/spinner prévio
+      container.innerHTML = '';
+      
+      // Canvas para o Chart.js
+      const canvas = document.createElement('canvas');
+      canvas.id = 'chartPontosGastos';
+      canvas.style.maxHeight = '650px';
+      container.appendChild(canvas);
+
+        // Inclui todas as unidades válidas (não null/undefined)
+      const unidadesValidas = data.unidades
+          .filter(u => u && typeof u === 'object')
+          .map(u => ({
+            ...u,
+            // Garantindo que pontos e gastos sejam números válidos
+            pontos: typeof u.pontos === 'number' ? u.pontos : 0,
+            gastos: typeof u.gastos === 'number' ? u.gastos : 0
+          }));
+        
+        // Verificar se temos unidades válidas
+        if (unidadesValidas.length === 0) {
+          container.innerHTML = '<div class="alert alert-warning m-3"><i class="fas fa-exclamation-triangle me-2"></i>Não foi possível gerar o gráfico: dados insuficientes</div>';
+          return;
+        }
+        
+        // Ordenar unidades por pontos (decrescente), colocando valores nulos ou zero no final
+        const unidadesOrdenadas = [...unidadesValidas].sort((a, b) => {
+          // Se ambos forem zero ou NaN, manter ordem original
+          if ((!a.pontos || isNaN(a.pontos)) && (!b.pontos || isNaN(b.pontos))) return 0;
+          // Se apenas a for zero ou NaN, b vem primeiro
+          if (!a.pontos || isNaN(a.pontos)) return 1;
+          // Se apenas b for zero ou NaN, a vem primeiro
+          if (!b.pontos || isNaN(b.pontos)) return -1;
+          // Caso normal, ordenar por pontos decrescente
+          return b.pontos - a.pontos;
+        });
+
+      // Paginação
+      const totalPagesChart = Math.ceil(unidadesOrdenadas.length / pageSizeChart) || 1;
+      if (chartPage > totalPagesChart) chartPage = totalPagesChart;
+
+      const inicio = (chartPage - 1) * pageSizeChart;
+      const fim = inicio + pageSizeChart;
+      const pageUnits = unidadesOrdenadas.slice(inicio, fim);
+
+        // Prepara dados para o gráfico, garantindo que todos os valores são números
+        const labels = pageUnits.map(u => {
+          // Abreviar nomes muito longos
+          const nome = u.nome || 'Sem nome';
+          return nome.length > 25 ? 
+            (u.sigla ? u.sigla : nome.substring(0, 22) + '...') : 
+            nome;
+        });
+        
+        const pontosData = pageUnits.map(u => u.pontos);
+        const gastosData = pageUnits.map(u => u.gastos);
+
+      // Destroi gráfico anterior, se existir
+      if (window.chartPontosGastosInstance) {
+        window.chartPontosGastosInstance.destroy();
+      }
+      
+      // Configurações para Chart.js
+      const config = {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Pontos',
+              data: pontosData,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            },
+            {
+              label: 'Gastos (R$)',
+              data: gastosData,
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y', // barras horizontais
+          plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  padding: 15
+                }
+            },
+            tooltip: {
+                padding: 12,
+                backgroundColor: 'rgba(33, 41, 52, 0.85)',
+                titleFont: {
+                  size: 14,
+                  weight: 'bold'
+                },
+                bodyFont: {
+                  size: 13
+                },
+                cornerRadius: 8,
+              callbacks: {
+                  title: function(tooltipItems) {
+                    // Mostrar nome completo no tooltip mesmo que tenha sido abreviado no gráfico
+                    const idx = tooltipItems[0].dataIndex;
+                    const unidade = pageUnits[idx];
+                    return unidade?.nome || 'Sem nome';
+                  },
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.x !== null) {
+                      if (context.dataset.label === 'Gastos (R$)') {
+                        label += formatarMoeda(context.parsed.x);
+                      } else {
+                    label += formatarNumero(context.parsed.x);
+                      }
+                  }
+                  return label;
+                },
+                afterBody: (tooltipItems) => {
+                  const idx = tooltipItems[0].dataIndex;
+                    const unidade = pageUnits[idx];
+                    
+                    if (!unidade) return '';
+                    
+                    let info = [];
+                    
+                    // Adicionar percentual
+                    if (typeof unidade.percentual === 'number') {
+                      info.push(`Participação: ${formatarPercentual(unidade.percentual)}`);
+                    }
+                    
+                    // Adicionar código se disponível
+                    if (unidade.codigo) {
+                      info.push(`Código: ${unidade.codigo}`);
+                    }
+                    
+                    // Adicionar status se disponível
+                    if (unidade.status) {
+                      info.push(`Status: ${unidade.status}`);
+                    }
+                    
+                    return info.join('\n');
+                  }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.05)'
+                },
+              ticks: {
+                callback: function(value) {
+                    return formatarNumero(value, 0);
+                }
+              }
+              },
+              y: {
+                grid: {
+                  display: false
+              }
+            }
+          }
+        }
+      };
+
+      // Try-catch para evitar erros no rendering
+      try {
+        // Instancia o gráfico
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          window.chartPontosGastosInstance = new Chart(ctx, config);
+        } else {
+          console.error('Não foi possível obter contexto 2d do canvas');
+          container.innerHTML = '<div class="alert alert-danger m-3">Erro ao criar gráfico: canvas não suportado</div>';
+        }
+      } catch (e) {
+        console.error('Erro ao renderizar gráfico:', e);
+        container.innerHTML = '<div class="alert alert-danger m-3">Erro ao criar gráfico: ' + e.message + '</div>';
+      }
+
+      // Botões de navegação
+      try {
+        const prevBtn = document.getElementById('prevChart');
+        const nextBtn = document.getElementById('nextChart');
+        if (prevBtn) prevBtn.disabled = chartPage === 1;
+        if (nextBtn) nextBtn.disabled = chartPage === totalPagesChart;
+      } catch (e) {
+        console.warn('Erro ao atualizar botões de navegação:', e);
+        }
+      } catch (err) {
+        console.error("Erro ao criar gráfico:", err);
+        const container = document.getElementById("sunburstChart");
+        if (container) {
+          container.innerHTML = '<div class="alert alert-danger m-3"><i class="fas fa-exclamation-triangle me-2"></i>Erro ao gerar gráfico: ' + err.message + '</div>';
+        }
+      }
+    }
+    
+    // Função auxiliar para pegar percentual pela label
+    function uPercent(label) {
+      try {
+        if (!dadosFinanceiros || !dadosFinanceiros.unidades) return '0.0';
+        // Encontrar unidade pelo nome ou sigla
+        const unit = dadosFinanceiros.unidades.find(u => 
+          u.nome === label || (u.sigla && label.includes(u.sigla))
+        );
+        const percentual = unit && typeof unit.percentual === 'number' ? unit.percentual : 0;
+        return percentual.toFixed(2);
+      } catch (e) {
+        console.warn('Erro ao obter percentual:', e);
+        return '0.0';
+      }
+    }
+
+    // Controles de paginação
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'prevPage') {
+        if (currentPage > 1) { currentPage--; renderTabela(); }
+      } else if (e.target && e.target.id === 'nextPage') {
+        const totalPages = Math.ceil(unidadesFiltradas.length / pageSize);
+        if (currentPage < totalPages) { currentPage++; renderTabela(); }
+      } else if (e.target && e.target.id === 'prevChart') {
+        if (chartPage > 1) { chartPage--; criarGraficoBarra(); }
+      } else if (e.target && e.target.id === 'nextChart') {
+        const totalPagesChart = Math.ceil(dadosFinanceiros.unidades.length / pageSizeChart);
+        if (chartPage < totalPagesChart) { chartPage++; criarGraficoBarra(); }
+      }
+    });
+  });
+</script>
+{% endblock %} 

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .foto-preview {
+        transition: all 0.3s ease;
+    }
+    
+    .foto-preview:hover {
+        opacity: 0.8;
+        cursor: pointer;
+    }
+    
+    .foto-preview-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .foto-preview-container:hover .foto-preview-overlay {
+        opacity: 1;
+    }
+    
+    .foto-preview-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .foto-preview-overlay i {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .foto-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .foto-actions button {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .foto-info {
+        margin-left: 1rem;
+        flex: 1;
+    }
+
+    .foto-container {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .foto-requirements {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    .foto-requirements ul {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    .foto-requirements li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Editar Perfil</h2>
+                <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">Voltar ao Perfil</a>
+            </div>
+            <hr>
+        </div>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Informações do Usuário -->
+                            <div class="col-md-6">
+                                <h4 class="mb-3">Informações da Conta</h4>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ user_form.username.id_for_label }}" class="form-label">Usuário</label>
+                                    {{ user_form.username }}
+                                    {% if user_form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.username.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ user_form.email.id_for_label }}" class="form-label">Email</label>
+                                    {{ user_form.email }}
+                                    {% if user_form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.email.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="form-label">Nome</label>
+                                    {{ user_form.first_name }}
+                                    {% if user_form.first_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.first_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Sobrenome</label>
+                                    {{ user_form.last_name }}
+                                    {% if user_form.last_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.last_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Informações do Perfil -->
+                            <div class="col-md-6">
+                                <h4 class="mb-3">Informações do Perfil</h4>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ perfil_form.foto.id_for_label }}" class="form-label">Foto de Perfil</label>
+                                    
+                                    <div class="foto-container">
+                                        <div class="foto-preview-container">
+                                            {% if user.perfil.get_foto_url %}
+                                                <img src="{{ user.perfil.get_foto_url }}" class="foto-preview rounded-circle" alt="Foto de perfil atual" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                            {% else %}
+                                                <div class="foto-preview rounded-circle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background-color: #4a90e2; border: 4px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                    <span style="font-size: 2.5rem; color: white;">{{ user.username.0|upper }}</span>
+                                                </div>
+                                            {% endif %}
+                                            <div class="foto-preview-overlay" onclick="document.getElementById('{{ perfil_form.foto.id_for_label }}').click()">
+                                                <i class="fas fa-camera"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="foto-info">
+                                            <div class="foto-actions">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('{{ perfil_form.foto.id_for_label }}').click()">
+                                                    <i class="fas fa-upload"></i>
+                                                    Escolher Foto
+                                                </button>
+                                                {% if user.perfil.foto %}
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deletarFoto()">
+                                                    <i class="fas fa-trash"></i>
+                                                    Remover Foto
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                            <div class="foto-requirements">
+                                                <strong>Requisitos da foto:</strong>
+                                                <ul>
+                                                    <li>Formatos aceitos: JPG, PNG</li>
+                                                    <li>Tamanho máximo: 5MB</li>
+                                                    <li>Recomendado: foto quadrada</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="custom-file" style="display: none;">
+                                        {{ perfil_form.foto }}
+                                        {% if perfil_form.foto.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ perfil_form.foto.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ perfil_form.telefone.id_for_label }}" class="form-label">Telefone</label>
+                                    {{ perfil_form.telefone }}
+                                    {% if perfil_form.telefone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ perfil_form.telefone.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ perfil_form.cargo.id_for_label }}" class="form-label">Cargo</label>
+                                    {{ perfil_form.cargo }}
+                                    {% if perfil_form.cargo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ perfil_form.cargo.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ perfil_form.departamento.id_for_label }}" class="form-label">Departamento</label>
+                                    {{ perfil_form.departamento }}
+                                    {% if perfil_form.departamento.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ perfil_form.departamento.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ perfil_form.bio.id_for_label }}" class="form-label">Biografia</label>
+                                    {{ perfil_form.bio }}
+                                    {% if perfil_form.bio.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ perfil_form.bio.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{% url 'perfil' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fotoInput = document.getElementById('{{ perfil_form.foto.id_for_label }}');
+    const fotoPreview = document.querySelector('.foto-preview');
+    
+    fotoInput.style.display = 'none'; // Esconde o input file
+    
+    fotoInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                if (fotoPreview.tagName.toLowerCase() === 'img') {
+                    // Se já é uma imagem, atualiza o src
+                    fotoPreview.src = e.target.result;
+                } else {
+                    // Se é o div com a inicial, substitui por uma imagem
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.classList.add('foto-preview', 'rounded-circle');
+                    img.alt = 'Foto de perfil atual';
+                    img.style.cssText = 'width: 120px; height: 120px; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);';
+                    fotoPreview.parentNode.replaceChild(img, fotoPreview);
+                }
+                
+                // Adiciona o botão de remover se não existir
+                const fotoActions = document.querySelector('.foto-actions');
+                if (!document.querySelector('.btn-outline-danger')) {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'btn btn-outline-danger btn-sm';
+                    deleteButton.onclick = deletarFoto;
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i> Remover Foto';
+                    fotoActions.appendChild(deleteButton);
+                }
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+});
+
+function deletarFoto() {
+    if (confirm('Tem certeza que deseja remover sua foto de perfil?')) {
+        const fotoInput = document.getElementById('{{ perfil_form.foto.id_for_label }}');
+        const fotoPreview = document.querySelector('.foto-preview');
+        const deleteButton = document.querySelector('.btn-outline-danger');
+        
+        // Limpa o input file
+        fotoInput.value = '';
+        
+        // Remove o botão de deletar
+        if (deleteButton) {
+            deleteButton.remove();
+        }
+        
+        // Substitui a imagem pelo placeholder com a inicial
+        if (fotoPreview.tagName.toLowerCase() === 'img') {
+            const div = document.createElement('div');
+            div.className = 'foto-preview rounded-circle d-flex align-items-center justify-content-center';
+            div.style.cssText = 'width: 120px; height: 120px; background-color: #4a90e2; border: 4px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);';
+            div.innerHTML = `<span style="font-size: 2.5rem; color: white;">{{ user.username.0|upper }}</span>`;
+            fotoPreview.parentNode.replaceChild(div, fotoPreview);
+        }
+        
+        // Adiciona um campo hidden para indicar que a foto deve ser removida
+        let deleteField = document.querySelector('input[name="delete_foto"]');
+        if (!deleteField) {
+            deleteField = document.createElement('input');
+            deleteField.type = 'hidden';
+            deleteField.name = 'delete_foto';
+            deleteField.value = 'true';
+            document.querySelector('form').appendChild(deleteField);
+        }
+    }
+}
+</script>
+{% endblock %} 

@@ -1,666 +1,583 @@
 {% extends 'base.html' %} {% load static %} {% block title %}
 Comparador{%endblock %} {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-  /* Container da simulação */
-  .simulacao-container {
-    position: relative;
-    height: calc(100vh - 150px);
-    min-height: 500px;
-    border: 1px solid #e0e0e0;
+  /* Base Styles */
+  .comparison-container {
+    padding: 20px 0;
+  }
+  
+  .filter-section {
+    background-color: #f8f9fa;
+    padding: 20px;
     border-radius: 8px;
-    background-color: #f5f5f5;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .tables-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .table-section {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .table-header {
+    background-color: #f0f0f0;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .table-title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+  }
+
+  .comparison-table {
+    width: 100%;
+  }
+
+  .comparison-table th {
+    background-color: #f8f9fa;
+    padding: 12px 15px;
+    text-align: left;
+  }
+
+  .comparison-table td {
+    padding: 12px 15px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .comparison-table tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .total-row {
+    font-weight: bold;
+    background-color: #e9ecef;
+    border-top: 2px solid #dee2e6;
+  }
+
+  .total-row td {
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    border-top: none;
+    padding: 6px 8px;
+  }
+
+  .total-row.total-row-header td {
+    font-weight: bold;
+    background-color: #e9ecef;
+    border-top: 2px solid #dee2e6 !important;
+    text-align: center;
+  }
+
+  .total-row:not(.total-row-header) td {
+    border-top: 1px solid #e9ecef;
+  }
+
+  .total-data-centered {
+    text-align: center;
+  }
+
+  .footer-value-badge {
+    display: inline-block;
+    background-color: #4a90e2;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .search-input {
+    border-radius: 20px;
+    padding-left: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23aaa' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+  }
+
+  .btn-compare {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+  }
+
+  .btn-compare:hover {
+    background-color: #3a7bc6;
+  }
+
+  .comparison-badge {
+    background-color: #4a90e2;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .metrics-card {
+    border-radius: 8px;
     overflow: hidden;
     margin-bottom: 20px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
   }
 
-  /* Estilos para modo escuro */
+  .metrics-header {
+    background-color: #4a90e2;
+    color: white;
+    padding: 10px 15px;
+  }
+
+  .metrics-body {
+    padding: 15px;
+    background-color: white;
+  }
+
+  .metric-item {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .metric-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .metric-label {
+    font-weight: 500;
+    color: #666;
+    margin-right: 10px;
+  }
+
+  .metric-value {
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+  }
+
+  .diff-positive {
+    color: #28a745;
+  }
+
+  .diff-negative {
+    color: #dc3545;
+  }
+
+  /* Select2 custom styles */
+  .select2-container {
+    width: 100% !important;
+  }
+  
+  .select2-container--default .select2-selection--single {
+    height: 38px;
+    padding: 6px 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 24px;
+    padding-left: 0;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+  }
+  
+  .select2-dropdown {
+    border-color: #ced4da;
+  }
+  
+  .select2-search--dropdown .select2-search__field {
+    padding: 8px;
+    border-radius: 4px;
+  }
+  
+  .select2-results__option {
+    padding: 8px 12px;
+  }
+  
+  /* Estilo para o badge da sigla */
+  .sigla-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-left: 5px;
+    color: #555;
+  }
+  
+  /* Destaque para item selecionado */
+  .select2-results__option--highlighted {
+    background-color: #4a90e2 !important;
+  }
+  
+  /* Estilo para item ativo na lista */
+  .select2-results__option--highlighted .sigla-badge {
+    background-color: #3580d7;
+    color: white;
+  }
+
+  /* Dark Mode Styles */
   body.dark-mode {
-    background-color: #000000;
-    color: #e0e0e0;
-  }
-
-  body.dark-mode .simulacao-container {
-    background-color: #121212;
-    border-color: #222222;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  }
-
-  body.dark-mode .card,
-  body.dark-mode .report-card,
-  body.dark-mode .node-list,
-  body.dark-mode .controls-panel {
-    background-color: #121212;
-    border-color: #222222;
-  }
-
-  body.dark-mode .card-header {
-    background-color: #1a1a1a;
-    border-color: #222222;
-  }
-
-  body.dark-mode .card-body {
     background-color: #121212;
     color: #e0e0e0;
   }
 
-  body.dark-mode .node-item,
-  body.dark-mode .secretaria-item {
-    background-color: #222222;
-    border-color: #333333;
+  body.dark-mode .filter-section {
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  body.dark-mode .table-section {
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  body.dark-mode .table-header {
+    background-color: #2d2d2d;
+    border-bottom-color: #333;
+  }
+
+  body.dark-mode .table-title {
+    color: #e0e0e0;
+  }
+
+  body.dark-mode .comparison-table th {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  body.dark-mode .comparison-table td {
+    border-top-color: #333;
+    color: #e0e0e0;
+  }
+
+  body.dark-mode .comparison-table tr:hover {
+    background-color: #2a2a2a;
   }
 
   body.dark-mode .form-control,
   body.dark-mode .form-select {
-    background-color: #1a1a1a;
-    border-color: #333333;
+    background-color: #333;
+    border-color: #444;
     color: #e0e0e0;
   }
 
-  body.dark-mode .form-text {
+  body.dark-mode .search-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23777' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+  }
+
+  body.dark-mode .metrics-card {
+    border-color: #333;
+  }
+
+  body.dark-mode .metrics-header {
+    background-color: #3a7bc6;
+  }
+
+  body.dark-mode .metrics-body {
+    background-color: #1e1e1e;
+  }
+
+  body.dark-mode .metric-item {
+    border-bottom-color: #333;
+  }
+
+  body.dark-mode .metric-label {
     color: #aaa;
   }
 
-  body.dark-mode .text-muted {
-    color: #aaa !important;
-  }
-
-  body.dark-mode .tooltip {
-    background-color: #1a1a1a;
-    border-color: #333333;
+  body.dark-mode .metric-value {
     color: #e0e0e0;
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
   }
-
-  body.dark-mode .secretaria-progresso {
-    background-color: #444;
-  }
-
-  /* Painéis e controles */
-  .controls-panel {
-    background-color: white;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 15px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-  }
-
-  body.dark-mode .controls-panel {
-    background-color: #2d2d2d;
+  
+  body.dark-mode .select2-container--default .select2-selection--single {
+    background-color: #333;
     border-color: #444;
   }
-
-  .search-container {
-    display: flex;
-    flex-grow: 1;
-    position: relative;
-    max-width: 500px;
-  }
-
-  /* Resultados de pesquisa */
-  .search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 0 0 4px 4px;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .search-results.active {
-    display: block;
-  }
-
-  .search-result-item {
-    padding: 8px 15px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  .search-result-item:hover {
-    background-color: #f8f9fa;
-  }
-
-  body.dark-mode .search-results {
-    background-color: #1a1a1a;
-    border-color: #333333;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  body.dark-mode .search-result-item {
-    border-color: #333333;
+  
+  body.dark-mode .select2-container--default .select2-selection--single .select2-selection__rendered {
     color: #e0e0e0;
   }
-
-  body.dark-mode .search-result-item:hover {
-    background-color: #222222;
-  }
-
-  body.dark-mode .node-item-details {
-    color: #aaa;
-  }
-
-  /* Lista de nós */
-  .node-list {
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 10px;
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 15px;
-  }
-
-  .node-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 10px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    background-color: #f8f9fa;
-  }
-
-  .node-item-info {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-  }
-
-  .node-item-name {
-    font-weight: 500;
-  }
-
-  .node-item-details {
-    font-size: 12px;
-    color: #666;
-  }
-
-  .node-item-actions {
-    display: flex;
-    gap: 5px;
-  }
-
-  .node-item button {
-    border: none;
-    background: none;
-    color: #dc3545;
-    cursor: pointer;
-  }
-
-  /* Tooltip */
-  .tooltip {
-    position: absolute;
-    padding: 8px 12px;
-    font: 12px sans-serif;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    pointer-events: none;
-    opacity: 0;
-    z-index: 100;
-    max-width: 300px;
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.07);
-  }
-
-  /* Cartão de relatório */
-  .report-card {
-    margin-top: 20px;
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 15px;
-  }
-
-  .secretaria-item {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-  }
-
-  .secretaria-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  .secretaria-nome {
-    font-weight: 600;
-  }
-
-  .secretaria-pontos {
-    font-weight: 500;
-  }
-
-  .secretaria-progresso {
-    height: 8px;
-    border-radius: 4px;
-    margin-top: 5px;
-    background-color: #e9ecef;
-    overflow: hidden;
-  }
-
-  .secretaria-barra {
-    height: 100%;
-    background-color: #4a90e2;
-    transition: width 0.3s ease;
-  }
-
-  .secretaria-aviso {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 5px;
-  }
-
-  .secretaria-economia {
-    color: #28a745;
-  }
-
-  .hierarchy-scale {
-    width: 100%;
-    margin: 10px 0;
-  }
-
-  .form-floating label {
-    opacity: 0.7;
-  }
-
-  .cargo-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    color: #4a90e2;
-  }
-
-  body.dark-mode .btn-outline-primary {
-    color: #90b2e5;
-    border-color: #4a90e2;
-  }
-
-  body.dark-mode .btn-outline-primary:hover {
-    background-color: #4a90e2;
-    color: #fff;
-  }
-
-  body.dark-mode .btn-outline-secondary {
-    color: #aaaaaa;
-    border-color: #555555;
-  }
-
-  body.dark-mode .btn-outline-secondary:hover {
-    background-color: #555555;
-    color: #fff;
-  }
-
-  body.dark-mode .btn-primary {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
-  }
-
-  body.dark-mode .btn-success {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
-  }
-
-  body.dark-mode .btn-success:hover {
-    background-color: #3a7bc6;
-    border-color: #2a6cb6;
-  }
-
-  body.dark-mode .form-range::-webkit-slider-thumb {
-    background-color: #4a90e2;
-  }
-
-  body.dark-mode .form-range::-moz-range-thumb {
-    background-color: #4a90e2;
-  }
-
-  body.dark-mode .form-range {
-    background-color: transparent;
-  }
-
-  body.dark-mode .form-range::-webkit-slider-runnable-track {
-    background-color: #555;
-  }
-
-  body.dark-mode .form-range::-moz-range-track {
-    background-color: #555;
-  }
-
-  body.dark-mode .cargo-value {
-    color: #90b2e5;
-  }
-
-  body.dark-mode .form-check-input {
+  
+  body.dark-mode .select2-dropdown {
     background-color: #333;
+    border-color: #444;
+  }
+  
+  body.dark-mode .select2-search--dropdown .select2-search__field {
+    background-color: #444;
     border-color: #555;
-  }
-
-  body.dark-mode .form-check-input:checked {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
-  }
-
-  /* Assegura que o painel "Novo Nó" tenha o fundo preto no modo escuro */
-  body.dark-mode .col-md-3 .card {
-    background-color: #121212;
-    border-color: #222222;
-  }
-
-  body.dark-mode .col-md-3 .card-body {
-    background-color: #121212;
     color: #e0e0e0;
   }
-
-  body.dark-mode .col-md-3 .card-header {
-    background-color: #1a1a1a;
-    border-color: #222222;
+  
+  body.dark-mode .select2-results__option {
+    color: #e0e0e0;
   }
-
-  /* Ajustes para cores de status ativo/inativo */
-  .badge.bg-success {
-    background-color: #28a745 !important;
-  }
-
-  .badge.bg-danger {
-    background-color: #dc3545 !important;
-  }
-
-  /* Botão Conectar deve usar a paleta azul */
-  #connectNodesBtn {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
-  }
-
-  #connectNodesBtn:hover {
+  
+  body.dark-mode .select2-container--default .select2-results__option--highlighted[aria-selected] {
     background-color: #3a7bc6;
-    border-color: #2a6cb6;
+  }
+  
+  body.dark-mode .sigla-badge {
+    background-color: #444;
+    color: #ddd;
+  }
+  
+  body.dark-mode .select2-results__option--highlighted .sigla-badge {
+    background-color: #2d6cb5;
+    color: white;
   }
 
-  /* Escuro para o restante da interface */
-  body.dark-mode #connectNodesBtn {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
+  body.dark-mode .total-row.total-row-header td {
+    background-color: #2c3034;
+    border-top-color: #383d41 !important;
   }
 
-  body.dark-mode .btn-success {
-    background-color: #4a90e2;
-    border-color: #3a7bc6;
+  body.dark-mode .total-row:not(.total-row-header) td {
+    border-top-color: #383d41;
+  }
+  
+  body.dark-mode .footer-value-badge {
+    background-color: #3a7bc6;
   }
 
-  /* Mantém verde apenas para indicadores de status */
-  body.dark-mode .secretaria-economia,
-  body.dark-mode .badge.bg-success {
-    color: #28a745 !important;
-    background-color: transparent !important;
+  body.dark-mode .total-data-centered {
+    text-align: center;
   }
 
-  body.dark-mode .secretaria-aviso,
-  body.dark-mode .badge.bg-danger {
-    color: #dc3545 !important;
-    background-color: transparent !important;
-  }
-
-  /* Melhorias para o painel "Novo Nó" no modo escuro */
-  body.dark-mode .col-md-3 {
-    color: #e0e0e0;
-  }
-
-  /* Ajuste nos textos e rótulos */
-  body.dark-mode .form-label,
-  body.dark-mode .mb-0,
-  body.dark-mode h5 {
-    color: #ffffff;
-  }
-
-  /* Range slider em destaque no dark mode */
-  body.dark-mode .form-range::-webkit-slider-thumb {
-    background-color: #4a90e2;
-    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
-  }
-
-  body.dark-mode .form-range::-moz-range-thumb {
-    background-color: #4a90e2;
-    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
-  }
-
-  /* Ajustar a cor do placeholder nos inputs em dark mode */
-  body.dark-mode input::placeholder,
-  body.dark-mode select::placeholder {
-    color: #aaaaaa;
-    opacity: 0.7;
-  }
-
-  /* Destacar botões de ação azuis no modo escuro */
-  body.dark-mode .btn-primary {
-    box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
-  }
-
-  body.dark-mode .btn-primary:hover {
-    box-shadow: 0 0 12px rgba(74, 144, 226, 0.5);
-  }
-
-  /* Efeitos de hover melhorados para botões na página de simulação */
-  .btn-primary {
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-  }
-
-  .btn-outline-primary {
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  }
-
-  .btn-outline-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.2);
-  }
-
-  /* Efeitos de hover melhorados para modo escuro */
-  body.dark-mode .btn-primary:hover {
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.5);
-  }
-
-  body.dark-mode .btn-outline-primary:hover {
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
-  }
-
-  /* Botão conectar com efeito de pulsação ao hover */
-  #connectNodesBtn {
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  }
-
-  #connectNodesBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0% {
-      box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.5);
+  @media (max-width: 992px) {
+    .tables-container {
+      grid-template-columns: 1fr;
     }
-    70% {
-      box-shadow: 0 0 0 6px rgba(74, 144, 226, 0);
-    }
-    100% {
-      box-shadow: 0 0 0 0 rgba(74, 144, 226, 0);
-    }
-  }
-
-  body.dark-mode #connectNodesBtn:hover {
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.5);
-  }
-
-  /* Ajuste o container do SVG */
-  .organograma-container svg {
-    transform: translate(200px, 100px); /* Move 200px para direita e 100px para baixo */
-  }
-
-  /* OU, se preferir ajustar o container inteiro */
-  .organograma-container {
-    padding: 100px 0 0 200px; /* Topo, Direita, Baixo, Esquerda */
   }
 </style>
 {% endblock %} {% block content %}
-<div class="container">
-  <h2 class="mb-3">Simulação de Organograma</h2>
-  <p class="mb-4">
-    Adicione nomes à simulação digitando no campo abaixo ou pesquisando nomes
-    existentes. Defina os níveis hierárquicos (1-15) e secretarias para criar um
-    organograma com distribuição de pontos.
-  </p>
-
-  <div class="controls-panel">
-    <div class="search-container">
-      <input
-        type="text"
-        id="searchInput"
-        class="form-control"
-        placeholder="Digite um nome ou pesquise..."
-      />
-      <div class="search-results" id="searchResults"></div>
+<div class="container comparison-container">
+  <h2 class="mb-4">Comparador de Unidades</h2>
+  
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-5">
+            <div class="mb-3">
+              <label for="filterOrgao1" class="form-label">Órgão 1</label>
+              <select class="form-select" id="filterOrgao1">
+                <option value="">Todos os Órgãos</option>
+                <option value="MPO" selected>Ministério do Planejamento e Orçamento (MPO)</option>
+                <!-- Outros órgãos serão adicionados aqui no futuro -->
+              </select>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="mb-3">
+              <label for="filterTable1" class="form-label">Unidade 1</label>
+              <select class="form-select select2-search" id="filterTable1" data-placeholder="Buscar unidade...">
+                <option value="">Selecione uma Unidade</option>
+                <!-- Opções serão carregadas via JavaScript -->
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-5">
+            <div class="mb-3">
+              <label for="filterOrgao2" class="form-label">Órgão 2</label>
+              <select class="form-select" id="filterOrgao2">
+                <option value="">Todos os Órgãos</option>
+                <option value="MPO" selected>Ministério do Planejamento e Orçamento (MPO)</option>
+                <!-- Outros órgãos serão adicionados aqui no futuro -->
+              </select>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="mb-3">
+              <label for="filterTable2" class="form-label">Unidade 2</label>
+              <select class="form-select select2-search" id="filterTable2" data-placeholder="Buscar unidade...">
+                <option value="">Selecione uma Unidade</option>
+                <!-- Opções serão carregadas via JavaScript -->
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12 d-flex justify-content-center">
+        <button id="btnCompare" class="btn btn-compare" style="width: 200px;">
+          <i class="fas fa-exchange-alt me-2"></i>Comparar
+        </button>
+      </div>
     </div>
-    <button id="addNodeBtn" class="btn btn-primary">
-      <i class="fas fa-plus"></i> Adicionar
-    </button>
-    <button id="resetBtn" class="btn btn-outline-secondary">
-      <i class="fas fa-redo"></i> Limpar
-    </button>
-    <div
-      class="auto-organize-indicator ms-3 d-flex align-items-center"
-      style="font-size: 0.9rem"
-    >
-      <span class="me-2"
-        ><i class="fas fa-sitemap me-1"></i> Auto-organizar:</span
-      >
-      <div class="form-check form-switch mb-0">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          id="autoOrganizeToggle"
-          checked
-        />
-        <label class="form-check-label" for="autoOrganizeToggle">
-          <span class="badge bg-success" id="autoOrganizeStatus">Ativo</span>
-        </label>
+    <!-- Download Buttons Row -->
+    <div class="row mt-3">
+      <div class="col-md-12 d-flex justify-content-center gap-2">
+        <button id="btnDownloadHTML" class="btn btn-outline-secondary">
+          <i class="fas fa-file-code me-2"></i>Download HTML
+        </button>
+        <button id="btnDownloadPDF" class="btn btn-outline-secondary">
+          <i class="fas fa-file-pdf me-2"></i>Download PDF
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="row mt-3">
-    <div class="col-md-3">
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i> Adicionar Servidor</h5>
+  <!-- Comparison Metrics -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="metrics-card">
+        <div class="metrics-header">
+          <h5 class="mb-0">Resumo Comparativo</h5>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="nodeSecretaria" class="form-label">Secretaria:</label>
-            <select id="nodeSecretaria" class="form-select">
-              <option value="">Selecione uma secretaria</option>
-              <option value="Administração">Administração</option>
-              <option value="Educação">Educação</option>
-              <option value="Saúde">Saúde</option>
-              <option value="Infraestrutura">Infraestrutura</option>
-              <option value="Finanças">Finanças</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="nodeCargo" class="form-label">Cargo:</label>
-            <input
-              type="text"
-              id="nodeCargo"
-              class="form-control"
-              placeholder="Digite o cargo"
-            />
-          </div>
-
-          <div class="mb-3 form-floating">
-            <input
-              type="range"
-              class="form-range hierarchy-scale"
-              id="nodeHierarchy"
-              min="1"
-              max="15"
-              value="5"
-              step="1"
-              oninput="updateHierarchyValue(this.value)"
-              aria-label="Nível hierárquico"
-            />
-            <div class="cargo-value" id="hierarchyValue">5</div>
-            <div class="form-text text-center">Nível hierárquico (1-15)</div>
-          </div>
-        </div>
-      </div>
-
-      <h5>Nomes Adicionados</h5>
-      <div id="nodeList" class="node-list">
-        <!-- Nodes added by user will appear here -->
-        <div class="text-muted small text-center p-3">
-          Nenhum nome adicionado
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <h5>Conexões</h5>
-        <div class="mb-3">
-          <label for="sourceNode" class="form-label">De:</label>
-          <select id="sourceNode" class="form-select">
-            <option value="">Selecione um nome</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label for="targetNode" class="form-label">Para:</label>
-          <select id="targetNode" class="form-select">
-            <option value="">Selecione um nome</option>
-          </select>
-        </div>
-        <button id="connectNodesBtn" class="btn btn-success w-100">
-          <i class="fas fa-link"></i> Conectar
-        </button>
-      </div>
-
-      <div class="report-card">
-        <h5 class="mb-3">
-          <i class="fas fa-chart-pie me-2"></i> Relatório de Pontos
-        </h5>
-        <div id="reportContent">
-          <div class="text-muted small text-center p-3">
-            Adicione nomes e secretarias para gerar o relatório
+        <div class="metrics-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="metric-item">
+                <span class="metric-label">Diferença de Pontos:</span>
+                <span class="metric-value diff-negative" id="diffPontos">--</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="metric-item">
+                <span class="metric-label">Diferença de Gastos:</span>
+                <span class="metric-value diff-positive" id="diffGastos">--</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="col-md-9">
-      <div id="simulacaoContainer" class="simulacao-container"></div>
+  <!-- Tables Container -->
+  <div class="tables-container">
+    <!-- Table 1 -->
+    <div class="table-section">
+      <div class="table-header d-flex justify-content-between align-items-center">
+        <h5 class="table-title">Unidade 1</h5>
+        <span class="comparison-badge" id="totalPointsBadge1">0 pts</span>
+      </div>
+      <div class="table-responsive">
+        <table class="comparison-table" id="table1">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Cargo</th>
+              <th>Categoria</th>
+              <th>Nível</th>
+              <th>Quantidade</th>
+              <th>Pontos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Table 1 data will be loaded here -->
+            <tr>
+              <td colspan="6" class="text-center">Selecione uma unidade</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row total-row-header">
+              <td colspan="6"><strong>Total Geral</strong></td>
+            </tr>
+            <tr class="total-row points-total-row">
+              <td colspan="6" class="total-data-centered" id="footerPtsDisplay1">
+                <!-- JS will populate: <strong>Pts Totais:</strong> <span class="footer-value-badge">...</span> -->
+              </td>
+            </tr>
+            <tr class="total-row cost-total-row">
+              <td colspan="6" class="total-data-centered" id="footerCustoDisplay1">
+                <!-- JS will populate: <strong>Custo Total:</strong> <span class="footer-value-badge">...</span> -->
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 2 -->
+    <div class="table-section">
+      <div class="table-header d-flex justify-content-between align-items-center">
+        <h5 class="table-title">Unidade 2</h5>
+        <span class="comparison-badge" id="totalPointsBadge2">0 pts</span>
+      </div>
+      <div class="table-responsive">
+        <table class="comparison-table" id="table2">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Cargo</th>
+              <th>Categoria</th>
+              <th>Nível</th>
+              <th>Quantidade</th>
+              <th>Pontos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Table 2 data will be loaded here -->
+            <tr>
+              <td colspan="6" class="text-center">Selecione uma unidade</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row total-row-header">
+              <td colspan="6"><strong>Total Geral</strong></td>
+            </tr>
+            <tr class="total-row points-total-row">
+              <td colspan="6" class="total-data-centered" id="footerPtsDisplay2">
+                <!-- JS will populate: <strong>Pts Totais:</strong> <span class="footer-value-badge">...</span> -->
+              </td>
+            </tr>
+            <tr class="total-row cost-total-row">
+              <td colspan="6" class="total-data-centered" id="footerCustoDisplay2">
+                <!-- JS will populate: <strong>Custo Total:</strong> <span class="footer-value-badge">...</span> -->
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 {% endblock %} {% block extra_js %}
-<!-- Carrega D3.js -->
+<!-- Carrega o jQuery (necessário para o Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Carrega o Select2 para dropdowns com busca -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Carrega o D3.js que é usado no script simulacao.js -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<!-- Script de simulação -->
-<script src="{% static 'js/simulacao.js' %}"></script>
-<script>
-  function updateHierarchyValue(value) {
-    document.getElementById('hierarchyValue').textContent = value
-  }
-</script>
+
+<!-- Bibliotecas para Gerar PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="{% static 'js/simulacao.js' %}?v=1.1"></script> <!-- Adicionado cache busting -->
 {% endblock %}

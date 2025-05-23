@@ -86,17 +86,9 @@ class CustomLoginView(LoginView):
 
 @csrf_protect
 def register(request):
-    if request.user.is_authenticated:
-        return redirect("home")
-    if request.method == "POST":
-        form = CustomRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-            return redirect("home")
-    else:
-        form = CustomRegisterForm()
-    return render(request, "registration/register.html", {"form": form})
+    # Redirecionar para a página de login com mensagem informativa
+    messages.info(request, "O cadastro de usuários só pode ser feito pelo administrador do sistema.")
+    return redirect("login")
 
 
 @login_required(login_url="/login_direct/")
@@ -231,7 +223,41 @@ def simulacao_page(request):
     View que renderiza a página de simulação do organograma
     onde o usuário pode adicionar nomes e criar conexões manualmente.
     """
-    return render(request, "core/simulacao.html")
+    from django.http import JsonResponse
+    import json
+    
+    try:
+        # Tentar ler o arquivo organograma.json para passar ao template
+        import os
+        from django.conf import settings
+        
+        json_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'data', 'organograma.json')
+        
+        # Verificar se o arquivo existe
+        if os.path.exists(json_path):
+            with open(json_path, 'r', encoding='utf-8') as f:
+                organograma_data = json.load(f)
+                
+            # Converter para string JSON para passar ao template
+            organograma_data_json = json.dumps(organograma_data)
+        else:
+            # Se o arquivo não existir, usar um objeto vazio
+            organograma_data_json = json.dumps({
+                "core_unidadecargo": []
+            })
+    except Exception as e:
+        # Em caso de erro, usar um objeto vazio
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao carregar dados do organograma para simulacao_page: {str(e)}")
+        
+        organograma_data_json = json.dumps({
+            "core_unidadecargo": []
+        })
+    
+    return render(request, "core/simulacao.html", {
+        'organograma_data': organograma_data_json
+    })
 
 
 @login_required(login_url="/login_direct/")

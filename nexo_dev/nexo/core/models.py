@@ -30,7 +30,10 @@ class UnidadeCargo(models.Model):
     pontos_total = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Pontos Total")
 
     def __str__(self):
-        return f"{self.denominacao_unidade} - {self.tipo_cargo} - {self.denominacao}"
+        tipo_cargo = self.tipo_cargo if self.tipo_cargo else ""
+        denominacao = self.denominacao if self.denominacao else ""
+        denominacao_unidade = self.denominacao_unidade if self.denominacao_unidade else ""
+        return str(denominacao_unidade + " - " + tipo_cargo + " - " + denominacao).strip()
     
     def save(self, *args, **kwargs):
         # Garantir que registros com grafo vazio não sejam salvos
@@ -75,7 +78,19 @@ class Perfil(models.Model):
         return None
 
     def __str__(self):
-        return f"Perfil de {self.usuario.username}"
+        try:
+            if hasattr(self, 'usuario') and self.usuario:
+                # Tentar obter username
+                username = self.usuario.username if hasattr(self.usuario, 'username') else ""
+                # Lidar com casos onde username está vazio ou é um caractere especial
+                if username == "-" or not username:
+                    username = str(self.usuario.id) if hasattr(self.usuario, 'id') else "Usuário"
+                return str("Perfil de " + username)
+            else:
+                return str("Perfil sem usuário")
+        except:
+            # Em último caso, retornar um valor simples e seguro
+            return str("Perfil")
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -109,4 +124,6 @@ class CargoSIORG(models.Model):
         ordering = ['cargo']
 
     def __str__(self):
-        return f"{self.cargo} - {self.nivel}"
+        cargo_str = str(self.cargo) if self.cargo else ""
+        nivel_str = str(self.nivel) if self.nivel else ""
+        return str(cargo_str + " - " + nivel_str).strip()

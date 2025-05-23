@@ -31,7 +31,7 @@ urlpatterns = [
         CustomSocialLoginView.as_view(),
         name="socialaccount_signup",
     ),
-    path("register/", register, name="register"),
+    path("register/", register, name="register"),  # Rota de registro que redireciona para login
     path("home/", home, name="home"),
     path("simulacao/", simulacao_page, name="simulacao"),
     path("financeira/", financeira_page, name="financeira"),

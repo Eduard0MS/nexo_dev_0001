@@ -2,28 +2,76 @@ from pathlib import Path
 import allauth
 import os
 from dotenv import load_dotenv, find_dotenv
+import io
+import sys
+
+# Variável para controlar se as mensagens já foram exibidas
+_ENV_LOADED = False
+
+# Função para exibir mensagens de log apenas uma vez
+def log_once(message):
+    """Imprime uma mensagem apenas uma vez por processo Python."""
+    global _PRINTED_MESSAGES
+    if not hasattr(sys.modules[__name__], '_PRINTED_MESSAGES'):
+        sys.modules[__name__]._PRINTED_MESSAGES = set()
+    
+    if message not in sys.modules[__name__]._PRINTED_MESSAGES:
+        print(message)
+        sys.modules[__name__]._PRINTED_MESSAGES.add(message)
 
 # Definir diretório base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carregar variáveis de ambiente do arquivo .env
-ENV_FILE = find_dotenv()
-if ENV_FILE:
-    load_dotenv(ENV_FILE)
-    print(f"Arquivo .env encontrado em: {ENV_FILE}")
-else:
-    print("Arquivo .env não encontrado!")
+# Carregar variáveis de ambiente do arquivo .env com tratamento robusto de erros
+def load_env_safely():
+    global _ENV_LOADED
+    
+    # Se já carregamos o .env, não precisamos fazer de novo
+    if _ENV_LOADED:
+        return
+        
+    try:
+        # Tentativa padrão de encontrar e carregar o .env
+        ENV_FILE = find_dotenv()
+        if ENV_FILE:
+            load_dotenv(ENV_FILE)
+            log_once(f"Arquivo .env encontrado em: {ENV_FILE}")
+            _ENV_LOADED = True
+            return
+    except Exception as e:
+        log_once(f"Erro ao carregar .env normalmente: {e}")
+    
+    # Alternativa 1: Tentar carregar com codificação explícita
+    try:
+        env_path = os.path.join(BASE_DIR, '.env')
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8-sig') as f:  # utf-8-sig lida com BOM
+                content = f.read()
+                # Criar um arquivo em memória que python-dotenv possa ler
+                stream = io.StringIO(content)
+                load_dotenv(stream=stream)
+                log_once("Arquivo .env carregado com encoding utf-8-sig")
+                _ENV_LOADED = True
+                return
+    except Exception as e:
+        log_once(f"Erro ao carregar .env com utf-8-sig: {e}")
+    
+    # Se tudo falhar, informamos que o .env não foi encontrado
+    log_once("Arquivo .env não encontrado ou não pôde ser carregado!")
 
-# Debug temporário
-print("DEBUG: DB_PASSWORD =", os.environ.get('DB_PASSWORD'))
-print("DEBUG: DB_HOST =", os.environ.get('DB_HOST'))
-print("DEBUG: DB_NAME =", os.environ.get('DB_NAME'))
+# Chamar nossa função segura
+load_env_safely()
+
+# Debug temporário (exibe apenas uma vez)
+log_once(f"DEBUG: DB_PASSWORD = {os.environ.get('DB_PASSWORD')}")
+log_once(f"DEBUG: DB_HOST = {os.environ.get('DB_HOST')}")
+log_once(f"DEBUG: DB_NAME = {os.environ.get('DB_NAME')}")
 
 # Definir ambiente
 ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 IS_PRODUCTION = ENVIRONMENT == 'production'
-print(f"DEBUG: Ambiente atual = {ENVIRONMENT}")
-print(f"DEBUG: IS_PRODUCTION = {IS_PRODUCTION}")
+log_once(f"DEBUG: Ambiente atual = {ENVIRONMENT}")
+log_once(f"DEBUG: IS_PRODUCTION = {IS_PRODUCTION}")
 
 # CONFIGURAÇÕES DE SEGURANÇA
 # Em produção, use variáveis de ambiente para SECRET_KEY
@@ -52,8 +100,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.microsoft",
-    "allauth.socialaccount.providers.google",
 ]
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 SITE_ID = 1
@@ -116,7 +162,7 @@ WSGI_APPLICATION = "Nexus.wsgi.application"
 
 # Configurações de banco de dados
 if IS_PRODUCTION:
-    print("DEBUG: Usando configurações de PRODUÇÃO")
+    log_once("DEBUG: Usando configurações de PRODUÇÃO")
     DATABASES = {
         "default": {
             "ENGINE": os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -128,7 +174,7 @@ if IS_PRODUCTION:
         }
     }
 else:
-    print("DEBUG: Usando configurações de DESENVOLVIMENTO")
+    log_once("DEBUG: Usando configurações de DESENVOLVIMENTO")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -185,7 +231,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
@@ -196,37 +242,8 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
 SOCIALACCOUNT_QUERY_EMAIL = True
 
-# Social Account Configuration com credenciais em variáveis de ambiente
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": os.environ.get('GOOGLE_CLIENT_ID'),
-            "secret": os.environ.get('GOOGLE_CLIENT_SECRET'),
-            "key": "",
-        },
-        "SCOPE": [
-            "profile",
-            "email",
-            "openid",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-    },
-    "microsoft": {
-        "APP": {
-            "client_id": os.environ.get("MICROSOFT_CLIENT_ID", "YOUR_MICROSOFT_CLIENT_ID"),
-            "secret": os.environ.get("MICROSOFT_CLIENT_SECRET", "YOUR_MICROSOFT_CLIENT_SECRET"),
-            "key": "",
-            "tenant": "common",
-        },
-        "SCOPE": [
-            "profile",
-            "email",
-            "openid",
-        ],
-    },
-}
+# Social Account Configuration - Remover provedores sociais
+SOCIALACCOUNT_PROVIDERS = {}
 
 # Configurações para resolver o loop de redirecionamento
 LOGIN_REDIRECT_URL = "/home/"

@@ -56,26 +56,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>
-          Não tem uma conta? <a href="{% url 'register' %}">Cadastre-se aqui</a>
-        </p>
-      </div>
-
-      <div class="social-login">
-        <p class="social-login-title">Ou entre com:</p>
-        <div class="social-buttons">
-          <a href="/accounts/google/login/" class="btn-social">
-            <i class="fab fa-google"></i> Google
-          </a>
-          <a href="/accounts/microsoft/login/" class="btn-social">
-            <img
-              src="{% static 'img/microsoft.svg' %}"
-              alt="Microsoft"
-              style="width: 21px; height: 21px; margin-right: 8px"
-            />
-            Microsoft
-          </a>
-        </div>
+        <p>Acesso apenas para usuários cadastrados pelo administrador.</p>
       </div>
     </div>
   </div>

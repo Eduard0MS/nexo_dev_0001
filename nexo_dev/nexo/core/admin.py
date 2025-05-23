@@ -10,6 +10,11 @@ import json
 from decimal import Decimal
 import math
 import sys
+from django.contrib.admin.utils import get_deleted_objects as original_get_deleted_objects
+from django.db.models.fields.related import ForeignObjectRel
+from django.db.models import Q
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Importar a função de geração do arquivo JSON
 try:
@@ -301,6 +306,25 @@ class PerfilAdmin(admin.ModelAdmin):
             'fields': ('bio', 'data_atualizacao')
         }),
     )
+    
+    def get_deleted_objects(self, objs, request):
+        """
+        Método personalizado para lidar com a exclusão de perfis que pode conter campos 
+        problemáticos como usernames vazios ou com caracteres especiais
+        """
+        try:
+            # Tentar usar o método padrão
+            return original_get_deleted_objects(objs, request, self.admin_site)
+        except Exception as e:
+            # Em caso de falha, implementar uma versão simplificada
+            # que ignora erros de string no __str__
+            collector = admin.utils.NestedObjects(using='default')
+            collector.collect(objs)
+            perms_needed = set()
+            protected = set()
+            model_count = {model._meta.verbose_name_plural: len(objs_list) for model, objs_list in collector.model_objs.items()}
+            
+            return collector.nested(), model_count, perms_needed, protected
 
 @admin.register(CargoSIORG)
 class CargoSIORGAdmin(admin.ModelAdmin):
@@ -347,3 +371,57 @@ class CargoSIORGAdmin(admin.ModelAdmin):
             'opts': self.model._meta,
             'title': "Atualizar Dados do SIORG"
         })
+
+# Classe personalizada para o admin de User do Django
+class CustomUserAdmin(BaseUserAdmin):
+    """
+    Classe de administração personalizada para o modelo User nativo do Django,
+    sobrescrevendo métodos de exclusão para lidar com situações específicas.
+    """
+    def get_deleted_objects(self, objs, request):
+        """
+        Método personalizado para lidar com a exclusão de usuários que pode conter
+        relacionamentos com objetos que têm __str__ problemáticos
+        """
+        try:
+            # Tentar usar o método padrão
+            return original_get_deleted_objects(objs, request, self.admin_site)
+        except Exception as e:
+            # Em caso de falha, implementar uma versão simplificada
+            # com um format_callback personalizado
+            from django.contrib.admin.utils import NestedObjects
+            from django.utils.text import capfirst
+            
+            collector = NestedObjects(using='default')
+            collector.collect(objs)
+            
+            def custom_format_callback(obj):
+                try:
+                    opts = obj._meta
+                    # Para usuários, usar o ID em vez do username se o username for problemático
+                    if isinstance(obj, User) and (not obj.username or obj.username == "-"):
+                        return "%s: %s" % (capfirst(opts.verbose_name), f"ID: {obj.id}")
+                    return "%s: %s" % (capfirst(opts.verbose_name), str(obj))
+                except Exception:
+                    # Se houver qualquer problema, retornar uma string segura
+                    return "Objeto de Tipo %s (ID: %s)" % (obj.__class__.__name__, obj.pk)
+            
+            perms_needed = set()
+            protected = set()
+            
+            # Usar o formato personalizado para criar a estrutura aninhada
+            to_delete = collector.nested(custom_format_callback)
+            
+            # Criar um dicionário de contagem de modelo manualmente
+            model_count = {}
+            for model, objs_list in collector.model_objs.items():
+                key = str(model._meta.verbose_name_plural)
+                model_count[key] = len(objs_list)
+            
+            return to_delete, model_count, perms_needed, protected
+
+# Desregistrar o admin padrão de User
+admin.site.unregister(User)
+
+# Registrar nosso admin personalizado
+admin.site.register(User, CustomUserAdmin)

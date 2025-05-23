@@ -253,7 +253,6 @@
                     <th>Orçamento</th>
                     <th>Executado</th>
                     <th>% Execução</th>
-                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -263,11 +262,6 @@
                     <td>{{ unidade.orcamento|moeda }}</td>
                     <td>{{ unidade.executado|moeda }}</td>
                     <td>{{ unidade.percentual|porcentagem }}</td>
-                    <td>
-                        <span class="badge {% if unidade.status == 'Adequado' %}badge-success{% else %}badge-warning{% endif %}">
-                            {{ unidade.status }}
-                        </span>
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

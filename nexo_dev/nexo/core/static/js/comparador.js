@@ -496,6 +496,10 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadPDF.addEventListener('click', function() {
       exportToPDF();
     });
+    // Novo listener para exportar XLSX
+    downloadXLSX.addEventListener('click', function() {
+      exportToXLSX();
+    });
   }
   
   /**
@@ -1698,16 +1702,16 @@ document.addEventListener('DOMContentLoaded', function() {
    * Exporta os dados para CSV
    */
   function exportToCSV() {
-    if ((type === 'nova' && editedData.length === 0) || 
-        (type !== 'nova' && originalData.length === 0)) {
+    const exportType = exportTypeSelect.value;
+    if ((exportType === 'nova' && editedData.length === 0) || 
+        (exportType !== 'nova' && originalData.length === 0)) {
       alert('Não há dados para exportar');
       return;
     }
-    const type = exportTypeSelect.value;
     let headers = [];
     let dataRows = [];
 
-    if (type === 'comparacao') {
+    if (exportType === 'comparacao') {
       headers = ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)'];
       dataRows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
@@ -1726,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', function() {
           parseFloat(edit.pontos || 0) * parseInt(edit.quantidade || 1)
         ];
       });
-    } else if (type === 'nova') {
+    } else if (exportType === 'nova') {
       headers = ['Área','Tipo Cargo','Denominação','Cat.','Nvl.','Qtd.','Pts.'];
       dataRows = editedData.map(item => [
         item.sigla,
@@ -1784,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `export_${type}.csv`);
+    link.setAttribute('download', `export_${exportType}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1794,12 +1798,12 @@ document.addEventListener('DOMContentLoaded', function() {
    * Exporta os dados para HTML
    */
   function exportToHTML() {
-    if ((type === 'nova' && editedData.length === 0) || 
-        (type !== 'nova' && originalData.length === 0)) {
+    const exportType = exportTypeSelect.value;
+    if ((exportType === 'nova' && editedData.length === 0) || 
+        (exportType !== 'nova' && originalData.length === 0)) {
       alert('Não há dados para exportar');
       return;
     }
-    const type = exportTypeSelect.value;
     let unidadeName;
     if (typeof $ !== 'undefined' && $.fn.select2) {
       unidadeName = $(unitSelect).find(':selected').text();
@@ -1808,9 +1812,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Título conforme tipo
     let title;
-    if (type === 'comparacao') {
+    if (exportType === 'comparacao') {
       title = 'Comparativo de Organograma';
-    } else if (type === 'nova') {
+    } else if (exportType === 'nova') {
       title = 'Estrutura Nova';
     } else {
       title = 'Tabela Completa';
@@ -1838,28 +1842,34 @@ document.addEventListener('DOMContentLoaded', function() {
   <h1>${title}</h1>
   <h2>${unidadeName}</h2>\n`;
     // Gerar conteúdo conforme tipo
-    if (type === 'comparacao') {
+    if (exportType === 'comparacao') {
       // Tabela comparativa
       html += '<table><thead><tr>' +
-        ['Denominação','Tipo Cargo','Categoria (Atual)','Categoria (Editada)','Nível (Atual)','Nível (Editado)','Quantidade (Atual)','Quantidade (Editada)']
-        .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+        ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
+          .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
       originalData.forEach((orig, idx) => {
         const edit = editedData[idx] || {};
+        const ptsOrig = parseFloat(orig.pontos || 0) * parseInt(orig.quantidade || 1);
+        const ptsEdit = parseFloat(edit.pontos || 0) * parseInt(edit.quantidade || 1);
         html += '<tr>' +
-          `<td>${formatValue(orig.denominacao)}</td>` +
+          `<td>${formatValue(orig.sigla)}</td>` +
           `<td>${formatValue(orig.tipo_cargo)}</td>` +
+          `<td>${formatValue(edit.tipo_cargo)}</td>` +
+          `<td>${formatValue(orig.denominacao)}</td>` +
           `<td>${formatValue(orig.categoria)}</td>` +
           `<td>${formatValue(edit.categoria)}</td>` +
           `<td>${formatValue(orig.nivel)}</td>` +
           `<td>${formatValue(edit.nivel)}</td>` +
           `<td>${formatValue(orig.quantidade)}</td>` +
           `<td>${formatValue(edit.quantidade)}</td>` +
+          `<td>${formatValue(ptsOrig)}</td>` +
+          `<td>${formatValue(ptsEdit)}</td>` +
         '</tr>';
       });
       html += '</tbody></table>';
       // Relatório de diferenças
       html += '<div class="report"><h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML + '</div>';
-    } else if (type === 'nova') {
+    } else if (exportType === 'nova') {
       // Tabela nova estrutura
       html += '<table><thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
@@ -1898,7 +1908,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `export_${type}.html`;
+    link.download = `export_${exportType}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1908,19 +1918,120 @@ document.addEventListener('DOMContentLoaded', function() {
    * Exporta os dados para Word (docx)
    */
   function exportToWord() {
-    alert('Funcionalidade de exportação para Word em desenvolvimento');
+    const exportType = exportTypeSelect.value;
+    if ((exportType === 'nova' && editedData.length === 0) ||
+        (exportType !== 'nova' && originalData.length === 0)) {
+      alert('Não há dados para exportar');
+      return;
+    }
+
+    // Nome da unidade
+    let unidadeName;
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      unidadeName = $(unitSelect).find(':selected').text();
+    } else {
+      unidadeName = unitSelect.options[unitSelect.selectedIndex].text;
+    }
+
+    // Definir título conforme tipo
+    let title;
+    if (exportType === 'comparacao') {
+      title = 'Comparativo de Organograma';
+    } else if (exportType === 'nova') {
+      title = 'Estrutura Nova';
+    } else {
+      title = 'Tabela Completa';
+    }
+
+    // Construir HTML interno
+    let html = `<!DOCTYPE html><html><head><meta charset='UTF-8'><title>${title} - ${unidadeName}</title></head><body>`;
+    html += `<h1 style="text-align:center;">${title}</h1>`;
+    html += `<h2 style="text-align:center;">${unidadeName}</h2>`;
+
+    const formatValueWord = val => {
+      if (val === undefined || val === null) return '';
+      if (typeof val === 'number') return Number(val.toFixed ? val.toFixed(2) : val).toString();
+      return val.toString();
+    };
+
+    if (exportType === 'comparacao') {
+      html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+      html += '<thead><tr>' +
+        ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
+        .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+      originalData.forEach((orig, idx) => {
+        const edit = editedData[idx] || {};
+        const ptsOrig = parseFloat(orig.pontos || 0) * parseInt(orig.quantidade || 1);
+        const ptsEdit = parseFloat(edit.pontos || 0) * parseInt(edit.quantidade || 1);
+        html += '<tr>' +
+          `<td>${formatValueWord(orig.sigla)}</td>` +
+          `<td>${formatValueWord(orig.tipo_cargo)}</td>` +
+          `<td>${formatValueWord(edit.tipo_cargo)}</td>` +
+          `<td>${formatValueWord(orig.denominacao)}</td>` +
+          `<td>${formatValueWord(orig.categoria)}</td>` +
+          `<td>${formatValueWord(edit.categoria)}</td>` +
+          `<td>${formatValueWord(orig.nivel)}</td>` +
+          `<td>${formatValueWord(edit.nivel)}</td>` +
+          `<td>${formatValueWord(orig.quantidade)}</td>` +
+          `<td>${formatValueWord(edit.quantidade)}</td>` +
+          `<td>${formatValueWord(ptsOrig)}</td>` +
+          `<td>${formatValueWord(ptsEdit)}</td>` +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+    } else if (exportType === 'nova') {
+      html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+      html += '<thead><tr>' +
+        ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
+        .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+      editedData.forEach(item => {
+        html += '<tr>' +
+          `<td>${formatValueWord(item.denominacao)}</td>` +
+          `<td>${formatValueWord(item.tipo_cargo)}</td>` +
+          `<td>${formatValueWord(item.categoria)}</td>` +
+          `<td>${formatValueWord(item.nivel)}</td>` +
+          `<td>${formatValueWord(item.quantidade)}</td>` +
+          `<td>${formatValueWord(item.pontos * item.quantidade)}</td>` +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+    } else { // completa
+      html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+      html += '<thead><tr>' +
+        ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
+        .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+      originalData.forEach(item => {
+        html += '<tr>' +
+          `<td>${formatValueWord(item.denominacao)}</td>` +
+          `<td>${formatValueWord(item.tipo_cargo)}</td>` +
+          `<td>${formatValueWord(item.categoria)}</td>` +
+          `<td>${formatValueWord(item.nivel)}</td>` +
+          `<td>${formatValueWord(item.quantidade)}</td>` +
+          `<td>${formatValueWord(item.pontos * item.quantidade)}</td>` +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+      // Relatório de diferenças
+      html += '<h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML;
+    }
+
+    html += '</body></html>';
+
+    const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8;' });
+    saveAs(blob, `export_${exportType}.doc`);
   }
   
   /**
    * Exporta os dados para PDF
    */
   function exportToPDF() {
-    if ((type === 'nova' && editedData.length === 0) || 
-        (type !== 'nova' && originalData.length === 0)) {
+    const exportType = exportTypeSelect.value;
+    if ((exportType === 'nova' && editedData.length === 0) || 
+        (exportType !== 'nova' && originalData.length === 0)) {
       alert('Não há dados para exportar');
       return;
     }
-    const type = exportTypeSelect.value;
+    const type = exportType;
     // Nome da unidade
     let unidadeName;
     if (typeof $ !== 'undefined' && $.fn.select2) {

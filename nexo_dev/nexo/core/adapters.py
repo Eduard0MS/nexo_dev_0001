@@ -12,97 +12,99 @@ from allauth.socialaccount.models import SocialAccount
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     """
-    Adaptador personalizado para proporcionar uma experiência de login social fluida:
-    1. Reconhecer usuários que já se cadastraram anteriormente
-    2. Conectar contas sociais a usuários existentes com o mesmo email
-    3. Criar automaticamente uma conta com os dados do provedor social para novos usuários
+    Adaptador personalizado para autenticação social que garante:
+    1. Que cada usuário tenha um nome de usuário único
+    2. Associação de contas sociais a usuários existentes com o mesmo email
+    3. Redirecionamento direto para a página principal após login
     """
-
-    def pre_social_login(self, request, sociallogin):
+    
+    def populate_user(self, request, sociallogin, data):
         """
-        Invocado logo após um login social bem-sucedido,
-        mas antes do login ser realmente processado.
+        Preencher dados do usuário a partir dos dados do provedor social
+        Garantir que o usuário tenha um nome de usuário válido
         """
-        # Se o usuário já está autenticado, não faça nada
-        if request.user.is_authenticated:
-            return
-
-        # Obter dados importantes
-        email = user_email(sociallogin.user)
-        provider = sociallogin.account.provider
-        uid = sociallogin.account.uid
+        user = super().populate_user(request, sociallogin, data)
         
-        # Se já existe um usuário com essa conta social, simplesmente conecte-o
-        if sociallogin.is_existing:
-            return
-            
-        # Verificar se já existe um usuário com o mesmo email no sistema
-        if email:
-            # Caso 1: Email já está verificado no sistema
-            try:
-                # Verificar se já existe um endereço de email verificado no sistema
-                existing_email = EmailAddress.objects.get(email__iexact=email, verified=True)
-                if existing_email:
-                    # Conectar esta conta social ao usuário existente
-                    user = existing_email.user
-                    sociallogin.connect(request, user)
-                    # Fazer login imediatamente
-                    sociallogin.user = user
-                    auth_login(request, user, 'django.contrib.auth.backends.ModelBackend')
-                    # Redirecionar para a página inicial
-                    raise ImmediateHttpResponse(redirect('home'))
-            except EmailAddress.DoesNotExist:
-                pass
-            
-            # Caso 2: Existe um usuário com mesmo email, mas não verificado
-            User = get_user_model()
-            try:
-                user = User.objects.get(email__iexact=email)
-                # Se não caiu no caso 1 e encontramos um usuário com mesmo email
-                # Vamos conectar a conta social a este usuário
-                sociallogin.connect(request, user)
-                # Fazer login imediatamente
-                sociallogin.user = user
-                auth_login(request, user, 'django.contrib.auth.backends.ModelBackend')
-                # Marcar email como verificado
-                EmailAddress.objects.get_or_create(user=user, email=email,
-                                              defaults={'verified': True, 'primary': True})
-                # Redirecionar para a página inicial
-                raise ImmediateHttpResponse(redirect('home'))
-            except User.DoesNotExist:
-                pass
-            
-        # Se chegamos aqui, é um novo usuário social
-        # Vamos criar automaticamente uma conta
-        user = sociallogin.user
-        
-        # Garantir que temos um nome de usuário válido e único
-        if not user_username(user):
+        # Garantir que temos um nome de usuário válido
+        if not user.username or user.username == '':
+            email = user_email(user)
             if email:
-                base_username = email.split("@")[0]
-                # Verificar se o nome de usuário já existe
+                # Usar a parte do email antes do @ como base para username
+                base_username = email.split('@')[0]
+                
+                # Verificar se este username já existe
                 User = get_user_model()
                 username = base_username
                 counter = 1
                 
-                # Se o nome de usuário já existe, adicionar um sufixo numérico
+                # Se o username já existe, adicionar um sufixo numérico
                 while User.objects.filter(username=username).exists():
                     username = f"{base_username}_{counter}"
                     counter += 1
                 
-                user_username(user, username)
+                # Definir o nome de usuário
+                user.username = username
             else:
-                # Gerar um nome de usuário aleatório se não houver email
-                user_username(user, f"user_{uuid.uuid4().hex[:10]}")
-
-        # Salvar o usuário
-        sociallogin.connect(request, user)
+                # Gerar um nome de usuário único com UUID
+                user.username = f"user_{uuid.uuid4().hex[:10]}"
         
-        # Se temos um email, marcar como verificado automaticamente
+        return user
+    
+    def pre_social_login(self, request, sociallogin):
+        """
+        Executado antes de finalizar o login social
+        Verificar se existe usuário com mesmo email e conectar a conta social
+        """
+        # Se o usuário já está autenticado, não fazer nada
+        if request.user.is_authenticated:
+            return
+        
+        # Se a conta social já está conectada a um usuário, deixar o fluxo padrão
+        if sociallogin.is_existing:
+            return
+        
+        # Verificar se existe um usuário com o mesmo email
+        email = user_email(sociallogin.user)
         if email:
-            EmailAddress.objects.get_or_create(user=user, email=email,
-                                           defaults={'verified': True, 'primary': True})
-
-        # Redirecionar para a página inicial
-        # Isso impede que o fluxo normal acesse a tela de signup
-        return redirect("home")
+            try:
+                # Verificar se já existe um email verificado no sistema
+                existing_email = EmailAddress.objects.get(email__iexact=email, verified=True)
+                if existing_email:
+                    # Redirecionar para página principal após conectar conta
+                    user = existing_email.user
+                    sociallogin.user = user
+                    sociallogin.save(request)
+                    auth_login(request, user)
+                    raise ImmediateHttpResponse(redirect('home'))
+            except EmailAddress.DoesNotExist:
+                # Verificar se existe um usuário com o mesmo email, mesmo sem verificação
+                User = get_user_model()
+                try:
+                    user = User.objects.get(email__iexact=email)
+                    sociallogin.user = user
+                    sociallogin.save(request)
+                    # Marcar email como verificado
+                    EmailAddress.objects.get_or_create(
+                        user=user, 
+                        email=email,
+                        defaults={'verified': True, 'primary': True}
+                    )
+                    auth_login(request, user)
+                    raise ImmediateHttpResponse(redirect('home'))
+                except User.DoesNotExist:
+                    pass
+        
+        # Garantir que o usuário tenha um nome de usuário válido
+        user = sociallogin.user
+        if not user.username or user.username == '':
+            if email:
+                base = email.split('@')[0]
+                User = get_user_model()
+                username = base
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base}_{counter}"
+                    counter += 1
+                user.username = username
+            else:
+                user.username = f"user_{uuid.uuid4().hex[:10]}"

@@ -211,3 +211,161 @@ O projeto inclui vários scripts úteis:
 3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request 
+
+## Criação e Configuração de Administradores
+
+### Criando um Superusuário (Admin)
+
+O Django possui um poderoso painel de administração integrado. Para acessá-lo, você precisa criar um superusuário:
+
+```bash
+# Navegue até o diretório do projeto Django
+cd nexo_dev/nexo
+
+# Crie um superusuário
+python manage.py createsuperuser
+```
+
+Siga as instruções do terminal:
+- Digite o endereço de email
+- Crie uma senha segura (deve conter pelo menos 8 caracteres)
+- Confirme a senha
+
+### Acessando o Painel de Administração
+
+1. Inicie o servidor de desenvolvimento:
+```bash
+python manage.py runserver
+```
+
+2. Acesse o painel de administração em seu navegador:
+```
+http://127.0.0.1:8000/admin/
+```
+
+3. Faça login com as credenciais do superusuário que você acabou de criar
+
+### Configurando o Admin para Novos Modelos
+
+Para adicionar seus próprios modelos ao painel de administração, edite o arquivo `admin.py` na aplicação correspondente:
+
+```python
+# Exemplo: core/admin.py
+from django.contrib import admin
+from .models import SeuModelo
+
+@admin.register(SeuModelo)
+class SeuModeloAdmin(admin.ModelAdmin):
+    list_display = ('campo1', 'campo2', 'data_criacao')  # Campos exibidos na listagem
+    search_fields = ('campo1', 'campo2')  # Campos pesquisáveis
+    list_filter = ('campo3', 'status')  # Filtros laterais
+    date_hierarchy = 'data_criacao'  # Navegação por hierarquia de data
+    ordering = ('-data_criacao',)  # Ordenação padrão
+    
+    # Opcional: personalizar formulários de edição
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('campo1', 'campo2', 'campo3')
+        }),
+        ('Opções Avançadas', {
+            'classes': ('collapse',),
+            'fields': ('opcao1', 'opcao2'),
+        }),
+    )
+```
+
+### Personalizando a Aparência do Admin
+
+Para personalizar a aparência e o comportamento do admin, você pode modificar seus templates:
+
+1. Crie um diretório `templates/admin/` em seu projeto
+2. Estenda os templates do admin que deseja personalizar
+
+Exemplo para personalizar o cabeçalho e título:
+```python
+# No arquivo settings.py
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # Certifique-se que este diretório está configurado
+        'APP_DIRS': True,
+        # ... resto da configuração
+    },
+]
+```
+
+```html
+<!-- templates/admin/base_site.html -->
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Nexo Dev Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        Nexo Dev - Painel Administrativo
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    #header {
+        background: #2c3e50;
+        color: white;
+    }
+    #header a:link, #header a:visited {
+        color: white;
+    }
+</style>
+{% endblock %}
+```
+
+### Gerenciando Usuários e Permissões
+
+No painel de administração, você pode:
+
+1. Criar novos usuários
+2. Gerenciar grupos e permissões
+3. Definir níveis de acesso específicos
+
+Para criar um usuário com permissões limitadas:
+1. Acesse "Usuários" no painel admin
+2. Clique em "Adicionar usuário"
+3. Preencha o email e senha
+4. Na próxima tela, defina permissões específicas:
+   - "Status da equipe" para acessar o admin
+   - Escolha grupos específicos ou permissões individuais
+
+### Dicas para o Admin em Produção
+
+Para ambientes de produção, considere:
+
+1. Proteger o acesso ao admin com HTTPS
+2. Alterar a URL do admin para algo menos óbvio:
+```python
+# Em urls.py
+urlpatterns = [
+    path('gerenciamento-secreto/', admin.site.urls),  # URL personalizada em vez de 'admin/'
+    # ... outras URLs
+]
+```
+
+3. Limitar o acesso por IP:
+```python
+# Middleware personalizado para restringir acesso
+from django.http import HttpResponseForbidden
+
+class AdminIPRestrictionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+    def __call__(self, request):
+        allowed_ips = ['192.168.1.100', '127.0.0.1']
+        if request.path.startswith('/admin') and request.META['REMOTE_ADDR'] not in allowed_ips:
+            return HttpResponseForbidden("Acesso não autorizado")
+        return self.get_response(request)
+
+# Adicione este middleware à lista MIDDLEWARE no settings.py
+``` 

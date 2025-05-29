@@ -1015,6 +1015,7 @@
                 <button id="addCargoBtn" class="btn btn-sm btn-success ms-2" title="Adicionar Novo Cargo">
                   <i class="fas fa-plus me-1"></i> Adicionar Cargo
                 </button>
+                <button type="button" class="btn btn-sm btn-success ms-2" id="baixarAnexoBtn" title="Baixar Anexo Preenchido"><i class="fas fa-file-excel"></i> Baixar Anexo</button>
               </div>
               <div class="download-options d-flex align-items-center" style="gap: 5px;">
                 <!-- Selector de tipo de exportação -->
@@ -1109,6 +1110,27 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Estruturas Salvas -->
+<div class="modal fade" id="modalEstruturasSalvas" tabindex="-1" role="dialog" aria-labelledby="modalEstruturasSalvasLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEstruturasSalvasLabel">Estruturas Salvas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <ul id="listaEstruturasSalvas" class="list-group"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}

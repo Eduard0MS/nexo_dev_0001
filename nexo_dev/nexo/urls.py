@@ -1,6 +1,12 @@
 from django.urls import path, include
 from django.contrib import admin
 from .views import CustomLoginView, RegisterView, LogoutView, financeira_page, financeira_data, financeira_export, organograma, organograma_data
+from django.conf import settings
+
+# Customizar o admin
+admin.site.site_header = "Administração do Nexo"
+admin.site.site_title = "Nexo"
+admin.site.index_title = "Administração do Sistema"
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -20,7 +20,7 @@ from .forms import (
     CustomPasswordChangeForm
 )
 from .models import UnidadeCargo, CargoSIORG
-from .utils import processa_planilhas, processa_organograma, estrutura_json_organograma, processa_json_organograma
+from .utils import processa_planilhas, processa_organograma, estrutura_json_organograma, processa_json_organograma, gerar_anexo_simulacao
 import os
 from django.conf import settings
 import json
@@ -45,6 +45,8 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from .dados_json_update import gerar_organograma_json
 from django.core.paginator import Paginator
+from django.utils.decorators import method_decorator
+from django.views import View
 
 
 class CustomLoginView(LoginView):
@@ -1642,3 +1644,35 @@ def api_financeira_organograma(request):
         import traceback
         traceback_str = traceback.format_exc()
         return JsonResponse({'error': f'Erro inesperado: {str(e)}', 'stack_trace': traceback_str}, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class BaixarAnexoSimulacaoView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            estrutura_atual = data.get('estrutura_atual', [])
+            estrutura_nova = data.get('estrutura_nova', [])
+
+            if not isinstance(estrutura_atual, list) or not isinstance(estrutura_nova, list):
+                return JsonResponse({'error': 'Invalid data format: estrutura_atual and estrutura_nova must be arrays.'}, status=400)
+
+            # Call the utility function to generate the Excel file
+            excel_stream = gerar_anexo_simulacao(estrutura_atual, estrutura_nova)
+            
+            response = HttpResponse(
+                excel_stream, 
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename="Anexo_Simulacao.xlsx"'
+            return response
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except FileNotFoundError as e:
+             return JsonResponse({'error': str(e)}, status=404) # e.g., no active template
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400) # e.g., template sheet missing or multiple active
+        except Exception as e:
+            # Log the exception e for debugging
+            print(f"Error in BaixarAnexoSimulacaoView: {str(e)}") # Basic logging
+            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)

@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.urls import path
 from django.shortcuts import render, redirect
 from django import forms
-from .models import UnidadeCargo, Perfil, CargoSIORG
+from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada
 from .utils import processa_planilhas
 from .siorg_scraper import scrape_siorg
 import os
@@ -15,6 +15,11 @@ from django.db.models.fields.related import ForeignObjectRel
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+# Customização do Admin
+admin.site.site_header = "Administração do Nexo"
+admin.site.site_title = "Administração do Nexo"
+admin.site.index_title = "Administração do Site"
 
 # Importar a função de geração do arquivo JSON
 try:
@@ -425,3 +430,48 @@ admin.site.unregister(User)
 
 # Registrar nosso admin personalizado
 admin.site.register(User, CustomUserAdmin)
+
+@admin.register(PlanilhaImportada)
+class PlanilhaImportadaAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'arquivo', 'data_importacao', 'ativo')
+    search_fields = ('nome',)
+    list_filter = ('data_importacao', 'ativo')
+    readonly_fields = ('data_importacao',)
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('importar-planilha/', self.admin_site.admin_view(self.importar_planilha_view), name='importar_planilha'),
+        ]
+        return my_urls + urls
+
+    def importar_planilha_view(self, request):
+        if request.method == 'POST':
+            form = ImportarPlanilhaForm(request.POST, request.FILES)
+            if form.is_valid():
+                planilha = PlanilhaImportada(
+                    nome=form.cleaned_data['nome'],
+                    arquivo=form.cleaned_data['arquivo'],
+                    ativo=form.cleaned_data['ativo']
+                )
+                planilha.save()
+                self.message_user(request, 'Planilha importada com sucesso!', messages.SUCCESS)
+                return redirect('..')
+        else:
+            form = ImportarPlanilhaForm()
+        
+        return render(request, 'admin/importar_planilha.html', {
+            'form': form,
+            'title': 'Importar Planilha',
+            'opts': self.model._meta,
+        })
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['show_import_button'] = True
+        return super().changelist_view(request, extra_context=extra_context)
+
+class ImportarPlanilhaForm(forms.Form):
+    nome = forms.CharField(max_length=255, label='Nome da Planilha')
+    arquivo = forms.FileField(label='Arquivo Excel')
+    ativo = forms.BooleanField(label='Definir como Planilha Ativa', required=False, initial=False)

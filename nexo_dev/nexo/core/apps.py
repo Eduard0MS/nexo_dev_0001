@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.contrib import admin
 
 
 class CoreConfig(AppConfig):
@@ -73,3 +74,8 @@ class CoreConfig(AppConfig):
         # Garante associação ao site
         if site not in primary.sites.all():
             primary.sites.add(site)
+
+        # Customizar o admin quando o app iniciar
+        admin.site.site_header = "Administração do Nexo"
+        admin.site.site_title = "Nexo"
+        admin.site.index_title = "Administração do Sistema"

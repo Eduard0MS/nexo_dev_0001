@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const downloadPDF = document.getElementById('downloadPDF');
   const downloadXLSX = document.getElementById('downloadXLSX');
   const exportTypeSelect = document.getElementById('exportType');
+  const baixarAnexoBtn = document.getElementById('baixarAnexoBtn');
   
   // Dados
   let originalData = [];
@@ -2406,6 +2407,159 @@ document.addEventListener('DOMContentLoaded', function() {
       updatePointsReport();
     }, 1000);
   });
+
+  function getTableData(tableId) {
+    console.log(`Attempting to get data from table with ID: ${tableId}`);
+    const tableElement = document.getElementById(tableId); // Changed from getElementById(tableId) to a more descriptive name
+    
+    if (!tableElement) {
+        console.error(`Table with ID '${tableId}' not found.`);
+        return [];
+    }
+    
+    const tbodyElement = tableElement.querySelector('tbody'); // Changed from querySelector('tbody') to a more descriptive name
+    if (!tbodyElement) {
+        console.warn(`No tbody found in table with ID '${tableId}'. Table HTML:`, tableElement.innerHTML);
+        // Fallback: If no tbody, try to get rows directly from table if it's a simple table
+        // This might not be robust if headers are not in thead
+        const directRows = tableElement.querySelectorAll('tr');
+        if (directRows.length > 1) { // Assuming first row might be header
+             console.log(`Found ${directRows.length} rows directly in table '${tableId}', attempting to process.`);
+             // Process directRows, skipping first if it's likely a header
+        } else {
+            return [];
+        }
+    } else {
+        console.log(`Found tbody in table '${tableId}'. Processing rows...`);
+    }
+
+    const data = [];
+    // Use tbodyElement if found, otherwise fallback to tableElement for rows (less ideal)
+    const rows = tbodyElement ? tbodyElement.querySelectorAll('tr') : tableElement.querySelectorAll('tr');
+    console.log(`Found ${rows.length} rows in table '${tableId}'.`);
+
+    rows.forEach((row, rowIndex) => {
+        const cells = row.querySelectorAll('td');
+        // console.log(`Row ${rowIndex} in ${tableId}, cells found: ${cells.length}`);
+        if (cells.length >= 5) { // Changed from 6 to 5, as Pts. might be calculated, not read
+            const rowData = {
+                area: cells[0]?.textContent.trim(),
+                tipo_cargo: cells[1]?.textContent.trim(),
+                denominacao: cells[2]?.textContent.trim(),
+                categoria: cells[3]?.textContent.trim(),
+                nivel: cells[4]?.textContent.trim(),
+                // quantidade: cells[5]?.textContent.trim(), // Assuming Qtd. is the 6th cell
+            };
+            // console.log(`Row ${rowIndex} data for ${tableId}:`, rowData);
+            data.push(rowData);
+        } else if (cells.length > 0) {
+            // Log rows that don't meet the cell count criteria but are not empty
+            // console.warn(`Row ${rowIndex} in ${tableId} has only ${cells.length} cells, expected at least 5. Skipping.`);
+        }
+    });
+    console.log(`Extracted ${data.length} data rows from table '${tableId}'.`);
+    return data;
+  }
+
+  if (baixarAnexoBtn) {
+    baixarAnexoBtn.addEventListener('click', async function() {
+      // Use the JavaScript variables originalData and editedData directly
+      // These variables should already be populated by your existing logic (e.g., loadUnitData)
+      
+      // We need to ensure the data format matches what _prepare_data_for_excel expects:
+      // list of dicts with keys: 'area', 'denominacao', 'tipo_cargo', 'categoria', 'nivel'
+      // The current `originalData` and `editedData` might have slightly different keys (e.g., 'sigla' instead of 'area')
+      // or might contain more fields than needed. We should map them.
+
+      const mapDataForExcel = (dataArray) => {
+          if (!Array.isArray(dataArray)) {
+              console.warn('Data for mapping is not an array:', dataArray);
+              return [];
+          }
+          return dataArray.map(item => ({
+              area: item.sigla || item.area || 'N/D', // Prefer sigla, fallback to area
+              tipo_cargo: item.tipo_cargo || '',
+              denominacao: item.denominacao || '',
+              categoria: item.categoria || '',
+              nivel: item.nivel || ''
+              // quantidade is not directly used by _prepare_data_for_excel for formatting cargo,
+              // but it's used by a previous version of an excel generator. For this specific anexo, it's not needed here.
+          }));
+      };
+
+      const estruturaAtualDataForExcel = mapDataForExcel(window.originalDataGlobal || originalData || []);
+      const estruturaNovaDataForExcel = mapDataForExcel(window.editedDataGlobal || editedData || []);
+
+      if (!estruturaAtualDataForExcel.length && !estruturaNovaDataForExcel.length) {
+          alert('Não há dados nas estruturas para exportar. Carregue ou adicione dados primeiro.');
+          return;
+      }
+      
+      console.log("Dados para anexo (Atual):", estruturaAtualDataForExcel);
+      console.log("Dados para anexo (Nova):", estruturaNovaDataForExcel);
+
+      try {
+          const response = await fetch('/api/baixar_anexo_simulacao/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken') 
+              },
+              body: JSON.stringify({
+                  estrutura_atual: estruturaAtualDataForExcel,
+                  estrutura_nova: estruturaNovaDataForExcel
+              })
+          });
+
+          if (response.ok) {
+              const blob = await response.blob();
+              const filenameHeader = response.headers.get('content-disposition');
+              let filename = "Anexo_Simulacao.xlsx"; // Default filename
+              if (filenameHeader) {
+                  const filenameMatch = filenameHeader.match(/filename[^;=\n]*=((['"])(?<filename>.*?)\2|(?<filename_no_quotes>[^;\n]*))/i);
+                  if (filenameMatch && filenameMatch.groups && (filenameMatch.groups.filename || filenameMatch.groups.filename_no_quotes)) {
+                      filename = filenameMatch.groups.filename || filenameMatch.groups.filename_no_quotes;
+                  }
+              }
+              
+              if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                  window.navigator.msSaveOrOpenBlob(blob, filename);
+              } else {
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = filename;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+              }
+          } else {
+              const errorData = await response.json();
+              alert(`Erro ao baixar anexo: ${errorData.error || response.statusText}`);
+          }
+      } catch (error) {
+          console.error('Erro ao baixar anexo:', error);
+          alert('Ocorreu um erro de rede ou inesperado ao tentar baixar o anexo.');
+      }
+    });
+  }
+  
+  // Ensure getCookie function exists if you use it for CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 });
 
 // Adicionar estilos para os campos editáveis e destacar valores atualizados

@@ -127,3 +127,26 @@ class CargoSIORG(models.Model):
         cargo_str = str(self.cargo) if self.cargo else ""
         nivel_str = str(self.nivel) if self.nivel else ""
         return str(cargo_str + " - " + nivel_str).strip()
+
+class PlanilhaImportada(models.Model):
+    """
+    Modelo para armazenar planilhas importadas.
+    """
+    nome = models.CharField(max_length=255, verbose_name="Nome")
+    arquivo = models.FileField(upload_to='planilhas_importadas/', verbose_name="Arquivo da Planilha")
+    data_importacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Importação")
+    ativo = models.BooleanField(default=False, verbose_name="Planilha Ativa")
+
+    class Meta:
+        verbose_name = "Planilha Importada"
+        verbose_name_plural = "Planilhas Importadas"
+        ordering = ['-data_importacao']
+
+    def __str__(self):
+        return self.nome
+
+    def save(self, *args, **kwargs):
+        # Se esta planilha está sendo marcada como ativa, desativa todas as outras
+        if self.ativo:
+            PlanilhaImportada.objects.filter(ativo=True).update(ativo=False)
+        super().save(*args, **kwargs)

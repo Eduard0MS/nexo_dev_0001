@@ -2476,15 +2476,57 @@ document.addEventListener('DOMContentLoaded', function() {
               console.warn('Data for mapping is not an array:', dataArray);
               return [];
           }
-          return dataArray.map(item => ({
-              area: item.sigla || item.area || 'N/D', // Prefer sigla, fallback to area
-              tipo_cargo: item.tipo_cargo || '',
-              denominacao: item.denominacao || '',
-              categoria: item.categoria || '',
-              nivel: item.nivel || ''
-              // quantidade is not directly used by _prepare_data_for_excel for formatting cargo,
-              // but it's used by a previous version of an excel generator. For this specific anexo, it's not needed here.
-          }));
+          
+          // Debug: verificar primeiro item antes do filtro
+          if (dataArray.length > 0) {
+              console.log("Primeiro item ANTES do filtro:", dataArray[0]);
+          }
+          
+          return dataArray
+              .filter(item => {
+                  // Filter out invalid items like headers or empty rows
+                  // Check if item has valid data (not a header row)
+                  const isHeader = item.denominacao === 'DENOMINAÇÃO CARGO/FUNÇÃO' || 
+                                 item.denominacao === 'Denominação' ||
+                                 item.area === 'ÁREA' || 
+                                 item.area === 'UNIDADE' ||
+                                 item.sigla === 'ÁREA' ||
+                                 item.tipo_cargo === 'CARGO/FUNÇÃO Nº' ||
+                                 (item.area === 'ÁREA' && item.denominacao === 'DENOMINAÇÃO CARGO/FUNÇÃO');
+                  
+                  // Also filter out items that look like template headers
+                  const isTemplateHeader = (typeof item.area === 'string' && item.area.toUpperCase() === 'ÁREA') ||
+                                         (typeof item.denominacao === 'string' && item.denominacao.includes('DENOMINAÇÃO'));
+                  
+                  const hasValidData = item.area || item.sigla || item.tipo_cargo || item.denominacao;
+                  const hasNumericData = item.categoria || item.nivel || item.quantidade || item.pontos;
+                  
+                  return !isHeader && !isTemplateHeader && (hasValidData || hasNumericData);
+              })
+              .map((item, index) => {
+                  const mapped = {
+                      area: item.sigla || item.area || item.sigla_unidade || 'N/D', // Prefer sigla, fallback to area
+                      tipo_cargo: item.tipo_cargo || '',
+                      denominacao: item.denominacao || '',
+                      categoria: item.categoria || '',
+                      nivel: item.nivel || '',
+                      grafo: item.grafo || '', // Include grafo field for hierarchical ordering
+                      codigo_unidade: item.codigo_unidade || '', // Include unit code
+                      denominacao_unidade: item.denominacao_unidade || '', // Include unit name
+                      sigla_unidade: item.sigla_unidade || item.sigla || item.area || '', // Include unit acronym
+                      quantidade: item.quantidade || 1, // Include quantity for reference
+                      pontos: item.pontos || 0, // Include points for reference
+                      valor_unitario: item.valor_unitario || 0 // Include unit value for reference
+                  };
+                  
+                  // Debug: log primeiro item mapeado
+                  if (index === 0) {
+                      console.log("Primeiro item DEPOIS do mapeamento:", mapped);
+                      console.log("Quantidade original:", item.quantidade, "Quantidade mapeada:", mapped.quantidade);
+                  }
+                  
+                  return mapped;
+              });
       };
 
       const estruturaAtualDataForExcel = mapDataForExcel(window.originalDataGlobal || originalData || []);
@@ -2497,6 +2539,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log("Dados para anexo (Atual):", estruturaAtualDataForExcel);
       console.log("Dados para anexo (Nova):", estruturaNovaDataForExcel);
+      
+      // Debug: verificar se quantidade está presente
+      if (estruturaAtualDataForExcel.length > 0) {
+          console.log("Exemplo de item (Atual) com quantidade:", estruturaAtualDataForExcel[0]);
+      }
+      if (estruturaNovaDataForExcel.length > 0) {
+          console.log("Exemplo de item (Nova) com quantidade:", estruturaNovaDataForExcel[0]);
+      }
 
       try {
           const response = await fetch('/api/baixar_anexo_simulacao/', {

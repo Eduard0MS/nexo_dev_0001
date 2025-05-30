@@ -1411,7 +1411,8 @@ def api_cargos_diretos(request):
                 'pontos': pontos,
                 'valor_unitario': valor_unitario,
                 'pontos_totais': pontos_total,
-                'gastos_totais': gasto_total
+                'gastos_totais': gasto_total,
+                'grafo': cargo.grafo or ''  # Include grafo field for hierarchical ordering
             })
         
         logger.info(f"Dados formatados: {len(result)} registros processados")

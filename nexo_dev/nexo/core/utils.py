@@ -338,42 +338,87 @@ def processa_json_organograma(json_data):
 
 def _prepare_data_for_excel(data_list):
     """
-    Prepares the list of data items for Excel, grouping by area and adding incremental index.
-    Each item in data_list is expected to be a dictionary with keys like
-    'area', 'denominacao', 'tipo_cargo', 'categoria', 'nivel'.
+    Prepares the list of data items for Excel, maintaining hierarchical order based on 'grafo' field.
+    The 'grafo' field contains the hierarchical path (e.g., "308804-308805-308806").
+    Parents always come before children, and items are grouped by area.
+    Higher level positions (e.g., FCE 1.15) come before lower levels (e.g., FCE 1.14).
     """
     processed_list = []
-    # Group data by 'area' to correctly calculate incremental index per area
-    grouped_by_area = defaultdict(list)
+    
+    # First, create a complete hierarchical structure
+    # Group by area first
+    areas_dict = {}
     for item in data_list:
-        grouped_by_area[item.get('area', 'N/A')].append(item)
-
-    for area_key in sorted(grouped_by_area.keys()): # Sort by area name for consistent output
-        items_in_area = grouped_by_area[area_key]
-        for i, item in enumerate(items_in_area, start=1):
-            # Ensure categoria and nivel are treated as strings for formatting
+        area = item.get('area', 'N/A')
+        if area not in areas_dict:
+            areas_dict[area] = []
+        areas_dict[area].append(item)
+    
+    # Sort areas alphabetically, but SAGE (if exists) should come first as it's usually the top level
+    sorted_areas = sorted(areas_dict.keys())
+    if 'SAGE' in sorted_areas:
+        sorted_areas.remove('SAGE')
+        sorted_areas.insert(0, 'SAGE')
+    
+    # Process each area
+    for area_key in sorted_areas:
+        items_in_area = areas_dict[area_key]
+        
+        # Sort items within area by hierarchy
+        def get_hierarchical_sort_key(item):
+            nivel = int(item.get('nivel', 0))
+            categoria = int(item.get('categoria', 0))
+            tipo_cargo = item.get('tipo_cargo', '')
+            denominacao = item.get('denominacao', '')
+            
+            # Primary sort: by nivel DESCENDING (15 before 14)
+            # Secondary sort: by categoria ASCENDING (1 before 3)
+            # Tertiary sort: by cargo type (CCE before FCE alphabetically)
+            # Quaternary sort: by denominacao
+            return (-nivel, categoria, tipo_cargo, denominacao)
+        
+        # Sort items
+        items_sorted = sorted(items_in_area, key=get_hierarchical_sort_key)
+        
+        # Add items to processed list
+        for item in items_sorted:
             categoria_str = str(item.get('categoria', ''))
             nivel_str = str(item.get('nivel', ''))
-            cargo_formatado = f"{item.get('tipo_cargo', '')} {categoria_str}.{nivel_str.zfill(2)}".strip()
-            # If tipo_cargo is empty, it might look like " .1.00", so strip leading/trailing spaces.
-            if cargo_formatado == ".": # handles case where all parts are empty
+            tipo_cargo = item.get('tipo_cargo', '')
+            
+            # Get quantity - ensure it's an integer
+            quantidade_raw = item.get('quantidade', 1)
+            try:
+                quantidade = int(quantidade_raw) if quantidade_raw else 1
+            except (ValueError, TypeError):
+                quantidade = 1
+            
+            # Format cargo string
+            if categoria_str and nivel_str and tipo_cargo:
+                cargo_formatado = f"{tipo_cargo} {categoria_str}.{nivel_str.zfill(2)}".strip()
+            else:
+                cargo_formatado = tipo_cargo
+            
+            # Clean up the formatted cargo string
+            if cargo_formatado == ".":
                 cargo_formatado = ""
             elif cargo_formatado.startswith(" ."):
-                 cargo_formatado = cargo_formatado[2:] # Remove leading space and dot if tipo_cargo is empty
+                cargo_formatado = cargo_formatado[2:]
             
             row_data = {
                 'area': area_key,
-                'incremental_idx': i,
+                'quantidade': quantidade,  # Use the converted integer
                 'denominacao': item.get('denominacao', ''),
                 'cargo_formatado': cargo_formatado
             }
             processed_list.append(row_data)
+    
     return processed_list
 
 def gerar_anexo_simulacao(data_atual, data_nova):
     """
     Generates an Excel anexo with simulation data.
-    Clears rows 5-327 in 'ComparativoEstruturas' sheet, adds headers to row 7,
+    Clears rows 5-327 in 'ComparativoEstruturas' sheet,
     and populates data from row 8.
     """
     try:
@@ -384,13 +429,9 @@ def gerar_anexo_simulacao(data_atual, data_nova):
         raise ValueError("Múltiplas planilhas ativas encontradas. Por favor, defina apenas uma como ativa.")
 
     try:
-        # Load the workbook, trying with keep_vba=False first to simplify processing
-        # if VBA is not essential for the sheet being modified.
+        # Load the workbook, trying with keep_vba=False first
         workbook = openpyxl.load_workbook(planilha_ativa.arquivo.path, keep_vba=False, data_only=False)
     except Exception as e:
-        # If loading without VBA fails or if you know VBA is needed and might be related,
-        # you could log this and try again with keep_vba=True, or just raise.
-        # For now, we directly raise the error if keep_vba=False fails.
         raise ValueError(f"Erro ao carregar o template da planilha: {str(e)}")
 
     sheet_name = "ComparativoEstruturas"
@@ -400,7 +441,7 @@ def gerar_anexo_simulacao(data_atual, data_nova):
     sheet = workbook[sheet_name]
 
     # 1. Clear content of rows 5 to 327, handling merged cells
-    for row_index in range(5, 328): # rows 5 to 327 inclusive
+    for row_index in range(5, 328):
         if row_index <= sheet.max_row:
             for col_index in range(1, sheet.max_column + 1):
                 if col_index <= sheet.max_column:
@@ -411,40 +452,16 @@ def gerar_anexo_simulacao(data_atual, data_nova):
                     for merged_range in sheet.merged_cells.ranges:
                         if cell.coordinate in merged_range:
                             is_merged = True
-                            # It's safer to unmerge the range and then clear the top-left cell of that original range.
-                            # However, to simply clear content within our target rows (5-327), we can unmerge
-                            # any merged cells that INTERSECT with the current cell we are trying to clear.
-                            # The unmerge operation might affect cells outside the current col_index if the merge span is large.
-                            # A common strategy is to unmerge, set the top-left value to None, 
-                            # and then optionally re-merge if the original structure needs to be preserved (complex).
-                            # For simple clearing, unmerging is the first step.
-                            
-                            # Store the range string before unmerging, as unmerging modifies the collection
                             range_to_unmerge_str = str(merged_range)
-                            # Unmerge the identified range
                             sheet.unmerge_cells(range_to_unmerge_str)
-                            # After unmerging, the current `cell` object might be stale or refer to the top-left.
-                            # We will clear the top-left cell of the *original* merged range if it falls within our row scan.
-                            # The primary cell (top-left) of the unmerged group now holds the value.
-                            # We need to ensure we clear all cells that were part of this merge if they fall in 5-327.
-                            # For simplicity now: after unmerging, the current cell (if it was the top-left)
-                            # can have its value set. If it wasn't the top-left, its value is intrinsically None.
-                            # So, we proceed to set cell.value = None, which should now work on the (potentially former top-left) cell.
-                            break # Found the merged range containing this cell, unmerged it.
+                            break
                     
-                    # Now, set the value to None. If it was part of a merge, it's now unmerged.
-                    # The cell we have (cell = sheet.cell(...)) should be the top-left if it was merged, or a normal cell.
                     try:
                         cell.value = None
-                    except AttributeError as e:
-                        # This might happen if the cell object became invalid after unmerge in some edge cases,
-                        # or if it truly is a type of cell that doesn't support direct value assignment even after unmerge.
-                        # Re-fetch the cell explicitly after unmerging for safety if issues persist.
-                        # For now, we log and continue, assuming the unmerge handled it or it's a minor cell.
-                        print(f"Could not set value for cell {cell.coordinate} after attempting unmerge: {e}")
+                    except AttributeError:
                         pass
 
-    # 2. Headers are assumed to be already present in the template on row 7.
+    # 2. Headers are already in the template on row 7 - DO NOT ADD THEM AGAIN
     #    Data will be populated starting from row 8.
 
     # 3. Prepare and populate data
@@ -453,10 +470,9 @@ def gerar_anexo_simulacao(data_atual, data_nova):
 
     # Define alignments
     align_left = Alignment(horizontal='left', vertical='center')
-    align_right = Alignment(horizontal='right', vertical='center')
-    # align_center = Alignment(horizontal='center', vertical='center') # Se precisar centralizar algo
+    align_center = Alignment(horizontal='center', vertical='center')
 
-    current_data_row = 8 # Data starts at row 8
+    current_data_row = 8  # Data starts at row 8
 
     # Populate "Estrutura Atual" (Columns A-D, i.e., 1-4)
     for item_row_data in processed_atual:
@@ -465,8 +481,8 @@ def gerar_anexo_simulacao(data_atual, data_nova):
         cell_A.alignment = align_left
 
         cell_B = sheet.cell(row=current_data_row, column=2)
-        cell_B.value = item_row_data['incremental_idx']
-        cell_B.alignment = align_right
+        cell_B.value = item_row_data['quantidade']
+        cell_B.alignment = align_center
 
         cell_C = sheet.cell(row=current_data_row, column=3)
         cell_C.value = item_row_data['denominacao']
@@ -478,7 +494,8 @@ def gerar_anexo_simulacao(data_atual, data_nova):
         
         current_data_row += 1
     
-    current_data_row = 8 # Reset for "Estrutura Nova"
+    current_data_row = 8  # Reset for "Estrutura Nova"
+    
     # Populate "Estrutura Nova" (Columns F-I, i.e., 6-9)
     for item_row_data in processed_nova:
         cell_F = sheet.cell(row=current_data_row, column=6)
@@ -486,8 +503,8 @@ def gerar_anexo_simulacao(data_atual, data_nova):
         cell_F.alignment = align_left
 
         cell_G = sheet.cell(row=current_data_row, column=7)
-        cell_G.value = item_row_data['incremental_idx']
-        cell_G.alignment = align_right
+        cell_G.value = item_row_data['quantidade']
+        cell_G.alignment = align_center
 
         cell_H = sheet.cell(row=current_data_row, column=8)
         cell_H.value = item_row_data['denominacao']
@@ -498,13 +515,11 @@ def gerar_anexo_simulacao(data_atual, data_nova):
         cell_I.alignment = align_left
         
         current_data_row += 1
-        
-    # Ensure enough rows exist if data is long. openpyxl handles this automatically.
 
     # Save to a BytesIO stream
     excel_stream = BytesIO()
     workbook.save(excel_stream)
-    excel_stream.seek(0) # Rewind the stream to the beginning
+    excel_stream.seek(0)  # Rewind the stream to the beginning
     
     return excel_stream
 

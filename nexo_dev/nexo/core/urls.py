@@ -44,4 +44,10 @@ urlpatterns = [
     # path('api/limpar_estruturas/', LimparEstruturasView.as_view(), name='limpar_estruturas'), # Commenting out
     # path('api/estruturas_salvas/', EstruturasSalvasView.as_view(), name='estruturas_salvas'), # Commenting out
     path('api/baixar_anexo_simulacao/', BaixarAnexoSimulacaoView.as_view(), name='baixar_anexo_simulacao'),
+    
+    # APIs de Simulações Salvas
+    path('api/simulacoes/', views.listar_simulacoes, name='listar_simulacoes'),
+    path('api/simulacoes/salvar/', views.salvar_simulacao, name='salvar_simulacao'),
+    path('api/simulacoes/<int:simulacao_id>/', views.carregar_simulacao, name='carregar_simulacao'),
+    path('api/simulacoes/<int:simulacao_id>/deletar/', views.deletar_simulacao, name='deletar_simulacao'),
 ]

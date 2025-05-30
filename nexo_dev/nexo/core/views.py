@@ -47,6 +47,7 @@ from .dados_json_update import gerar_organograma_json
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views import View
+from .models import SimulacaoSalva
 
 
 class CustomLoginView(LoginView):
@@ -1677,3 +1678,129 @@ class BaixarAnexoSimulacaoView(View):
             # Log the exception e for debugging
             print(f"Error in BaixarAnexoSimulacaoView: {str(e)}") # Basic logging
             return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def listar_simulacoes(request):
+    """Lista todas as simulações salvas do usuário atual"""
+    simulacoes = SimulacaoSalva.objects.filter(usuario=request.user)
+    
+    data = []
+    for sim in simulacoes:
+        data.append({
+            'id': sim.id,
+            'nome': sim.nome,
+            'descricao': sim.descricao or '',
+            'unidade_base': sim.unidade_base or '',
+            'criado_em': sim.criado_em.strftime('%d/%m/%Y %H:%M'),
+            'atualizado_em': sim.atualizado_em.strftime('%d/%m/%Y %H:%M')
+        })
+    
+    return JsonResponse({
+        'simulacoes': data,
+        'total': len(data),
+        'limite': 5
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def salvar_simulacao(request):
+    """Salva uma nova simulação ou atualiza uma existente"""
+    try:
+        data = json.loads(request.body)
+        nome = data.get('nome', '').strip()
+        descricao = data.get('descricao', '').strip()
+        dados_estrutura = data.get('dados_estrutura', [])
+        unidade_base = data.get('unidade_base', '').strip()
+        simulacao_id = data.get('id')  # Para atualização
+        
+        # Validações
+        if not nome:
+            return JsonResponse({'erro': 'Nome da simulação é obrigatório'}, status=400)
+        
+        if not dados_estrutura:
+            return JsonResponse({'erro': 'Dados da estrutura são obrigatórios'}, status=400)
+        
+        # Verificar se é atualização ou criação
+        if simulacao_id:
+            # Atualização
+            try:
+                simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+                simulacao.nome = nome
+                simulacao.descricao = descricao
+                simulacao.dados_estrutura = dados_estrutura
+                simulacao.unidade_base = unidade_base
+                simulacao.save()
+                
+                return JsonResponse({
+                    'mensagem': 'Simulação atualizada com sucesso',
+                    'id': simulacao.id
+                })
+            except SimulacaoSalva.DoesNotExist:
+                return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+        else:
+            # Criação
+            # Verificar limite de 5 simulações
+            total_simulacoes = SimulacaoSalva.objects.filter(usuario=request.user).count()
+            if total_simulacoes >= 5:
+                return JsonResponse({
+                    'erro': 'Limite de 5 simulações atingido. Delete uma simulação existente antes de criar uma nova.'
+                }, status=400)
+            
+            # Verificar se já existe simulação com mesmo nome
+            if SimulacaoSalva.objects.filter(usuario=request.user, nome=nome).exists():
+                return JsonResponse({
+                    'erro': f'Já existe uma simulação com o nome "{nome}"'
+                }, status=400)
+            
+            simulacao = SimulacaoSalva.objects.create(
+                usuario=request.user,
+                nome=nome,
+                descricao=descricao,
+                dados_estrutura=dados_estrutura,
+                unidade_base=unidade_base
+            )
+            
+            return JsonResponse({
+                'mensagem': 'Simulação salva com sucesso',
+                'id': simulacao.id
+            }, status=201)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def carregar_simulacao(request, simulacao_id):
+    """Carrega os dados de uma simulação específica"""
+    try:
+        simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        
+        return JsonResponse({
+            'id': simulacao.id,
+            'nome': simulacao.nome,
+            'descricao': simulacao.descricao or '',
+            'dados_estrutura': simulacao.dados_estrutura,
+            'unidade_base': simulacao.unidade_base or '',
+            'criado_em': simulacao.criado_em.strftime('%d/%m/%Y %H:%M'),
+            'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M')
+        })
+    except SimulacaoSalva.DoesNotExist:
+        return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+
+@login_required
+@require_http_methods(["DELETE"])
+def deletar_simulacao(request, simulacao_id):
+    """Deleta uma simulação do usuário"""
+    try:
+        simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        nome = simulacao.nome
+        simulacao.delete()
+        
+        return JsonResponse({
+            'mensagem': f'Simulação "{nome}" deletada com sucesso'
+        })
+    except SimulacaoSalva.DoesNotExist:
+        return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)

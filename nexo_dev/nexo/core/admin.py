@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.urls import path
 from django.shortcuts import render, redirect
 from django import forms
-from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada
+from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada, SimulacaoSalva
 from .utils import processa_planilhas
 from .siorg_scraper import scrape_siorg
 import os
@@ -475,3 +475,43 @@ class ImportarPlanilhaForm(forms.Form):
     nome = forms.CharField(max_length=255, label='Nome da Planilha')
     arquivo = forms.FileField(label='Arquivo Excel')
     ativo = forms.BooleanField(label='Definir como Planilha Ativa', required=False, initial=False)
+
+@admin.register(SimulacaoSalva)
+class SimulacaoSalvaAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'usuario', 'unidade_base', 'criado_em', 'atualizado_em']
+    list_filter = ['usuario', 'unidade_base', 'criado_em']
+    search_fields = ['nome', 'descricao', 'usuario__username', 'usuario__email']
+    readonly_fields = ['criado_em', 'atualizado_em']
+    
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('usuario', 'nome', 'descricao', 'unidade_base')
+        }),
+        ('Dados da Simulação', {
+            'fields': ('dados_estrutura',),
+            'classes': ('collapse',)
+        }),
+        ('Informações do Sistema', {
+            'fields': ('criado_em', 'atualizado_em'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('usuario')
+    
+    def has_add_permission(self, request):
+        # Apenas superusuários podem adicionar diretamente pelo admin
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        # Superusuários podem editar qualquer simulação
+        if request.user.is_superuser:
+            return True
+        # Usuários regulares não têm acesso ao admin
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # Apenas superusuários podem deletar
+        return request.user.is_superuser

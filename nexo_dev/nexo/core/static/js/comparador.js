@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
   let filteredEditedData = [];
   let isFiltered = false;
   
+  // Expor dados globalmente para outros módulos
+  window.originalData = originalData;
+  window.editedData = editedData;
+  
   // Controle de paginação no estado inicial
   let currentPage = 1;
   const itemsPerPage = 25;
@@ -413,6 +417,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
+      // Limpar contexto de simulação ao pesquisar nova unidade
+      if (typeof window.limparContextoSimulacao === 'function') {
+        window.limparContextoSimulacao();
+      }
+      
       // Obter o texto da opção selecionada para extrair a sigla
       let siglaUnidade;
       if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -430,36 +439,83 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     if (clearFilterBtn) {
       clearFilterBtn.addEventListener('click', function() {
+        // Verificar se há uma simulação carregada
+        const status = document.getElementById('paginationStatus');
+        const isSimulacao = status && status.textContent.includes('Simulação');
+        
+        if (isSimulacao) {
+          const confirmar = confirm('Você está visualizando uma simulação carregada.\n\nDeseja realmente voltar à visualização completa da base de dados?');
+          if (!confirmar) {
+            return;
+          }
+        }
+        
+        // Limpar contexto de simulação ao limpar filtro
+        if (typeof window.limparContextoSimulacao === 'function') {
+          window.limparContextoSimulacao();
+        }
+        
         // Limpar seleção de unidade
         if (typeof $ !== 'undefined' && $.fn.select2) {
           $(unitSelect).val(null).trigger('change');
         } else {
           unitSelect.value = '';
         }
-        // Restaurar dados originais completos
+        
+        // Restaurar dados originais completos da base
         if (window.organogramaData && Array.isArray(window.organogramaData.core_unidadecargo)) {
-          originalData = window.organogramaData.core_unidadecargo.map(item => ({
-            sigla: item.sigla || '',
-            tipo_cargo: item.tipo_cargo || '',
-            denominacao: item.denominacao || '',
-            categoria: item.categoria || '',
-            nivel: item.nivel || '',
-            quantidade: item.quantidade || 0,
-            pontos: item.pontos || 0,
-            valor_unitario: item.valor_unitario || 0
-          }));
-          editedData = JSON.parse(JSON.stringify(originalData));
+          // Limpar arrays completamente
+          originalData.length = 0;
+          editedData.length = 0;
+          filteredOriginalData.length = 0;
+          filteredEditedData.length = 0;
+          
+          // Recarregar dados da base completa
+          window.organogramaData.core_unidadecargo.forEach(item => {
+            const newItem = {
+              sigla: item.sigla || '',
+              tipo_cargo: item.tipo_cargo || '',
+              denominacao: item.denominacao || '',
+              categoria: item.categoria || '',
+              nivel: item.nivel || '',
+              quantidade: item.quantidade || 0,
+              pontos: item.pontos || 0,
+              valor_unitario: item.valor_unitario || 0
+            };
+            originalData.push(newItem);
+            editedData.push(JSON.parse(JSON.stringify(newItem)));
+          });
+          
+          // Resetar estado
+          isFiltered = false;
+          window.isFiltered = false;
+          
+          // Atualizar variáveis globais
+          window.originalData = originalData;
+          window.editedData = editedData;
         }
+        
         // Recriar paginação e renderizar página inicial
         const pagControls = document.getElementById('paginationControls');
         if (pagControls) pagControls.remove();
         setupPaginationControls();
         currentPage = 1;
         renderPage();
+        
         // Limpar relatório de diferenças
         clearDiffReport();
+        
         // Atualizar relatório de pontos 
         updatePointsReport();
+        
+        // Mostrar mensagem de confirmação
+        setTimeout(() => {
+          const statusEl = document.getElementById('paginationStatus');
+          if (statusEl) {
+            const totalPages = Math.ceil(originalData.length / itemsPerPage);
+            statusEl.textContent = `Página 1 de ${totalPages} (Base Completa)`;
+          }
+        }, 100);
       });
     }
     
@@ -509,6 +565,17 @@ document.addEventListener('DOMContentLoaded', function() {
    * @param {string} unitSigla - Sigla da unidade
    */
   function loadUnitData(unitCode, unitSigla) {
+    // Verificar se há uma simulação carregada
+    const status = document.getElementById('paginationStatus');
+    const isSimulacao = status && status.textContent.includes('Simulação');
+    
+    if (isSimulacao) {
+      const confirmar = confirm(`Você está visualizando uma simulação carregada.\n\nDeseja realmente substituir pelos dados da unidade "${unitSigla}"?\n\n(Isso irá remover a simulação atual)`);
+      if (!confirmar) {
+        return;
+      }
+    }
+    
     // Limpar dados anteriores
     originalData = [];
     editedData = [];
@@ -565,6 +632,11 @@ document.addEventListener('DOMContentLoaded', function() {
         isFiltered = false;
         currentPage = 1;
         
+        // Atualizar variáveis globais
+        window.originalData = originalData;
+        window.editedData = editedData;
+        window.isFiltered = false;
+        
         // Recriar controles de paginação para os novos dados
         setupPaginationControls();
         
@@ -577,6 +649,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Garantir que o relatório de pontos seja atualizado
         setTimeout(updatePointsReport, 100);
+        
+        // Atualizar status para indicar filtro por unidade
+        setTimeout(() => {
+          const statusEl = document.getElementById('paginationStatus');
+          if (statusEl) {
+            const totalPages = Math.ceil(originalData.length / itemsPerPage);
+            statusEl.textContent = `Página 1 de ${totalPages} (Filtrado: ${unitSigla})`;
+          }
+        }, 200);
       })
       .catch(error => {
         console.error('Erro ao buscar dados:', error);
@@ -2610,6 +2691,127 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return cookieValue;
   }
+  
+  // Exportar funções necessárias para o módulo de simulações
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // Exportar funções globalmente para outros módulos (ex: simulacoes.js)
+  window.populateCurrentTable = populateCurrentTable;
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.renderPage = renderPage;
+  window.setupPaginationControls = setupPaginationControls;
+  
+  // Exportar variáveis importantes
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // Exportar funções de controle de estado
+  window.setFilteredData = function(originalFiltered, editedFiltered) {
+    filteredOriginalData = originalFiltered;
+    filteredEditedData = editedFiltered;
+    isFiltered = true;
+    currentPage = 1;
+  };
+  
+  window.clearFilteredData = function() {
+    filteredOriginalData = [];
+    filteredEditedData = [];
+    isFiltered = false;
+  };
+  
+  // Função para simular o comportamento do filtro (sem fazer requisição à API)
+  window.aplicarFiltroSimulacao = function(dadosSimulacao, unidadeBase) {
+    console.log('🔄 Aplicando filtro de simulação...');
+    console.log('📊 Dados recebidos:', dadosSimulacao.length, 'itens');
+    console.log('🏢 Unidade base:', unidadeBase);
+    
+    // CORREÇÃO: Se os dados já estão corretos (originalData != editedData), só atualizar interface
+    if (window.originalData && window.editedData && 
+        window.originalData.length > 0 && window.editedData.length > 0 &&
+        JSON.stringify(window.originalData) !== JSON.stringify(window.editedData)) {
+      
+      console.log('✅ Dados já aplicados corretamente, apenas atualizando interface...');
+      
+      // Só atualizar a interface sem modificar os dados
+      updateInterface();
+      
+    } else {
+      console.log('🔄 Aplicando dados da simulação...');
+      
+      // Comportamento original: substituir dados (fallback)
+      originalData.splice(0, originalData.length, ...dadosSimulacao);
+      editedData.splice(0, editedData.length, ...JSON.parse(JSON.stringify(dadosSimulacao)));
+      
+      // Atualizar variáveis globais
+      window.originalData = originalData;
+      window.editedData = editedData;
+      
+      console.log('✅ Dados substituídos - originalData:', originalData.length, 'editedData:', editedData.length);
+      
+      updateInterface();
+    }
+    
+    function updateInterface() {
+      // Limpar dados filtrados
+      filteredOriginalData = [];
+      filteredEditedData = [];
+      isFiltered = false;
+      currentPage = 1;
+      
+      window.isFiltered = false;
+      window.currentPage = 1;
+      
+      // Recriar controles de paginação
+      const paginationControls = document.getElementById('paginationControls');
+      if (paginationControls) {
+        paginationControls.remove();
+      }
+      
+      setupPaginationControls();
+      
+      // Forçar renderização das tabelas
+      console.log('🎯 Forçando renderização...');
+      populateCurrentTable(window.originalData.slice(0, itemsPerPage));
+      populateEditableTable(window.editedData.slice(0, itemsPerPage));
+      
+      // Atualizar o select de unidade
+      if (unidadeBase && unitSelect) {
+        const options = unitSelect.options;
+        for (let i = 0; i < options.length; i++) {
+          if (options[i].text.includes(unidadeBase)) {
+            unitSelect.selectedIndex = i;
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+              $(unitSelect).val(options[i].value).trigger('change');
+            }
+            break;
+          }
+        }
+      }
+      
+      // Atualizar status de paginação
+      const status = document.getElementById('paginationStatus');
+      if (status) {
+        const totalPages = Math.ceil(window.originalData.length / itemsPerPage);
+        status.textContent = `Página 1 de ${totalPages} (Simulação: ${unidadeBase || 'Carregada'})`;
+      }
+      
+      // FORÇAR atualização dos relatórios
+      setTimeout(() => {
+        console.log('🔄 Atualizando relatórios...');
+        updateDiffReport();
+        updatePointsReport();
+        console.log('✅ Relatórios atualizados!');
+      }, 500);
+    }
+    
+    console.log('🎉 Filtro de simulação aplicado com sucesso!');
+  };
 });
 
 // Adicionar estilos para os campos editáveis e destacar valores atualizados

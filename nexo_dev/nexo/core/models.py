@@ -150,3 +150,33 @@ class PlanilhaImportada(models.Model):
         if self.ativo:
             PlanilhaImportada.objects.filter(ativo=True).update(ativo=False)
         super().save(*args, **kwargs)
+
+class SimulacaoSalva(models.Model):
+    """
+    Modelo para armazenar simulações salvas pelos usuários.
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuário")
+    nome = models.CharField(max_length=255, verbose_name="Nome da Simulação")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    dados_estrutura = models.JSONField(verbose_name="Dados da Estrutura")
+    unidade_base = models.CharField(max_length=100, blank=True, null=True, verbose_name="Unidade Base")
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+
+    class Meta:
+        verbose_name = "Simulação Salva"
+        verbose_name_plural = "Simulações Salvas"
+        ordering = ['-criado_em']
+        unique_together = ['usuario', 'nome']  # Um usuário não pode ter duas simulações com o mesmo nome
+
+    def __str__(self):
+        return f"{self.nome} - {self.usuario.username}"
+
+    def save(self, *args, **kwargs):
+        # Validar que o usuário não tenha mais de 5 simulações
+        if not self.pk:  # Se é uma nova simulação (não uma atualização)
+            count = SimulacaoSalva.objects.filter(usuario=self.usuario).count()
+            if count >= 5:
+                from django.core.exceptions import ValidationError
+                raise ValidationError("Cada usuário pode ter no máximo 5 simulações salvas.")
+        super().save(*args, **kwargs)

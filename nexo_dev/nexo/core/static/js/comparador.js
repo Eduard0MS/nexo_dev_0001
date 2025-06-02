@@ -34,9 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
   let filteredEditedData = [];
   let isFiltered = false;
   
+  // Variáveis globais para armazenar dados completos (não filtrados)
+  let completeOriginalData = [];
+  let completeEditedData = [];
+  
   // Expor dados globalmente para outros módulos
   window.originalData = originalData;
   window.editedData = editedData;
+  window.completeOriginalData = completeOriginalData;
+  window.completeEditedData = completeEditedData;
   
   // Controle de paginação no estado inicial
   let currentPage = 1;
@@ -187,6 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
       valor_unitario: item.valor_unitario || 0
     }));
     editedData = JSON.parse(JSON.stringify(originalData));
+    
+    // IMPORTANTE: Armazenar dados completos da base APENAS UMA VEZ no início
+    completeOriginalData = JSON.parse(JSON.stringify(originalData));
+    completeEditedData = JSON.parse(JSON.stringify(editedData));
+    
     setupPaginationControls();
     renderPage();
   }
@@ -469,6 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
           editedData.length = 0;
           filteredOriginalData.length = 0;
           filteredEditedData.length = 0;
+          completeOriginalData.length = 0;
+          completeEditedData.length = 0;
           
           // Recarregar dados da base completa
           window.organogramaData.core_unidadecargo.forEach(item => {
@@ -484,6 +497,8 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             originalData.push(newItem);
             editedData.push(JSON.parse(JSON.stringify(newItem)));
+            completeOriginalData.push(JSON.parse(JSON.stringify(newItem)));
+            completeEditedData.push(JSON.parse(JSON.stringify(newItem)));
           });
           
           // Resetar estado
@@ -493,6 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
           // Atualizar variáveis globais
           window.originalData = originalData;
           window.editedData = editedData;
+          window.completeOriginalData = completeOriginalData;
+          window.completeEditedData = completeEditedData;
         }
         
         // Recriar paginação e renderizar página inicial
@@ -632,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isFiltered = false;
         currentPage = 1;
         
-        // Atualizar variáveis globais
+        // Atualizar variáveis globais APENAS dos dados filtrados (não sobrescrever dados completos)
         window.originalData = originalData;
         window.editedData = editedData;
         window.isFiltered = false;
@@ -888,6 +905,9 @@ document.addEventListener('DOMContentLoaded', function() {
           // Verificar diferenças e atualizar os relatórios
           updateDiffReport();
           updatePointsReport();
+          
+          // Sincronizar edições com dados completos
+          syncEditedDataToComplete();
         }
     }
     
@@ -931,6 +951,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Verificar diferenças e atualizar os relatórios
         updateDiffReport();
         updatePointsReport();
+        
+        // Sincronizar edições com dados completos
+        syncEditedDataToComplete();
       }
     }
   }
@@ -1790,10 +1813,14 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação CSV do tipo: ${exportType}`);
+    
     let headers = [];
     let dataRows = [];
 
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação CSV com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       headers = ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)'];
       dataRows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
@@ -1813,6 +1840,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
       });
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova CSV com ${editedData.length} itens`);
       headers = ['Área','Tipo Cargo','Denominação','Cat.','Nvl.','Qtd.','Pts.'];
       dataRows = editedData.map(item => [
         item.sigla,
@@ -1824,9 +1852,15 @@ document.addEventListener('DOMContentLoaded', function() {
         item.pontos * item.quantidade
       ]);
     } else {
-      // completa
+      // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos CSV: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação CSV`);
+      
       headers = ['Área','Tipo Cargo','Denominação','Categoria','Nível','Quantidade','Pontos'];
-      dataRows = originalData.map(item => [
+      dataRows = dataToExport.map(item => [
         item.sigla,
         item.tipo_cargo,
         item.denominacao,
@@ -1840,8 +1874,10 @@ document.addEventListener('DOMContentLoaded', function() {
       dataRows.push([]);
       const diffHeaders = ['Denominação','Categoria (Original)','Categoria (Editada)','Nível (Original)','Nível (Editado)','Quantidade (Original)','Quantidade (Editada)','Pontos (Original)','Pontos (Editado)'];
       dataRows.push(diffHeaders);
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -1856,9 +1892,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ptsOrig,
             ptsEdit
           ]);
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório CSV`);
     }
+
+    console.log(`✅ ${dataRows.length} linhas preparadas para exportação CSV`);
 
     let csvContent = headers.join(',') + '\n';
     dataRows.forEach(row => {
@@ -1870,7 +1911,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `export_${exportType}.csv`);
+    const filename = `export_${exportType}.csv`;
+    link.setAttribute('download', filename);
+    console.log(`💾 Baixando arquivo CSV: ${filename}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1886,6 +1929,9 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação HTML do tipo: ${exportType}`);
+    
     let unidadeName;
     if (typeof $ !== 'undefined' && $.fn.select2) {
       unidadeName = $(unitSelect).find(':selected').text();
@@ -1923,8 +1969,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <body>
   <h1>${title}</h1>
   <h2>${unidadeName}</h2>\n`;
+  
     // Gerar conteúdo conforme tipo
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação HTML com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       // Tabela comparativa
       html += '<table><thead><tr>' +
         ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
@@ -1952,6 +2000,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Relatório de diferenças
       html += '<div class="report"><h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML + '</div>';
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova HTML com ${editedData.length} itens`);
       // Tabela nova estrutura
       html += '<table><thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
@@ -1968,11 +2017,16 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       html += '</tbody></table>';
     } else {
-      // Tabela completa
+      // Tabela completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      
+      console.log(`📊 Exportando dados completos HTML: ${dataToExport.length} registros`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação HTML`);
+      
       html += '<table><thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
         .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-      originalData.forEach(item => {
+      dataToExport.forEach(item => {
         html += '<tr>' +
           `<td>${formatValue(item.denominacao)}</td>` +
           `<td>${formatValue(item.tipo_cargo)}</td>` +
@@ -1986,11 +2040,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Relatório de diferenças, se houver
       html += '<div class="report"><h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML + '</div>';
     }
+    
     html += '</body></html>';
+    
+    console.log(`✅ HTML preparado para exportação`);
+    
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `export_${exportType}.html`;
+    const filename = `export_${exportType}.html`;
+    link.download = filename;
+    console.log(`💾 Baixando arquivo HTML: ${filename}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -2006,6 +2066,8 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+
+    console.log(`🔄 Iniciando exportação Word do tipo: ${exportType}`);
 
     // Nome da unidade
     let unidadeName;
@@ -2037,6 +2099,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação Word com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
@@ -2062,6 +2125,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       html += '</tbody></table>';
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova Word com ${editedData.length} itens`);
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
@@ -2077,12 +2141,17 @@ document.addEventListener('DOMContentLoaded', function() {
         '</tr>';
       });
       html += '</tbody></table>';
-    } else { // completa
+    } else { // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      
+      console.log(`📊 Exportando dados completos Word: ${dataToExport.length} registros`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação Word`);
+      
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
         .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-      originalData.forEach(item => {
+      dataToExport.forEach(item => {
         html += '<tr>' +
           `<td>${formatValueWord(item.denominacao)}</td>` +
           `<td>${formatValueWord(item.tipo_cargo)}</td>` +
@@ -2099,8 +2168,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     html += '</body></html>';
 
+    console.log(`✅ Word preparado para exportação`);
+
     const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8;' });
-    saveAs(blob, `export_${exportType}.doc`);
+    const filename = `export_${exportType}.doc`;
+    console.log(`💾 Baixando arquivo Word: ${filename}`);
+    saveAs(blob, filename);
   }
   
   /**
@@ -2113,6 +2186,9 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação PDF do tipo: ${exportType}`);
+    
     const type = exportType;
     // Nome da unidade
     let unidadeName;
@@ -2125,12 +2201,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let headers = [];
     let rows = [];
     if (type === 'comparacao') {
+      console.log(`📊 Exportando comparação PDF com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       headers = ['Área','Tipo Cargo Orig','Tipo Cargo Novo','Denominação','Cat. Orig','Cat. Novo','Nvl. Orig','Nvl. Novo','Qtd. Orig','Qtd. Novo','Pts. Orig','Pts. Novo'];
       rows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
         return [orig.sigla, orig.tipo_cargo, edit.tipo_cargo||'', orig.denominacao, orig.categoria, edit.categoria||'', orig.nivel, edit.nivel||'', orig.quantidade, edit.quantidade||'', orig.pontos*orig.quantidade, (edit.pontos||0)*edit.quantidade];
       });
     } else if (type === 'nova') {
+      console.log(`📊 Exportando estrutura nova PDF com ${editedData.length} itens`);
       headers = ['Área','Tipo Cargo','Denominação','Cat.','Nvl.','Qtd.','Pts.'];
       rows = editedData.map(item => [
         item.sigla,
@@ -2141,9 +2219,15 @@ document.addEventListener('DOMContentLoaded', function() {
         item.quantidade,
         item.pontos * item.quantidade
       ]);
-    } else { // completa
+    } else { // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos PDF: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação PDF`);
+      
       headers = ['Área','Tipo Cargo','Denominação','Categoria','Nível','Quantidade','Pontos'];
-      rows = originalData.map(item => [
+      rows = dataToExport.map(item => [
         item.sigla,
         item.tipo_cargo,
         item.denominacao,
@@ -2157,8 +2241,10 @@ document.addEventListener('DOMContentLoaded', function() {
       rows.push([]);
       const diffHeaders = ['Denominação','Categoria (Original)','Categoria (Editada)','Nível (Original)','Nível (Editado)','Quantidade (Original)','Quantidade (Editada)','Pontos (Original)','Pontos (Editado)'];
       rows.push(diffHeaders);
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -2173,9 +2259,15 @@ document.addEventListener('DOMContentLoaded', function() {
             ptsOrig,
             ptsEdit
           ]);
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório PDF`);
     }
+    
+    console.log(`✅ ${rows.length} linhas preparadas para exportação PDF`);
+    
     // Montar HTML para PDF
     const tempDiv = document.createElement('div');
     let html = '<h1 style="text-align:center;">Export ' + type + '</h1>';
@@ -2201,6 +2293,9 @@ document.addEventListener('DOMContentLoaded', function() {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
     };
+    
+    console.log(`💾 Baixando arquivo PDF: export_${type}.pdf`);
+    
     html2pdf().from(tempDiv).set(options).save().then(() => {
       document.body.removeChild(tempDiv);
     });
@@ -2216,8 +2311,14 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação XLSX do tipo: ${exportType}`);
+    
     let rows = [];
+    let diffRows = []; // Declarar diffRows no escopo da função
+    
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       // Exportar comparação: lado a lado original x editado
       rows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
@@ -2237,6 +2338,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
       });
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova com ${editedData.length} itens`);
       // Exportar apenas estrutura nova (editada)
       rows = editedData.map(item => ({
         'Área': item.sigla,
@@ -2248,8 +2350,15 @@ document.addEventListener('DOMContentLoaded', function() {
         'Pts.': item.pontos * item.quantidade
       }));
     } else if (exportType === 'completa') {
-      // Exportar tabela completa com dados originais do banco
-      rows = originalData.map(item => ({
+      // CORREÇÃO: Para exportação completa, usar dados completos (não filtrados) se disponíveis
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação`);
+      
+      // Exportar tabela completa com dados completos do banco
+      rows = dataToExport.map(item => ({
         'Área': item.sigla,
         'Tipo Cargo': item.tipo_cargo,
         'Denominação': item.denominacao,
@@ -2258,10 +2367,11 @@ document.addEventListener('DOMContentLoaded', function() {
         'Quantidade': item.quantidade,
         'Pontos': item.pontos * item.quantidade
       }));
-      // Criar planilha de relatório de diferenças
-      const diffRows = [];
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      // Criar planilha de relatório de diferenças usando dados completos
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -2276,8 +2386,16 @@ document.addEventListener('DOMContentLoaded', function() {
             'Pontos (Original)': ptsOrig,
             'Pontos (Editado)': ptsEdit
           });
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório`);
+    }
+
+    console.log(`✅ ${rows.length} linhas preparadas para exportação principal`);
+    if (diffRows.length > 0) {
+      console.log(`✅ ${diffRows.length} linhas preparadas para relatório de diferenças`);
     }
 
     // Gerar worksheet e workbook
@@ -2290,7 +2408,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Baixar arquivo
-    XLSX.writeFile(wb, `export_${exportType}.xlsx`);
+    const filename = `export_${exportType}.xlsx`;
+    console.log(`💾 Baixando arquivo: ${filename}`);
+    XLSX.writeFile(wb, filename);
   }
 
   // Função para adicionar uma nova linha na tabela editável
@@ -2811,6 +2931,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('🎉 Filtro de simulação aplicado com sucesso!');
+  };
+
+  // Função para sincronizar edições com dados completos
+  function syncEditedDataToComplete() {
+    if (completeOriginalData.length > 0 && editedData.length > 0) {
+      console.log(`🔄 Sincronizando ${editedData.length} edições com ${completeOriginalData.length} dados completos`);
+      
+      // Para cada item editado, encontrar o correspondente nos dados completos e atualizar
+      editedData.forEach((editedItem, editedIndex) => {
+        // Buscar correspondência por múltiplos critérios para maior precisão
+        const completeIndex = completeOriginalData.findIndex(completeItem => {
+          // Critério principal: denominação + sigla + tipo_cargo
+          const matchDenomSigla = completeItem.denominacao === editedItem.denominacao && 
+                                  completeItem.sigla === editedItem.sigla &&
+                                  completeItem.tipo_cargo === editedItem.tipo_cargo;
+          
+          // Critério alternativo: apenas denominação + tipo_cargo (para casos onde sigla pode variar)
+          const matchDenomTipo = completeItem.denominacao === editedItem.denominacao && 
+                                 completeItem.tipo_cargo === editedItem.tipo_cargo;
+          
+          return matchDenomSigla || matchDenomTipo;
+        });
+        
+        if (completeIndex !== -1) {
+          // Atualizar o item correspondente nos dados completos editados
+          const itemToUpdate = JSON.parse(JSON.stringify(editedItem));
+          completeEditedData[completeIndex] = itemToUpdate;
+          
+          console.log(`✅ Sincronizado: ${editedItem.denominacao} (${editedItem.sigla})`);
+        } else {
+          console.warn(`⚠️ Não encontrado nos dados completos: ${editedItem.denominacao} (${editedItem.sigla})`);
+        }
+      });
+      
+      // Atualizar variável global
+      window.completeEditedData = completeEditedData;
+      
+      console.log(`✅ Sincronização completa! ${completeEditedData.length} itens nos dados completos`);
+    } else {
+      console.log('ℹ️ Sincronização não necessária (sem dados completos ou editados)');
+    }
+  }
+
+  // Exportar funções globalmente para outros módulos (ex: simulacoes.js)
+  window.populateCurrentTable = populateCurrentTable;
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.renderPage = renderPage;
+  window.setupPaginationControls = setupPaginationControls;
+  
+  // Exportar variáveis importantes
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // FUNÇÃO DE DEBUG: Verificar status dos dados
+  window.debugDataStatus = function() {
+    console.log('📊 STATUS DOS DADOS:');
+    console.log(`🔸 originalData (filtrados): ${originalData.length} itens`);
+    console.log(`🔸 editedData (filtrados): ${editedData.length} itens`);
+    console.log(`🔸 completeOriginalData (completos): ${completeOriginalData.length} itens`);
+    console.log(`🔸 completeEditedData (completos): ${completeEditedData.length} itens`);
+    console.log(`🔸 isFiltered: ${isFiltered}`);
+    
+    if (originalData.length > 0) {
+      console.log(`🔸 Primeiro item filtrado: ${originalData[0].denominacao} (${originalData[0].sigla})`);
+    }
+    if (completeOriginalData.length > 0) {
+      console.log(`🔸 Primeiro item completo: ${completeOriginalData[0].denominacao} (${completeOriginalData[0].sigla})`);
+    }
+    
+    // Verificar se há diferenças entre dados originais e editados nos dados completos
+    let diferencasCompletas = 0;
+    completeOriginalData.forEach((orig, idx) => {
+      const edited = completeEditedData[idx];
+      if (edited && JSON.stringify(orig) !== JSON.stringify(edited)) {
+        diferencasCompletas++;
+      }
+    });
+    console.log(`🔸 Diferenças nos dados completos: ${diferencasCompletas} itens`);
+    
+    return {
+      originalFiltered: originalData.length,
+      editedFiltered: editedData.length,
+      originalComplete: completeOriginalData.length,
+      editedComplete: completeEditedData.length,
+      isFiltered: isFiltered,
+      diferencasCompletas: diferencasCompletas
+    };
   };
 });
 

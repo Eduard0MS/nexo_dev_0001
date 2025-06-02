@@ -1658,6 +1658,11 @@ class BaixarAnexoSimulacaoView(View):
             if not isinstance(estrutura_atual, list) or not isinstance(estrutura_nova, list):
                 return JsonResponse({'error': 'Invalid data format: estrutura_atual and estrutura_nova must be arrays.'}, status=400)
 
+            # Validate data before processing
+            for i, item in enumerate(estrutura_atual + estrutura_nova):
+                if not isinstance(item, dict):
+                    return JsonResponse({'error': f'Invalid item at position {i}: must be an object.'}, status=400)
+
             # Call the utility function to generate the Excel file
             excel_stream = gerar_anexo_simulacao(estrutura_atual, estrutura_nova)
             
@@ -1673,10 +1678,16 @@ class BaixarAnexoSimulacaoView(View):
         except FileNotFoundError as e:
              return JsonResponse({'error': str(e)}, status=404) # e.g., no active template
         except ValueError as e:
+            # Log the full error for debugging
+            print(f"ValueError in BaixarAnexoSimulacaoView: {str(e)}")
+            if "invalid literal for int()" in str(e):
+                return JsonResponse({'error': 'Erro de conversão de dados. Verifique se todos os campos numéricos estão preenchidos corretamente.'}, status=400)
             return JsonResponse({'error': str(e)}, status=400) # e.g., template sheet missing or multiple active
         except Exception as e:
             # Log the exception e for debugging
             print(f"Error in BaixarAnexoSimulacaoView: {str(e)}") # Basic logging
+            import traceback
+            traceback.print_exc()  # Print full traceback for debugging
             return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
 
 @login_required

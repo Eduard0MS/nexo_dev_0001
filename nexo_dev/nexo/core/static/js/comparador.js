@@ -473,14 +473,14 @@ document.addEventListener('DOMContentLoaded', function() {
           // Recarregar dados da base completa
           window.organogramaData.core_unidadecargo.forEach(item => {
             const newItem = {
-              sigla: item.sigla || '',
-              tipo_cargo: item.tipo_cargo || '',
-              denominacao: item.denominacao || '',
-              categoria: item.categoria || '',
-              nivel: item.nivel || '',
-              quantidade: item.quantidade || 0,
-              pontos: item.pontos || 0,
-              valor_unitario: item.valor_unitario || 0
+            sigla: item.sigla || '',
+            tipo_cargo: item.tipo_cargo || '',
+            denominacao: item.denominacao || '',
+            categoria: item.categoria || '',
+            nivel: item.nivel || '',
+            quantidade: item.quantidade || 0,
+            pontos: item.pontos || 0,
+            valor_unitario: item.valor_unitario || 0
             };
             originalData.push(newItem);
             editedData.push(JSON.parse(JSON.stringify(newItem)));
@@ -2589,8 +2589,8 @@ document.addEventListener('DOMContentLoaded', function() {
                       area: item.sigla || item.area || item.sigla_unidade || 'N/D', // Prefer sigla, fallback to area
                       tipo_cargo: item.tipo_cargo || '',
                       denominacao: item.denominacao || '',
-                      categoria: item.categoria || '',
-                      nivel: item.nivel || '',
+                      categoria: (item.categoria !== undefined && item.categoria !== null && item.categoria !== '') ? parseInt(item.categoria) : 0,
+                      nivel: (item.nivel !== undefined && item.nivel !== null && item.nivel !== '') ? parseInt(item.nivel) : 0,
                       grafo: item.grafo || '', // Include grafo field for hierarchical ordering
                       codigo_unidade: item.codigo_unidade || '', // Include unit code
                       denominacao_unidade: item.denominacao_unidade || '', // Include unit name

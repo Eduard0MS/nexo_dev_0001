@@ -366,8 +366,19 @@ def _prepare_data_for_excel(data_list):
         
         # Sort items within area by hierarchy
         def get_hierarchical_sort_key(item):
-            nivel = int(item.get('nivel', 0))
-            categoria = int(item.get('categoria', 0))
+            # Safely convert nivel and categoria to int with fallback
+            try:
+                nivel_raw = item.get('nivel', 0)
+                nivel = int(nivel_raw) if nivel_raw not in ('', None, 'None') else 0
+            except (ValueError, TypeError):
+                nivel = 0
+            
+            try:
+                categoria_raw = item.get('categoria', 0)
+                categoria = int(categoria_raw) if categoria_raw not in ('', None, 'None') else 0
+            except (ValueError, TypeError):
+                categoria = 0
+                
             tipo_cargo = item.get('tipo_cargo', '')
             denominacao = item.get('denominacao', '')
             

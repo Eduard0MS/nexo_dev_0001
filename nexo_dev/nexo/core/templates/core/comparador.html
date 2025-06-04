@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% csrf_token %}
+
 {% block title %}Simulador{% endblock %}
 
 {% block extra_css %}
@@ -1015,6 +1017,20 @@
                 <button id="addCargoBtn" class="btn btn-sm btn-success ms-2" title="Adicionar Novo Cargo">
                   <i class="fas fa-plus me-1"></i> Adicionar Cargo
                 </button>
+                <button type="button" class="btn btn-sm btn-success ms-2" id="baixarAnexoBtn" title="Baixar Anexo Preenchido"><i class="fas fa-file-excel"></i> Baixar Anexo</button>
+                
+                <!-- Botões de Simulação -->
+                <div class="dropdown ms-2">
+                  <button class="btn btn-sm btn-info dropdown-toggle" type="button" id="dropdownSimulacoes" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-save me-1"></i> Simulações
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownSimulacoes">
+                    <li><a class="dropdown-item" href="#" id="salvarSimulacaoBtn"><i class="fas fa-save me-1"></i> Salvar Simulação</a></li>
+                    <li><a class="dropdown-item" href="#" id="carregarSimulacaoBtn"><i class="fas fa-folder-open me-1"></i> Carregar Simulação</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" id="gerenciarSimulacoesBtn"><i class="fas fa-cog me-1"></i> Gerenciar Simulações</a></li>
+                  </ul>
+                </div>
               </div>
               <div class="download-options d-flex align-items-center" style="gap: 5px;">
                 <!-- Selector de tipo de exportação -->
@@ -1109,6 +1125,131 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Estruturas Salvas -->
+<div class="modal fade" id="modalEstruturasSalvas" tabindex="-1" role="dialog" aria-labelledby="modalEstruturasSalvasLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEstruturasSalvasLabel">Estruturas Salvas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <ul id="listaEstruturasSalvas" class="list-group"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Salvar Simulação -->
+<div class="modal fade" id="modalSalvarSimulacao" tabindex="-1" aria-labelledby="modalSalvarSimulacaoLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSalvarSimulacaoLabel">Salvar Simulação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formSalvarSimulacao">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="nomeSimulacao" class="form-label">Nome da Simulação</label>
+            <input type="text" class="form-control" id="nomeSimulacao" required maxlength="100" placeholder="Ex: Reestruturação MPO 2024">
+            <div class="form-text">
+              <i class="fas fa-lightbulb text-warning"></i> 
+              Digite um nome único e descritivo para identificar esta simulação (máximo 100 caracteres)
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="descricaoSimulacao" class="form-label">Descrição (opcional)</label>
+            <textarea class="form-control" id="descricaoSimulacao" rows="3" placeholder="Descreva as principais mudanças desta simulação..."></textarea>
+            <div class="form-text">
+              <i class="fas fa-info-circle text-info"></i> 
+              Adicione detalhes sobre as modificações feitas nesta simulação
+            </div>
+          </div>
+          <div id="alertaSalvar" class="alert d-none" role="alert"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmarSalvarSimulacao">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Carregar Simulação -->
+<div class="modal fade" id="modalCarregarSimulacao" tabindex="-1" aria-labelledby="modalCarregarSimulacaoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCarregarSimulacaoLabel">Carregar Simulação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="listaSimulacoesCarregar" class="list-group">
+          <!-- Lista será preenchida dinamicamente -->
+        </div>
+        <div id="alertaCarregar" class="alert d-none mt-3" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Gerenciar Simulações -->
+<div class="modal fade" id="modalGerenciarSimulacoes" tabindex="-1" aria-labelledby="modalGerenciarSimulacoesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalGerenciarSimulacoesLabel">Gerenciar Simulações</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Limite de Simulações:</strong> Cada usuário pode salvar até <strong>5 simulações</strong>. 
+            <span id="contadorSimulacoes">Carregando...</span>
+            <br><small class="mt-1 d-block">
+              💡 <strong>Dica:</strong> Cada simulação deve ter um nome único. Se precisar de mais espaço, delete simulações antigas.
+            </small>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Unidade Base</th>
+                <th>Criado em</th>
+                <th>Atualizado em</th>
+                <th style="width: 150px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaSimulacoes">
+              <!-- Conteúdo será preenchido dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+        <div id="alertaGerenciar" class="alert d-none" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1129,10 +1270,18 @@
 <!-- Dados do organograma -->
 <script type="text/javascript">
   window.organogramaData = JSON.parse('{{ organograma_data|escapejs }}');
+  
+  // Configurar token CSRF para as requisições AJAX
+  window.CSRF_TOKEN = '{{ csrf_token }}';
+  
+  // Função global de backup para obter CSRF token
+  window.getCSRFTokenGlobal = function() {
+    return '{{ csrf_token }}';
+  };
 </script>
 
 <!-- Script principal do comparador -->
-<script src="{% static 'js/comparador.js' %}?v=1.0.6"></script>
+<script src="{% static 'js/comparador.js' %}?v=1.0.8"></script>
 
 <!-- Inicialização do Select2 -->
 <script>
@@ -1157,4 +1306,7 @@
     });
   });
 </script>
+
+<!-- Script de gerenciamento de simulações -->
+<script src="{% static 'js/simulacoes.js' %}?v=1.0.2"></script>
 {% endblock %}

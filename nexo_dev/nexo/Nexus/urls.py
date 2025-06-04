@@ -37,8 +37,6 @@ urlpatterns = [
     path("financeira/", financeira_page, name="financeira"),
     path("financeira/data/", financeira_data, name="financeira_data"),
     path("financeira/export/", financeira_export, name="financeira_export"),
-    # Incluir URLs do app 'core'
+    # Incluir URLs do app 'core' - DEVE VIR POR ÚLTIMO
     path("", include("core.urls")),
-    # Rota raíz -> envia para login_direct
-    path("", RedirectView.as_view(url="/login_direct/", permanent=False), name="root"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) if settings.DEBUG else []

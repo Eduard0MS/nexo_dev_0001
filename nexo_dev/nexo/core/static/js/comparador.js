@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const downloadPDF = document.getElementById('downloadPDF');
   const downloadXLSX = document.getElementById('downloadXLSX');
   const exportTypeSelect = document.getElementById('exportType');
+  const baixarAnexoBtn = document.getElementById('baixarAnexoBtn');
   
   // Dados
   let originalData = [];
@@ -32,6 +33,16 @@ document.addEventListener('DOMContentLoaded', function() {
   let filteredOriginalData = [];
   let filteredEditedData = [];
   let isFiltered = false;
+  
+  // Variáveis globais para armazenar dados completos (não filtrados)
+  let completeOriginalData = [];
+  let completeEditedData = [];
+  
+  // Expor dados globalmente para outros módulos
+  window.originalData = originalData;
+  window.editedData = editedData;
+  window.completeOriginalData = completeOriginalData;
+  window.completeEditedData = completeEditedData;
   
   // Controle de paginação no estado inicial
   let currentPage = 1;
@@ -182,6 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
       valor_unitario: item.valor_unitario || 0
     }));
     editedData = JSON.parse(JSON.stringify(originalData));
+    
+    // IMPORTANTE: Armazenar dados completos da base APENAS UMA VEZ no início
+    completeOriginalData = JSON.parse(JSON.stringify(originalData));
+    completeEditedData = JSON.parse(JSON.stringify(editedData));
+    
     setupPaginationControls();
     renderPage();
   }
@@ -412,6 +428,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
+      // Limpar contexto de simulação ao pesquisar nova unidade
+      if (typeof window.limparContextoSimulacao === 'function') {
+        window.limparContextoSimulacao();
+      }
+      
       // Obter o texto da opção selecionada para extrair a sigla
       let siglaUnidade;
       if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -429,15 +450,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     if (clearFilterBtn) {
       clearFilterBtn.addEventListener('click', function() {
+        // Verificar se há uma simulação carregada
+        const status = document.getElementById('paginationStatus');
+        const isSimulacao = status && status.textContent.includes('Simulação');
+        
+        if (isSimulacao) {
+          const confirmar = confirm('Você está visualizando uma simulação carregada.\n\nDeseja realmente voltar à visualização completa da base de dados?');
+          if (!confirmar) {
+            return;
+          }
+        }
+        
+        // Limpar contexto de simulação ao limpar filtro
+        if (typeof window.limparContextoSimulacao === 'function') {
+          window.limparContextoSimulacao();
+        }
+        
         // Limpar seleção de unidade
         if (typeof $ !== 'undefined' && $.fn.select2) {
           $(unitSelect).val(null).trigger('change');
         } else {
           unitSelect.value = '';
         }
-        // Restaurar dados originais completos
+        
+        // Restaurar dados originais completos da base
         if (window.organogramaData && Array.isArray(window.organogramaData.core_unidadecargo)) {
-          originalData = window.organogramaData.core_unidadecargo.map(item => ({
+          // Limpar arrays completamente
+          originalData.length = 0;
+          editedData.length = 0;
+          filteredOriginalData.length = 0;
+          filteredEditedData.length = 0;
+          completeOriginalData.length = 0;
+          completeEditedData.length = 0;
+          
+          // Recarregar dados da base completa
+          window.organogramaData.core_unidadecargo.forEach(item => {
+            const newItem = {
             sigla: item.sigla || '',
             tipo_cargo: item.tipo_cargo || '',
             denominacao: item.denominacao || '',
@@ -446,19 +494,45 @@ document.addEventListener('DOMContentLoaded', function() {
             quantidade: item.quantidade || 0,
             pontos: item.pontos || 0,
             valor_unitario: item.valor_unitario || 0
-          }));
-          editedData = JSON.parse(JSON.stringify(originalData));
+            };
+            originalData.push(newItem);
+            editedData.push(JSON.parse(JSON.stringify(newItem)));
+            completeOriginalData.push(JSON.parse(JSON.stringify(newItem)));
+            completeEditedData.push(JSON.parse(JSON.stringify(newItem)));
+          });
+          
+          // Resetar estado
+          isFiltered = false;
+          window.isFiltered = false;
+          
+          // Atualizar variáveis globais
+          window.originalData = originalData;
+          window.editedData = editedData;
+          window.completeOriginalData = completeOriginalData;
+          window.completeEditedData = completeEditedData;
         }
+        
         // Recriar paginação e renderizar página inicial
         const pagControls = document.getElementById('paginationControls');
         if (pagControls) pagControls.remove();
         setupPaginationControls();
         currentPage = 1;
         renderPage();
+        
         // Limpar relatório de diferenças
         clearDiffReport();
+        
         // Atualizar relatório de pontos 
         updatePointsReport();
+        
+        // Mostrar mensagem de confirmação
+        setTimeout(() => {
+          const statusEl = document.getElementById('paginationStatus');
+          if (statusEl) {
+            const totalPages = Math.ceil(originalData.length / itemsPerPage);
+            statusEl.textContent = `Página 1 de ${totalPages} (Base Completa)`;
+          }
+        }, 100);
       });
     }
     
@@ -508,6 +582,17 @@ document.addEventListener('DOMContentLoaded', function() {
    * @param {string} unitSigla - Sigla da unidade
    */
   function loadUnitData(unitCode, unitSigla) {
+    // Verificar se há uma simulação carregada
+    const status = document.getElementById('paginationStatus');
+    const isSimulacao = status && status.textContent.includes('Simulação');
+    
+    if (isSimulacao) {
+      const confirmar = confirm(`Você está visualizando uma simulação carregada.\n\nDeseja realmente substituir pelos dados da unidade "${unitSigla}"?\n\n(Isso irá remover a simulação atual)`);
+      if (!confirmar) {
+        return;
+      }
+    }
+    
     // Limpar dados anteriores
     originalData = [];
     editedData = [];
@@ -564,6 +649,11 @@ document.addEventListener('DOMContentLoaded', function() {
         isFiltered = false;
         currentPage = 1;
         
+        // Atualizar variáveis globais APENAS dos dados filtrados (não sobrescrever dados completos)
+        window.originalData = originalData;
+        window.editedData = editedData;
+        window.isFiltered = false;
+        
         // Recriar controles de paginação para os novos dados
         setupPaginationControls();
         
@@ -576,6 +666,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Garantir que o relatório de pontos seja atualizado
         setTimeout(updatePointsReport, 100);
+        
+        // Atualizar status para indicar filtro por unidade
+        setTimeout(() => {
+          const statusEl = document.getElementById('paginationStatus');
+          if (statusEl) {
+            const totalPages = Math.ceil(originalData.length / itemsPerPage);
+            statusEl.textContent = `Página 1 de ${totalPages} (Filtrado: ${unitSigla})`;
+          }
+        }, 200);
       })
       .catch(error => {
         console.error('Erro ao buscar dados:', error);
@@ -806,6 +905,9 @@ document.addEventListener('DOMContentLoaded', function() {
           // Verificar diferenças e atualizar os relatórios
           updateDiffReport();
           updatePointsReport();
+          
+          // Sincronizar edições com dados completos
+          syncEditedDataToComplete();
         }
     }
     
@@ -849,6 +951,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Verificar diferenças e atualizar os relatórios
         updateDiffReport();
         updatePointsReport();
+        
+        // Sincronizar edições com dados completos
+        syncEditedDataToComplete();
       }
     }
   }
@@ -1708,10 +1813,14 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação CSV do tipo: ${exportType}`);
+    
     let headers = [];
     let dataRows = [];
 
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação CSV com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       headers = ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)'];
       dataRows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
@@ -1731,6 +1840,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
       });
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova CSV com ${editedData.length} itens`);
       headers = ['Área','Tipo Cargo','Denominação','Cat.','Nvl.','Qtd.','Pts.'];
       dataRows = editedData.map(item => [
         item.sigla,
@@ -1742,9 +1852,15 @@ document.addEventListener('DOMContentLoaded', function() {
         item.pontos * item.quantidade
       ]);
     } else {
-      // completa
+      // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos CSV: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação CSV`);
+      
       headers = ['Área','Tipo Cargo','Denominação','Categoria','Nível','Quantidade','Pontos'];
-      dataRows = originalData.map(item => [
+      dataRows = dataToExport.map(item => [
         item.sigla,
         item.tipo_cargo,
         item.denominacao,
@@ -1758,8 +1874,10 @@ document.addEventListener('DOMContentLoaded', function() {
       dataRows.push([]);
       const diffHeaders = ['Denominação','Categoria (Original)','Categoria (Editada)','Nível (Original)','Nível (Editado)','Quantidade (Original)','Quantidade (Editada)','Pontos (Original)','Pontos (Editado)'];
       dataRows.push(diffHeaders);
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -1774,9 +1892,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ptsOrig,
             ptsEdit
           ]);
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório CSV`);
     }
+
+    console.log(`✅ ${dataRows.length} linhas preparadas para exportação CSV`);
 
     let csvContent = headers.join(',') + '\n';
     dataRows.forEach(row => {
@@ -1788,7 +1911,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `export_${exportType}.csv`);
+    const filename = `export_${exportType}.csv`;
+    link.setAttribute('download', filename);
+    console.log(`💾 Baixando arquivo CSV: ${filename}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1804,6 +1929,9 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação HTML do tipo: ${exportType}`);
+    
     let unidadeName;
     if (typeof $ !== 'undefined' && $.fn.select2) {
       unidadeName = $(unitSelect).find(':selected').text();
@@ -1841,8 +1969,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <body>
   <h1>${title}</h1>
   <h2>${unidadeName}</h2>\n`;
+  
     // Gerar conteúdo conforme tipo
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação HTML com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       // Tabela comparativa
       html += '<table><thead><tr>' +
         ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
@@ -1870,6 +2000,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Relatório de diferenças
       html += '<div class="report"><h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML + '</div>';
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova HTML com ${editedData.length} itens`);
       // Tabela nova estrutura
       html += '<table><thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
@@ -1886,11 +2017,16 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       html += '</tbody></table>';
     } else {
-      // Tabela completa
+      // Tabela completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      
+      console.log(`📊 Exportando dados completos HTML: ${dataToExport.length} registros`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação HTML`);
+      
       html += '<table><thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
         .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-      originalData.forEach(item => {
+      dataToExport.forEach(item => {
         html += '<tr>' +
           `<td>${formatValue(item.denominacao)}</td>` +
           `<td>${formatValue(item.tipo_cargo)}</td>` +
@@ -1904,11 +2040,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Relatório de diferenças, se houver
       html += '<div class="report"><h3>Relatório de Diferenças</h3>' + document.getElementById('diffReport').innerHTML + '</div>';
     }
+    
     html += '</body></html>';
+    
+    console.log(`✅ HTML preparado para exportação`);
+    
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `export_${exportType}.html`;
+    const filename = `export_${exportType}.html`;
+    link.download = filename;
+    console.log(`💾 Baixando arquivo HTML: ${filename}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1924,6 +2066,8 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+
+    console.log(`🔄 Iniciando exportação Word do tipo: ${exportType}`);
 
     // Nome da unidade
     let unidadeName;
@@ -1955,6 +2099,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação Word com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Área','Tipo Cargo (Orig)','Tipo Cargo (Novo)','Denominação','Cat. (Orig)','Cat. (Novo)','Nvl. (Orig)','Nvl. (Novo)','Qtd. (Orig)','Qtd. (Novo)','Pts. (Orig)','Pts. (Novo)']
@@ -1980,6 +2125,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       html += '</tbody></table>';
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova Word com ${editedData.length} itens`);
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
@@ -1995,12 +2141,17 @@ document.addEventListener('DOMContentLoaded', function() {
         '</tr>';
       });
       html += '</tbody></table>';
-    } else { // completa
+    } else { // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      
+      console.log(`📊 Exportando dados completos Word: ${dataToExport.length} registros`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação Word`);
+      
       html += '<table border="1" cellpadding="4" cellspacing="0" style="width:100%;border-collapse:collapse;">';
       html += '<thead><tr>' +
         ['Denominação','Tipo Cargo','Categoria','Nível','Quantidade','Pontos']
         .map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-      originalData.forEach(item => {
+      dataToExport.forEach(item => {
         html += '<tr>' +
           `<td>${formatValueWord(item.denominacao)}</td>` +
           `<td>${formatValueWord(item.tipo_cargo)}</td>` +
@@ -2017,8 +2168,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     html += '</body></html>';
 
+    console.log(`✅ Word preparado para exportação`);
+
     const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8;' });
-    saveAs(blob, `export_${exportType}.doc`);
+    const filename = `export_${exportType}.doc`;
+    console.log(`💾 Baixando arquivo Word: ${filename}`);
+    saveAs(blob, filename);
   }
   
   /**
@@ -2031,6 +2186,9 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação PDF do tipo: ${exportType}`);
+    
     const type = exportType;
     // Nome da unidade
     let unidadeName;
@@ -2043,12 +2201,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let headers = [];
     let rows = [];
     if (type === 'comparacao') {
+      console.log(`📊 Exportando comparação PDF com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       headers = ['Área','Tipo Cargo Orig','Tipo Cargo Novo','Denominação','Cat. Orig','Cat. Novo','Nvl. Orig','Nvl. Novo','Qtd. Orig','Qtd. Novo','Pts. Orig','Pts. Novo'];
       rows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
         return [orig.sigla, orig.tipo_cargo, edit.tipo_cargo||'', orig.denominacao, orig.categoria, edit.categoria||'', orig.nivel, edit.nivel||'', orig.quantidade, edit.quantidade||'', orig.pontos*orig.quantidade, (edit.pontos||0)*edit.quantidade];
       });
     } else if (type === 'nova') {
+      console.log(`📊 Exportando estrutura nova PDF com ${editedData.length} itens`);
       headers = ['Área','Tipo Cargo','Denominação','Cat.','Nvl.','Qtd.','Pts.'];
       rows = editedData.map(item => [
         item.sigla,
@@ -2059,9 +2219,15 @@ document.addEventListener('DOMContentLoaded', function() {
         item.quantidade,
         item.pontos * item.quantidade
       ]);
-    } else { // completa
+    } else { // completa - CORREÇÃO: usar dados completos
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos PDF: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação PDF`);
+      
       headers = ['Área','Tipo Cargo','Denominação','Categoria','Nível','Quantidade','Pontos'];
-      rows = originalData.map(item => [
+      rows = dataToExport.map(item => [
         item.sigla,
         item.tipo_cargo,
         item.denominacao,
@@ -2075,8 +2241,10 @@ document.addEventListener('DOMContentLoaded', function() {
       rows.push([]);
       const diffHeaders = ['Denominação','Categoria (Original)','Categoria (Editada)','Nível (Original)','Nível (Editado)','Quantidade (Original)','Quantidade (Editada)','Pontos (Original)','Pontos (Editado)'];
       rows.push(diffHeaders);
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -2091,9 +2259,15 @@ document.addEventListener('DOMContentLoaded', function() {
             ptsOrig,
             ptsEdit
           ]);
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório PDF`);
     }
+    
+    console.log(`✅ ${rows.length} linhas preparadas para exportação PDF`);
+    
     // Montar HTML para PDF
     const tempDiv = document.createElement('div');
     let html = '<h1 style="text-align:center;">Export ' + type + '</h1>';
@@ -2119,6 +2293,9 @@ document.addEventListener('DOMContentLoaded', function() {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
     };
+    
+    console.log(`💾 Baixando arquivo PDF: export_${type}.pdf`);
+    
     html2pdf().from(tempDiv).set(options).save().then(() => {
       document.body.removeChild(tempDiv);
     });
@@ -2134,8 +2311,14 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Não há dados para exportar');
       return;
     }
+    
+    console.log(`🔄 Iniciando exportação XLSX do tipo: ${exportType}`);
+    
     let rows = [];
+    let diffRows = []; // Declarar diffRows no escopo da função
+    
     if (exportType === 'comparacao') {
+      console.log(`📊 Exportando comparação com ${originalData.length} itens originais e ${editedData.length} itens editados`);
       // Exportar comparação: lado a lado original x editado
       rows = originalData.map((orig, idx) => {
         const edit = editedData[idx] || {};
@@ -2155,6 +2338,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
       });
     } else if (exportType === 'nova') {
+      console.log(`📊 Exportando estrutura nova com ${editedData.length} itens`);
       // Exportar apenas estrutura nova (editada)
       rows = editedData.map(item => ({
         'Área': item.sigla,
@@ -2166,8 +2350,15 @@ document.addEventListener('DOMContentLoaded', function() {
         'Pts.': item.pontos * item.quantidade
       }));
     } else if (exportType === 'completa') {
-      // Exportar tabela completa com dados originais do banco
-      rows = originalData.map(item => ({
+      // CORREÇÃO: Para exportação completa, usar dados completos (não filtrados) se disponíveis
+      const dataToExport = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const editedDataToCompare = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log(`📊 Exportando dados completos: ${dataToExport.length} registros originais, ${editedDataToCompare.length} registros editados`);
+      console.log(`🔸 Usando dados ${completeOriginalData.length > 0 ? 'COMPLETOS' : 'FILTRADOS'} para exportação`);
+      
+      // Exportar tabela completa com dados completos do banco
+      rows = dataToExport.map(item => ({
         'Área': item.sigla,
         'Tipo Cargo': item.tipo_cargo,
         'Denominação': item.denominacao,
@@ -2176,10 +2367,11 @@ document.addEventListener('DOMContentLoaded', function() {
         'Quantidade': item.quantidade,
         'Pontos': item.pontos * item.quantidade
       }));
-      // Criar planilha de relatório de diferenças
-      const diffRows = [];
-      originalData.forEach((orig, idx) => {
-        const edited = editedData[idx] || {};
+      
+      // Criar planilha de relatório de diferenças usando dados completos
+      let diferencasEncontradas = 0;
+      dataToExport.forEach((orig, idx) => {
+        const edited = editedDataToCompare[idx] || {};
         const ptsOrig = orig.pontos * orig.quantidade;
         const ptsEdit = edited.pontos * edited.quantidade;
         if (orig.categoria != edited.categoria || orig.nivel != edited.nivel || orig.quantidade != edited.quantidade || ptsOrig != ptsEdit) {
@@ -2194,8 +2386,16 @@ document.addEventListener('DOMContentLoaded', function() {
             'Pontos (Original)': ptsOrig,
             'Pontos (Editado)': ptsEdit
           });
+          diferencasEncontradas++;
         }
       });
+      
+      console.log(`🔸 ${diferencasEncontradas} diferenças encontradas para o relatório`);
+    }
+
+    console.log(`✅ ${rows.length} linhas preparadas para exportação principal`);
+    if (diffRows.length > 0) {
+      console.log(`✅ ${diffRows.length} linhas preparadas para relatório de diferenças`);
     }
 
     // Gerar worksheet e workbook
@@ -2208,7 +2408,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Baixar arquivo
-    XLSX.writeFile(wb, `export_${exportType}.xlsx`);
+    const filename = `export_${exportType}.xlsx`;
+    console.log(`💾 Baixando arquivo: ${filename}`);
+    XLSX.writeFile(wb, filename);
   }
 
   // Função para adicionar uma nova linha na tabela editável
@@ -2406,6 +2608,419 @@ document.addEventListener('DOMContentLoaded', function() {
       updatePointsReport();
     }, 1000);
   });
+
+  function getTableData(tableId) {
+    console.log(`Attempting to get data from table with ID: ${tableId}`);
+    const tableElement = document.getElementById(tableId); // Changed from getElementById(tableId) to a more descriptive name
+    
+    if (!tableElement) {
+        console.error(`Table with ID '${tableId}' not found.`);
+        return [];
+    }
+    
+    const tbodyElement = tableElement.querySelector('tbody'); // Changed from querySelector('tbody') to a more descriptive name
+    if (!tbodyElement) {
+        console.warn(`No tbody found in table with ID '${tableId}'. Table HTML:`, tableElement.innerHTML);
+        // Fallback: If no tbody, try to get rows directly from table if it's a simple table
+        // This might not be robust if headers are not in thead
+        const directRows = tableElement.querySelectorAll('tr');
+        if (directRows.length > 1) { // Assuming first row might be header
+             console.log(`Found ${directRows.length} rows directly in table '${tableId}', attempting to process.`);
+             // Process directRows, skipping first if it's likely a header
+        } else {
+            return [];
+        }
+    } else {
+        console.log(`Found tbody in table '${tableId}'. Processing rows...`);
+    }
+
+    const data = [];
+    // Use tbodyElement if found, otherwise fallback to tableElement for rows (less ideal)
+    const rows = tbodyElement ? tbodyElement.querySelectorAll('tr') : tableElement.querySelectorAll('tr');
+    console.log(`Found ${rows.length} rows in table '${tableId}'.`);
+
+    rows.forEach((row, rowIndex) => {
+        const cells = row.querySelectorAll('td');
+        // console.log(`Row ${rowIndex} in ${tableId}, cells found: ${cells.length}`);
+        if (cells.length >= 5) { // Changed from 6 to 5, as Pts. might be calculated, not read
+            const rowData = {
+                area: cells[0]?.textContent.trim(),
+                tipo_cargo: cells[1]?.textContent.trim(),
+                denominacao: cells[2]?.textContent.trim(),
+                categoria: cells[3]?.textContent.trim(),
+                nivel: cells[4]?.textContent.trim(),
+                // quantidade: cells[5]?.textContent.trim(), // Assuming Qtd. is the 6th cell
+            };
+            // console.log(`Row ${rowIndex} data for ${tableId}:`, rowData);
+            data.push(rowData);
+        } else if (cells.length > 0) {
+            // Log rows that don't meet the cell count criteria but are not empty
+            // console.warn(`Row ${rowIndex} in ${tableId} has only ${cells.length} cells, expected at least 5. Skipping.`);
+        }
+    });
+    console.log(`Extracted ${data.length} data rows from table '${tableId}'.`);
+    return data;
+  }
+
+  if (baixarAnexoBtn) {
+    baixarAnexoBtn.addEventListener('click', async function() {
+      // Use the JavaScript variables originalData and editedData directly
+      // These variables should already be populated by your existing logic (e.g., loadUnitData)
+      
+      // We need to ensure the data format matches what _prepare_data_for_excel expects:
+      // list of dicts with keys: 'area', 'denominacao', 'tipo_cargo', 'categoria', 'nivel'
+      // The current `originalData` and `editedData` might have slightly different keys (e.g., 'sigla' instead of 'area')
+      // or might contain more fields than needed. We should map them.
+
+      const mapDataForExcel = (dataArray) => {
+          if (!Array.isArray(dataArray)) {
+              console.warn('Data for mapping is not an array:', dataArray);
+              return [];
+          }
+          
+          // Debug: verificar primeiro item antes do filtro
+          if (dataArray.length > 0) {
+              console.log("Primeiro item ANTES do filtro:", dataArray[0]);
+          }
+          
+          return dataArray
+              .filter(item => {
+                  // Filter out invalid items like headers or empty rows
+                  // Check if item has valid data (not a header row)
+                  const isHeader = item.denominacao === 'DENOMINAÇÃO CARGO/FUNÇÃO' || 
+                                 item.denominacao === 'Denominação' ||
+                                 item.area === 'ÁREA' || 
+                                 item.area === 'UNIDADE' ||
+                                 item.sigla === 'ÁREA' ||
+                                 item.tipo_cargo === 'CARGO/FUNÇÃO Nº' ||
+                                 (item.area === 'ÁREA' && item.denominacao === 'DENOMINAÇÃO CARGO/FUNÇÃO');
+                  
+                  // Also filter out items that look like template headers
+                  const isTemplateHeader = (typeof item.area === 'string' && item.area.toUpperCase() === 'ÁREA') ||
+                                         (typeof item.denominacao === 'string' && item.denominacao.includes('DENOMINAÇÃO'));
+                  
+                  const hasValidData = item.area || item.sigla || item.tipo_cargo || item.denominacao;
+                  const hasNumericData = item.categoria || item.nivel || item.quantidade || item.pontos;
+                  
+                  return !isHeader && !isTemplateHeader && (hasValidData || hasNumericData);
+              })
+              .map((item, index) => {
+                  const mapped = {
+                      area: item.sigla || item.area || item.sigla_unidade || 'N/D', // Prefer sigla, fallback to area
+                      tipo_cargo: item.tipo_cargo || '',
+                      denominacao: item.denominacao || '',
+                      categoria: (item.categoria !== undefined && item.categoria !== null && item.categoria !== '') ? parseInt(item.categoria) : 0,
+                      nivel: (item.nivel !== undefined && item.nivel !== null && item.nivel !== '') ? parseInt(item.nivel) : 0,
+                      grafo: item.grafo || '', // Include grafo field for hierarchical ordering
+                      codigo_unidade: item.codigo_unidade || '', // Include unit code
+                      denominacao_unidade: item.denominacao_unidade || '', // Include unit name
+                      sigla_unidade: item.sigla_unidade || item.sigla || item.area || '', // Include unit acronym
+                      quantidade: item.quantidade || 1, // Include quantity for reference
+                      pontos: item.pontos || 0, // Include points for reference
+                      valor_unitario: item.valor_unitario || 0 // Include unit value for reference
+                  };
+                  
+                  // Debug: log primeiro item mapeado
+                  if (index === 0) {
+                      console.log("Primeiro item DEPOIS do mapeamento:", mapped);
+                      console.log("Quantidade original:", item.quantidade, "Quantidade mapeada:", mapped.quantidade);
+                  }
+                  
+                  return mapped;
+              });
+      };
+
+      const estruturaAtualDataForExcel = mapDataForExcel(window.originalDataGlobal || originalData || []);
+      const estruturaNovaDataForExcel = mapDataForExcel(window.editedDataGlobal || editedData || []);
+
+      if (!estruturaAtualDataForExcel.length && !estruturaNovaDataForExcel.length) {
+          alert('Não há dados nas estruturas para exportar. Carregue ou adicione dados primeiro.');
+          return;
+      }
+      
+      console.log("Dados para anexo (Atual):", estruturaAtualDataForExcel);
+      console.log("Dados para anexo (Nova):", estruturaNovaDataForExcel);
+      
+      // Debug: verificar se quantidade está presente
+      if (estruturaAtualDataForExcel.length > 0) {
+          console.log("Exemplo de item (Atual) com quantidade:", estruturaAtualDataForExcel[0]);
+      }
+      if (estruturaNovaDataForExcel.length > 0) {
+          console.log("Exemplo de item (Nova) com quantidade:", estruturaNovaDataForExcel[0]);
+      }
+
+      try {
+          const response = await fetch('/api/baixar_anexo_simulacao/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken') 
+              },
+              body: JSON.stringify({
+                  estrutura_atual: estruturaAtualDataForExcel,
+                  estrutura_nova: estruturaNovaDataForExcel
+              })
+          });
+
+          if (response.ok) {
+              const blob = await response.blob();
+              const filenameHeader = response.headers.get('content-disposition');
+              let filename = "Anexo_Simulacao.xlsx"; // Default filename
+              if (filenameHeader) {
+                  const filenameMatch = filenameHeader.match(/filename[^;=\n]*=((['"])(?<filename>.*?)\2|(?<filename_no_quotes>[^;\n]*))/i);
+                  if (filenameMatch && filenameMatch.groups && (filenameMatch.groups.filename || filenameMatch.groups.filename_no_quotes)) {
+                      filename = filenameMatch.groups.filename || filenameMatch.groups.filename_no_quotes;
+                  }
+              }
+              
+              if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                  window.navigator.msSaveOrOpenBlob(blob, filename);
+              } else {
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = filename;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+              }
+          } else {
+              const errorData = await response.json();
+              alert(`Erro ao baixar anexo: ${errorData.error || response.statusText}`);
+          }
+      } catch (error) {
+          console.error('Erro ao baixar anexo:', error);
+          alert('Ocorreu um erro de rede ou inesperado ao tentar baixar o anexo.');
+      }
+    });
+  }
+  
+  // Ensure getCookie function exists if you use it for CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  // Exportar funções necessárias para o módulo de simulações
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // Exportar funções globalmente para outros módulos (ex: simulacoes.js)
+  window.populateCurrentTable = populateCurrentTable;
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.renderPage = renderPage;
+  window.setupPaginationControls = setupPaginationControls;
+  
+  // Exportar variáveis importantes
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // Exportar funções de controle de estado
+  window.setFilteredData = function(originalFiltered, editedFiltered) {
+    filteredOriginalData = originalFiltered;
+    filteredEditedData = editedFiltered;
+    isFiltered = true;
+    currentPage = 1;
+  };
+  
+  window.clearFilteredData = function() {
+    filteredOriginalData = [];
+    filteredEditedData = [];
+    isFiltered = false;
+  };
+  
+  // Função para simular o comportamento do filtro (sem fazer requisição à API)
+  window.aplicarFiltroSimulacao = function(dadosSimulacao, unidadeBase) {
+    console.log('🔄 Aplicando filtro de simulação...');
+    console.log('📊 Dados recebidos:', dadosSimulacao.length, 'itens');
+    console.log('🏢 Unidade base:', unidadeBase);
+    
+    // CORREÇÃO: Se os dados já estão corretos (originalData != editedData), só atualizar interface
+    if (window.originalData && window.editedData && 
+        window.originalData.length > 0 && window.editedData.length > 0 &&
+        JSON.stringify(window.originalData) !== JSON.stringify(window.editedData)) {
+      
+      console.log('✅ Dados já aplicados corretamente, apenas atualizando interface...');
+      
+      // Só atualizar a interface sem modificar os dados
+      updateInterface();
+      
+    } else {
+      console.log('🔄 Aplicando dados da simulação...');
+      
+      // Comportamento original: substituir dados (fallback)
+      originalData.splice(0, originalData.length, ...dadosSimulacao);
+      editedData.splice(0, editedData.length, ...JSON.parse(JSON.stringify(dadosSimulacao)));
+      
+      // Atualizar variáveis globais
+      window.originalData = originalData;
+      window.editedData = editedData;
+      
+      console.log('✅ Dados substituídos - originalData:', originalData.length, 'editedData:', editedData.length);
+      
+      updateInterface();
+    }
+    
+    function updateInterface() {
+      // Limpar dados filtrados
+      filteredOriginalData = [];
+      filteredEditedData = [];
+      isFiltered = false;
+      currentPage = 1;
+      
+      window.isFiltered = false;
+      window.currentPage = 1;
+      
+      // Recriar controles de paginação
+      const paginationControls = document.getElementById('paginationControls');
+      if (paginationControls) {
+        paginationControls.remove();
+      }
+      
+      setupPaginationControls();
+      
+      // Forçar renderização das tabelas
+      console.log('🎯 Forçando renderização...');
+      populateCurrentTable(window.originalData.slice(0, itemsPerPage));
+      populateEditableTable(window.editedData.slice(0, itemsPerPage));
+      
+      // Atualizar o select de unidade
+      if (unidadeBase && unitSelect) {
+        const options = unitSelect.options;
+        for (let i = 0; i < options.length; i++) {
+          if (options[i].text.includes(unidadeBase)) {
+            unitSelect.selectedIndex = i;
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+              $(unitSelect).val(options[i].value).trigger('change');
+            }
+            break;
+          }
+        }
+      }
+      
+      // Atualizar status de paginação
+      const status = document.getElementById('paginationStatus');
+      if (status) {
+        const totalPages = Math.ceil(window.originalData.length / itemsPerPage);
+        status.textContent = `Página 1 de ${totalPages} (Simulação: ${unidadeBase || 'Carregada'})`;
+      }
+      
+      // FORÇAR atualização dos relatórios
+      setTimeout(() => {
+        console.log('🔄 Atualizando relatórios...');
+        updateDiffReport();
+        updatePointsReport();
+        console.log('✅ Relatórios atualizados!');
+      }, 500);
+    }
+    
+    console.log('🎉 Filtro de simulação aplicado com sucesso!');
+  };
+
+  // Função para sincronizar edições com dados completos
+  function syncEditedDataToComplete() {
+    if (completeOriginalData.length > 0 && editedData.length > 0) {
+      console.log(`🔄 Sincronizando ${editedData.length} edições com ${completeOriginalData.length} dados completos`);
+      
+      // Para cada item editado, encontrar o correspondente nos dados completos e atualizar
+      editedData.forEach((editedItem, editedIndex) => {
+        // Buscar correspondência por múltiplos critérios para maior precisão
+        const completeIndex = completeOriginalData.findIndex(completeItem => {
+          // Critério principal: denominação + sigla + tipo_cargo
+          const matchDenomSigla = completeItem.denominacao === editedItem.denominacao && 
+                                  completeItem.sigla === editedItem.sigla &&
+                                  completeItem.tipo_cargo === editedItem.tipo_cargo;
+          
+          // Critério alternativo: apenas denominação + tipo_cargo (para casos onde sigla pode variar)
+          const matchDenomTipo = completeItem.denominacao === editedItem.denominacao && 
+                                 completeItem.tipo_cargo === editedItem.tipo_cargo;
+          
+          return matchDenomSigla || matchDenomTipo;
+        });
+        
+        if (completeIndex !== -1) {
+          // Atualizar o item correspondente nos dados completos editados
+          const itemToUpdate = JSON.parse(JSON.stringify(editedItem));
+          completeEditedData[completeIndex] = itemToUpdate;
+          
+          console.log(`✅ Sincronizado: ${editedItem.denominacao} (${editedItem.sigla})`);
+        } else {
+          console.warn(`⚠️ Não encontrado nos dados completos: ${editedItem.denominacao} (${editedItem.sigla})`);
+        }
+      });
+      
+      // Atualizar variável global
+      window.completeEditedData = completeEditedData;
+      
+      console.log(`✅ Sincronização completa! ${completeEditedData.length} itens nos dados completos`);
+    } else {
+      console.log('ℹ️ Sincronização não necessária (sem dados completos ou editados)');
+    }
+  }
+
+  // Exportar funções globalmente para outros módulos (ex: simulacoes.js)
+  window.populateCurrentTable = populateCurrentTable;
+  window.populateEditableTable = populateEditableTable;
+  window.updateDiffReport = updateDiffReport;
+  window.updatePointsReport = updatePointsReport;
+  window.renderPage = renderPage;
+  window.setupPaginationControls = setupPaginationControls;
+  
+  // Exportar variáveis importantes
+  window.editedData = editedData;
+  window.originalData = originalData;
+  
+  // FUNÇÃO DE DEBUG: Verificar status dos dados
+  window.debugDataStatus = function() {
+    console.log('📊 STATUS DOS DADOS:');
+    console.log(`🔸 originalData (filtrados): ${originalData.length} itens`);
+    console.log(`🔸 editedData (filtrados): ${editedData.length} itens`);
+    console.log(`🔸 completeOriginalData (completos): ${completeOriginalData.length} itens`);
+    console.log(`🔸 completeEditedData (completos): ${completeEditedData.length} itens`);
+    console.log(`🔸 isFiltered: ${isFiltered}`);
+    
+    if (originalData.length > 0) {
+      console.log(`🔸 Primeiro item filtrado: ${originalData[0].denominacao} (${originalData[0].sigla})`);
+    }
+    if (completeOriginalData.length > 0) {
+      console.log(`🔸 Primeiro item completo: ${completeOriginalData[0].denominacao} (${completeOriginalData[0].sigla})`);
+    }
+    
+    // Verificar se há diferenças entre dados originais e editados nos dados completos
+    let diferencasCompletas = 0;
+    completeOriginalData.forEach((orig, idx) => {
+      const edited = completeEditedData[idx];
+      if (edited && JSON.stringify(orig) !== JSON.stringify(edited)) {
+        diferencasCompletas++;
+      }
+    });
+    console.log(`🔸 Diferenças nos dados completos: ${diferencasCompletas} itens`);
+    
+    return {
+      originalFiltered: originalData.length,
+      editedFiltered: editedData.length,
+      originalComplete: completeOriginalData.length,
+      editedComplete: completeEditedData.length,
+      isFiltered: isFiltered,
+      diferencasCompletas: diferencasCompletas
+    };
+  };
 });
 
 // Adicionar estilos para os campos editáveis e destacar valores atualizados

@@ -1,6 +1,12 @@
 import pandas as pd
 from .models import UnidadeCargo, CargoSIORG
 from decimal import Decimal
+import openpyxl
+from openpyxl.utils import get_column_letter
+from io import BytesIO
+from .models import PlanilhaImportada
+from collections import defaultdict
+from openpyxl.styles import Alignment
 
 def processa_planilhas(file_hierarquia, file_estrutura_viva):
     # Leitura da planilha de hierarquia
@@ -329,3 +335,204 @@ def processa_json_organograma(json_data):
     except Exception as e:
         print(f"Erro ao processar JSON do organograma: {str(e)}")
         return None
+
+def _prepare_data_for_excel(data_list):
+    """
+    Prepares the list of data items for Excel, maintaining hierarchical order based on 'grafo' field.
+    The 'grafo' field contains the hierarchical path (e.g., "308804-308805-308806").
+    Parents always come before children, and items are grouped by area.
+    Higher level positions (e.g., FCE 1.15) come before lower levels (e.g., FCE 1.14).
+    """
+    processed_list = []
+    
+    # First, create a complete hierarchical structure
+    # Group by area first
+    areas_dict = {}
+    for item in data_list:
+        area = item.get('area', 'N/A')
+        if area not in areas_dict:
+            areas_dict[area] = []
+        areas_dict[area].append(item)
+    
+    # Sort areas alphabetically, but SAGE (if exists) should come first as it's usually the top level
+    sorted_areas = sorted(areas_dict.keys())
+    if 'SAGE' in sorted_areas:
+        sorted_areas.remove('SAGE')
+        sorted_areas.insert(0, 'SAGE')
+    
+    # Process each area
+    for area_key in sorted_areas:
+        items_in_area = areas_dict[area_key]
+        
+        # Sort items within area by hierarchy
+        def get_hierarchical_sort_key(item):
+            # Safely convert nivel and categoria to int with fallback
+            try:
+                nivel_raw = item.get('nivel', 0)
+                nivel = int(nivel_raw) if nivel_raw not in ('', None, 'None') else 0
+            except (ValueError, TypeError):
+                nivel = 0
+            
+            try:
+                categoria_raw = item.get('categoria', 0)
+                categoria = int(categoria_raw) if categoria_raw not in ('', None, 'None') else 0
+            except (ValueError, TypeError):
+                categoria = 0
+                
+            tipo_cargo = item.get('tipo_cargo', '')
+            denominacao = item.get('denominacao', '')
+            
+            # Primary sort: by nivel DESCENDING (15 before 14)
+            # Secondary sort: by categoria ASCENDING (1 before 3)
+            # Tertiary sort: by cargo type (CCE before FCE alphabetically)
+            # Quaternary sort: by denominacao
+            return (-nivel, categoria, tipo_cargo, denominacao)
+        
+        # Sort items
+        items_sorted = sorted(items_in_area, key=get_hierarchical_sort_key)
+        
+        # Add items to processed list
+        for item in items_sorted:
+            categoria_str = str(item.get('categoria', ''))
+            nivel_str = str(item.get('nivel', ''))
+            tipo_cargo = item.get('tipo_cargo', '')
+            
+            # Get quantity - ensure it's an integer
+            quantidade_raw = item.get('quantidade', 1)
+            try:
+                quantidade = int(quantidade_raw) if quantidade_raw else 1
+            except (ValueError, TypeError):
+                quantidade = 1
+            
+            # Format cargo string
+            if categoria_str and nivel_str and tipo_cargo:
+                cargo_formatado = f"{tipo_cargo} {categoria_str}.{nivel_str.zfill(2)}".strip()
+            else:
+                cargo_formatado = tipo_cargo
+            
+            # Clean up the formatted cargo string
+            if cargo_formatado == ".":
+                cargo_formatado = ""
+            elif cargo_formatado.startswith(" ."):
+                cargo_formatado = cargo_formatado[2:]
+            
+            row_data = {
+                'area': area_key,
+                'quantidade': quantidade,  # Use the converted integer
+                'denominacao': item.get('denominacao', ''),
+                'cargo_formatado': cargo_formatado
+            }
+            processed_list.append(row_data)
+    
+    return processed_list
+
+def gerar_anexo_simulacao(data_atual, data_nova):
+    """
+    Generates an Excel anexo with simulation data.
+    Clears rows 5-327 in 'ComparativoEstruturas' sheet,
+    and populates data from row 8.
+    """
+    try:
+        planilha_ativa = PlanilhaImportada.objects.get(ativo=True)
+    except PlanilhaImportada.DoesNotExist:
+        raise FileNotFoundError("Nenhuma planilha ativa encontrada no sistema.")
+    except PlanilhaImportada.MultipleObjectsReturned:
+        raise ValueError("Múltiplas planilhas ativas encontradas. Por favor, defina apenas uma como ativa.")
+
+    try:
+        # Load the workbook, trying with keep_vba=False first
+        workbook = openpyxl.load_workbook(planilha_ativa.arquivo.path, keep_vba=False, data_only=False)
+    except Exception as e:
+        raise ValueError(f"Erro ao carregar o template da planilha: {str(e)}")
+
+    sheet_name = "ComparativoEstruturas"
+    if sheet_name not in workbook.sheetnames:
+        raise ValueError(f"Aba '{sheet_name}' não encontrada no template.")
+    
+    sheet = workbook[sheet_name]
+
+    # 1. Clear content of rows 5 to 327, handling merged cells
+    for row_index in range(5, 328):
+        if row_index <= sheet.max_row:
+            for col_index in range(1, sheet.max_column + 1):
+                if col_index <= sheet.max_column:
+                    cell = sheet.cell(row=row_index, column=col_index)
+                    
+                    # Check if the cell is part of a merged cell range
+                    is_merged = False
+                    for merged_range in sheet.merged_cells.ranges:
+                        if cell.coordinate in merged_range:
+                            is_merged = True
+                            range_to_unmerge_str = str(merged_range)
+                            sheet.unmerge_cells(range_to_unmerge_str)
+                            break
+                    
+                    try:
+                        cell.value = None
+                    except AttributeError:
+                        pass
+
+    # 2. Headers are already in the template on row 7 - DO NOT ADD THEM AGAIN
+    #    Data will be populated starting from row 8.
+
+    # 3. Prepare and populate data
+    processed_atual = _prepare_data_for_excel(data_atual)
+    processed_nova = _prepare_data_for_excel(data_nova)
+
+    # Define alignments
+    align_left = Alignment(horizontal='left', vertical='center')
+    align_center = Alignment(horizontal='center', vertical='center')
+
+    current_data_row = 8  # Data starts at row 8
+
+    # Populate "Estrutura Atual" (Columns A-D, i.e., 1-4)
+    for item_row_data in processed_atual:
+        cell_A = sheet.cell(row=current_data_row, column=1)
+        cell_A.value = item_row_data['area']
+        cell_A.alignment = align_left
+
+        cell_B = sheet.cell(row=current_data_row, column=2)
+        cell_B.value = item_row_data['quantidade']
+        cell_B.alignment = align_center
+
+        cell_C = sheet.cell(row=current_data_row, column=3)
+        cell_C.value = item_row_data['denominacao']
+        cell_C.alignment = align_left
+
+        cell_D = sheet.cell(row=current_data_row, column=4)
+        cell_D.value = item_row_data['cargo_formatado']
+        cell_D.alignment = align_left
+        
+        current_data_row += 1
+    
+    current_data_row = 8  # Reset for "Estrutura Nova"
+    
+    # Populate "Estrutura Nova" (Columns F-I, i.e., 6-9)
+    for item_row_data in processed_nova:
+        cell_F = sheet.cell(row=current_data_row, column=6)
+        cell_F.value = item_row_data['area']
+        cell_F.alignment = align_left
+
+        cell_G = sheet.cell(row=current_data_row, column=7)
+        cell_G.value = item_row_data['quantidade']
+        cell_G.alignment = align_center
+
+        cell_H = sheet.cell(row=current_data_row, column=8)
+        cell_H.value = item_row_data['denominacao']
+        cell_H.alignment = align_left
+
+        cell_I = sheet.cell(row=current_data_row, column=9)
+        cell_I.value = item_row_data['cargo_formatado']
+        cell_I.alignment = align_left
+        
+        current_data_row += 1
+
+    # Save to a BytesIO stream
+    excel_stream = BytesIO()
+    workbook.save(excel_stream)
+    excel_stream.seek(0)  # Rewind the stream to the beginning
+    
+    return excel_stream
+
+# Make sure to add openpyxl to requirements.txt
+# Example: openpyxl>=3.0.0

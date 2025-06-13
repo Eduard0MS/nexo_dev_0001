@@ -237,3 +237,15 @@ body {
     right: 10px;
   }
 }
+
+/* Forçar cores específicas para nós pais e folhas */
+.node--internal circle,
+.node.collapsed circle {
+  fill: #87ceeb !important; /* Azul céu para nós que têm filhos */
+  stroke: #2c5282 !important;
+}
+
+.node--leaf circle {
+  fill: #ffffff !important; /* Branco para nós folhas */
+  stroke: #2c5282 !important;
+}

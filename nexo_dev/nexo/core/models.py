@@ -180,3 +180,104 @@ class SimulacaoSalva(models.Model):
                 from django.core.exceptions import ValidationError
                 raise ValidationError("Cada usuário pode ter no máximo 5 simulações salvas.")
         super().save(*args, **kwargs)
+
+
+# === NOVOS MODELOS PARA SISTEMA DE RELATÓRIOS ===
+
+
+class RelatorioGratificacoes(models.Model):
+    """
+    Modelo para armazenar dados de gratificações e lotações dos funcionários.
+    """
+    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Data de Importação")
+    nome_servidor = models.CharField(max_length=255, verbose_name="Nome do Servidor")
+    matricula_siape = models.CharField(max_length=50, verbose_name="Matrícula SIAPE")
+    situacao_funcional = models.CharField(max_length=100, blank=True, verbose_name="Situação Funcional")
+    cargo = models.CharField(max_length=255, blank=True, verbose_name="Cargo")
+    nivel = models.CharField(max_length=50, blank=True, verbose_name="Nível")
+    gsiste = models.CharField(max_length=100, blank=True, verbose_name="Gsiste")
+    gsiste_nivel = models.CharField(max_length=50, blank=True, verbose_name="Gsiste Nível")
+    funcao = models.CharField(max_length=255, blank=True, verbose_name="Função")
+    nivel_funcao = models.CharField(max_length=50, blank=True, verbose_name="Nível da Função")
+    atividade_funcao = models.CharField(max_length=255, blank=True, verbose_name="Atividade da Função")
+    jornada_trabalho = models.CharField(max_length=50, blank=True, verbose_name="Jornada de Trabalho")
+    unidade_lotacao = models.CharField(max_length=255, blank=True, verbose_name="Unidade de Lotação")
+    secretaria_lotacao = models.CharField(max_length=255, blank=True, verbose_name="Secretaria da Lotação")
+    uf = models.CharField(max_length=2, blank=True, verbose_name="UF")
+    uorg_exercicio = models.CharField(max_length=100, blank=True, verbose_name="UORG de Exercício")
+    unidade_exercicio = models.CharField(max_length=255, blank=True, verbose_name="Unidade de Exercício")
+    coordenacao = models.CharField(max_length=255, blank=True, verbose_name="Coordenação")
+    diretoria = models.CharField(max_length=255, blank=True, verbose_name="Diretoria")
+    secretaria = models.CharField(max_length=255, blank=True, verbose_name="Secretaria")
+    orgao_origem = models.CharField(max_length=255, blank=True, verbose_name="Órgão Origem")
+    email_institucional = models.EmailField(blank=True, verbose_name="e-Mail Institucional")
+    siape_titular_chefe = models.CharField(max_length=50, blank=True, verbose_name="Siape do Titular Chefe")
+    siape_substituto = models.CharField(max_length=50, blank=True, verbose_name="Siape do Substituto")
+    
+    class Meta:
+        verbose_name = "Dados de Gratificações"
+        verbose_name_plural = "Dados de Gratificações"
+        ordering = ['nome_servidor']
+    
+    def __str__(self):
+        return f"{self.nome_servidor} - {self.cargo}"
+
+
+class RelatorioOrgaosCentrais(models.Model):
+    """
+    Modelo para armazenar dados de órgãos centrais e setoriais.
+    """
+    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Data de Importação")
+    tipo_orgao = models.CharField(max_length=20, choices=[('central', 'Central'), ('setorial', 'Setorial')], verbose_name="Tipo de Órgão")
+    nivel_cargo = models.CharField(max_length=50, verbose_name="Nível do Cargo")
+    valor_maximo = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor Máximo da GSISTE")
+    efeitos_financeiros_data = models.CharField(max_length=100, blank=True, verbose_name="Efeitos Financeiros a partir de")
+    
+    class Meta:
+        verbose_name = "Dados de Órgãos"
+        verbose_name_plural = "Dados de Órgãos"
+        ordering = ['tipo_orgao', 'nivel_cargo']
+    
+    def __str__(self):
+        return f"{self.get_tipo_orgao_display()} - {self.nivel_cargo} - R$ {self.valor_maximo}"
+
+
+class RelatorioGratificacoesPlan1(models.Model):
+    """
+    Modelo para dados da aba Plan1 - Gratificações e Valores por Órgão
+    """
+    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Data de Importação")
+    tipo_orgao = models.CharField(max_length=20, choices=[('central', 'Órgãos Centrais'), ('setorial', 'Órgãos Setoriais'), ('limites', 'Limites GSISTE')], verbose_name="Tipo de Órgão")
+    nivel_cargo = models.CharField(max_length=50, verbose_name="Nível do Cargo")
+    valor_maximo_gsiste = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor Máximo da GSISTE")
+    efeitos_financeiros_data = models.CharField(max_length=100, blank=True, verbose_name="Efeitos Financeiros a partir de")
+    
+    class Meta:
+        verbose_name = "Gratificação por Órgão (Plan1)"
+        verbose_name_plural = "Gratificações por Órgão (Plan1)"
+        ordering = ['tipo_orgao', 'nivel_cargo']
+    
+    def __str__(self):
+        return f"{self.get_tipo_orgao_display()} - {self.nivel_cargo} - R$ {self.valor_maximo_gsiste}"
+
+
+class RelatorioEfetivo(models.Model):
+    """
+    Modelo para armazenar dados de efetivo de funcionários.
+    """
+    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Data de Importação")
+    ordem_planilha = models.IntegerField(verbose_name="Ordem na Planilha", help_text="Posição original na planilha", default=0)
+    qt = models.IntegerField(verbose_name="QT")
+    nome_completo = models.CharField(max_length=255, verbose_name="Nome Completo")
+    funcao = models.CharField(max_length=255, verbose_name="Função")
+    unidade_macro = models.CharField(max_length=100, blank=True, verbose_name="Unidade Macro")
+    horario = models.CharField(max_length=100, blank=True, verbose_name="Horário")
+    bloco_andar = models.CharField(max_length=100, blank=True, verbose_name="Bloco/Andar")
+    
+    class Meta:
+        verbose_name = "Dados de Efetivo"
+        verbose_name_plural = "Dados de Efetivo"
+        ordering = ['ordem_planilha']  # Ordenar pela ordem original da planilha
+    
+    def __str__(self):
+        return f"{self.qt} - {self.nome_completo} - {self.funcao}"

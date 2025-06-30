@@ -50,4 +50,15 @@ urlpatterns = [
     path('api/simulacoes/salvar/', views.salvar_simulacao, name='salvar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/', views.carregar_simulacao, name='carregar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/deletar/', views.deletar_simulacao, name='deletar_simulacao'),
+    
+    # URLs para Sistema de Relatórios
+    path('relatorios/', views.relatorios, name='relatorios'),
+    path('api/relatorio/pontos-gratificacoes/', views.api_relatorio_pontos_gratificacoes, name='api_relatorio_pontos_gratificacoes'),
+    path('api/relatorio/dimensionamento/', views.api_relatorio_dimensionamento, name='api_relatorio_dimensionamento'),
+    path('api/historico-decretos/', views.api_historico_decretos, name='api_historico_decretos'),
+    path('api/siglario/', views.api_siglario, name='api_siglario'),
+    path('api/unidades-disponiveis/', views.api_unidades_disponiveis, name='api_unidades_disponiveis'),
+    path('api/solicitacao-realocacao/', views.enviar_solicitacao_realocacao, name='enviar_solicitacao_realocacao'),
+    path('api/solicitacao-permuta/', views.enviar_solicitacao_permuta, name='enviar_solicitacao_permuta'),
+    path('api/minhas-solicitacoes/', views.api_minhas_solicitacoes, name='api_minhas_solicitacoes'),
 ]

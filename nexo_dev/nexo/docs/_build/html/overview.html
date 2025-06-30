@@ -1,0 +1,931 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Visão Geral do Sistema Nexo &#8212; Nexo - Documentação</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=2bde2ffa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=68842761"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=30646c52"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="_static/translations.js?v=beaedd51"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'overview';</script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Pesquisar" href="search.html" />
+    <link rel="next" title="Guia de Instalação" href="installation.html" />
+    <link rel="prev" title="Nexo - Sistema de Gestão Organizacional" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">Sistema de Gestão Organizacional - CGEST/SAGE/MPO</div>
+</aside>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Nexo - Documentação</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Pesquisar</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Primeiros Passos</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Visão Geral do Sistema Nexo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Guia de Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Início Rápido</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Documentação da API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api/models.html">Modelos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/views.html">Views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/auto_models.html">Modelos (Gerado Automaticamente)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/auto_views.html">Views (Gerado Automaticamente)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Repositório fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/blob/main/nexo_dev_0001/nexo_dev/nexo/docs/overview.rst?plain=1" target="_blank"
+   class="btn btn-sm btn-source-file-button dropdown-item"
+   title="Show source"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-code"></i>
+  </span>
+<span class="btn__text-container">Show source</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/edit/main/nexo_dev_0001/nexo_dev/nexo/docs/overview.rst" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/issues/new?title=Issue%20on%20page%20%2Foverview.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Abra um problema"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Baixe esta página">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/overview.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Baixar arquivo fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Imprimir em PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Modo tela cheia"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Visão Geral do Sistema Nexo</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Conteúdo </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#principais-funcionalidades">Principais Funcionalidades</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#arquitetura-do-sistema">Arquitetura do Sistema</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-django">Backend (Django)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frontend">Frontend</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#banco-de-dados">Banco de Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fluxo-de-trabalho-tipico">Fluxo de Trabalho Típico</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#casos-de-uso">Casos de Uso</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orgaos-publicos">Órgãos Públicos</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#empresas-privadas">Empresas Privadas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integracao-com-sistemas-externos">Integração com Sistemas Externos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#siorg-sistema-de-informacoes-organizacionais">SIORG (Sistema de Informações Organizacionais)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sistemas-de-rh">Sistemas de RH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planilhas-corporativas">Planilhas Corporativas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seguranca-e-compliance">Segurança e Compliance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autenticacao">Autenticação</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autorizacao">Autorização</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dados">Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-e-escalabilidade">Performance e Escalabilidade</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#otimizacoes-implementadas">Otimizações Implementadas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monitoramento">Monitoramento</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#escalabilidade-horizontal">Escalabilidade Horizontal</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap-de-desenvolvimento">Roadmap de Desenvolvimento</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-1-1-q2-2025">Versão 1.1 (Q2 2025)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-1-2-q3-2025">Versão 1.2 (Q3 2025)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-2-0-q4-2025">Versão 2.0 (Q4 2025)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#suporte-e-comunidade">Suporte e Comunidade</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentacao">Documentação</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#canais-de-suporte">Canais de Suporte</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#contribuicao">Contribuição</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licenciamento">Licenciamento</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="visao-geral-do-sistema-nexo">
+<h1>Visão Geral do Sistema Nexo<a class="headerlink" href="#visao-geral-do-sistema-nexo" title="Link to this heading">#</a></h1>
+<p>O Nexo é um sistema completo de gestão organizacional desenvolvido em Django, projetado para atender às necessidades de órgãos públicos e empresas que precisam gerenciar estruturas hierárquicas complexas.</p>
+<section id="principais-funcionalidades">
+<h2>Principais Funcionalidades<a class="headerlink" href="#principais-funcionalidades" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>🏢 <strong>Gestão Organizacional</strong></dt><dd><ul class="simple">
+<li><p>Criação e manutenção de organogramas</p></li>
+<li><p>Definição de hierarquias e relacionamentos</p></li>
+<li><p>Visualização interativa da estrutura</p></li>
+</ul>
+</dd>
+<dt>💼 <strong>Controle de Cargos</strong></dt><dd><ul class="simple">
+<li><p>Cadastro detalhado de posições</p></li>
+<li><p>Integração com dados do SIORG</p></li>
+<li><p>Cálculo automático de custos</p></li>
+</ul>
+</dd>
+<dt>📊 <strong>Sistema de Relatórios</strong></dt><dd><ul class="simple">
+<li><p>Relatórios de efetivo</p></li>
+<li><p>Análise de gratificações</p></li>
+<li><p>Exportação em múltiplos formatos</p></li>
+</ul>
+</dd>
+<dt>🎯 <strong>Simulações</strong></dt><dd><ul class="simple">
+<li><p>Cenários de reestruturação</p></li>
+<li><p>Análise de impacto financeiro</p></li>
+<li><p>Comparação de alternativas</p></li>
+</ul>
+</dd>
+<dt>📁 <strong>Importação de Dados</strong></dt><dd><ul class="simple">
+<li><p>Suporte a Excel, CSV</p></li>
+<li><p>Validação automática</p></li>
+<li><p>Histórico de importações</p></li>
+</ul>
+</dd>
+<dt>👥 <strong>Autenticação Avançada</strong></dt><dd><ul class="simple">
+<li><p>Login social (Google, Microsoft)</p></li>
+<li><p>Controle de permissões</p></li>
+<li><p>Perfis personalizados</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="arquitetura-do-sistema">
+<h2>Arquitetura do Sistema<a class="headerlink" href="#arquitetura-do-sistema" title="Link to this heading">#</a></h2>
+<section id="backend-django">
+<h3>Backend (Django)<a class="headerlink" href="#backend-django" title="Link to this heading">#</a></h3>
+<p>O backend utiliza Django 5.1.5 com uma arquitetura modular:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>nexo/
+├── core/                    # App principal
+│   ├── models.py           # Modelos de dados
+│   ├── views.py            # Lógica de negócio
+│   ├── forms.py            # Formulários
+│   ├── admin.py            # Interface administrativa
+│   └── management/         # Comandos customizados
+├── Nexus/                  # Configurações do projeto
+└── templates/              # Templates HTML
+</pre></div>
+</div>
+</section>
+<section id="frontend">
+<h3>Frontend<a class="headerlink" href="#frontend" title="Link to this heading">#</a></h3>
+<p>Interface moderna e responsiva:</p>
+<ul class="simple">
+<li><p><strong>HTML5</strong> com templates Django</p></li>
+<li><p><strong>CSS3</strong> com design responsivo</p></li>
+<li><p><strong>JavaScript</strong> vanilla para interatividade</p></li>
+<li><p><strong>Bibliotecas</strong>: Vis.js para organogramas</p></li>
+</ul>
+</section>
+<section id="banco-de-dados">
+<h3>Banco de Dados<a class="headerlink" href="#banco-de-dados" title="Link to this heading">#</a></h3>
+<p>Suporte a múltiplos SGBDs:</p>
+<ul class="simple">
+<li><p><strong>PostgreSQL</strong> (recomendado para produção)</p></li>
+<li><p><strong>MySQL</strong> (alternativa robusta)</p></li>
+<li><p><strong>SQLite</strong> (desenvolvimento)</p></li>
+</ul>
+</section>
+</section>
+<section id="fluxo-de-trabalho-tipico">
+<h2>Fluxo de Trabalho Típico<a class="headerlink" href="#fluxo-de-trabalho-tipico" title="Link to this heading">#</a></h2>
+<ol class="arabic">
+<li><p><strong>Configuração Inicial</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Instalar dependências</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Configurar banco</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>migrate
+
+<span class="c1"># Criar superusuário</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
+</pre></div>
+</div>
+</li>
+<li><p><strong>Importação de Dados</strong></p>
+<ul class="simple">
+<li><p>Upload de planilhas via interface admin</p></li>
+<li><p>Validação automática dos dados</p></li>
+<li><p>Processamento e inserção no banco</p></li>
+</ul>
+</li>
+<li><p><strong>Visualização e Análise</strong></p>
+<ul class="simple">
+<li><p>Acesso ao organograma interativo</p></li>
+<li><p>Criação de relatórios personalizados</p></li>
+<li><p>Análise de cenários através de simulações</p></li>
+</ul>
+</li>
+<li><p><strong>Gestão Contínua</strong></p>
+<ul class="simple">
+<li><p>Atualizações incrementais</p></li>
+<li><p>Monitoramento de mudanças</p></li>
+<li><p>Exportação de resultados</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="casos-de-uso">
+<h2>Casos de Uso<a class="headerlink" href="#casos-de-uso" title="Link to this heading">#</a></h2>
+<section id="orgaos-publicos">
+<h3>Órgãos Públicos<a class="headerlink" href="#orgaos-publicos" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Secretarias de Governo</strong></p>
+<ul>
+<li><p>Mapeamento de estrutura regimental</p></li>
+<li><p>Controle de cargos DAS/FC</p></li>
+<li><p>Relatórios para TCU/CGU</p></li>
+</ul>
+</li>
+<li><p><strong>Universidades</strong></p>
+<ul>
+<li><p>Organização departamental</p></li>
+<li><p>Controle de docentes e técnicos</p></li>
+<li><p>Planejamento orçamentário</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="empresas-privadas">
+<h3>Empresas Privadas<a class="headerlink" href="#empresas-privadas" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Grandes Corporações</strong></p>
+<ul>
+<li><p>Reestruturação organizacional</p></li>
+<li><p>Análise de custos com pessoal</p></li>
+<li><p>Planejamento estratégico</p></li>
+</ul>
+</li>
+<li><p><strong>Consultorias</strong></p>
+<ul>
+<li><p>Análise para clientes</p></li>
+<li><p>Modelagem de cenários</p></li>
+<li><p>Relatórios executivos</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="integracao-com-sistemas-externos">
+<h2>Integração com Sistemas Externos<a class="headerlink" href="#integracao-com-sistemas-externos" title="Link to this heading">#</a></h2>
+<section id="siorg-sistema-de-informacoes-organizacionais">
+<h3>SIORG (Sistema de Informações Organizacionais)<a class="headerlink" href="#siorg-sistema-de-informacoes-organizacionais" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Importação automática de dados</p></li>
+<li><p>Sincronização de estruturas</p></li>
+<li><p>Atualização de valores</p></li>
+</ul>
+</section>
+<section id="sistemas-de-rh">
+<h3>Sistemas de RH<a class="headerlink" href="#sistemas-de-rh" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>APIs para integração</p></li>
+<li><p>Formato padronizado de dados</p></li>
+<li><p>Webhooks para atualizações</p></li>
+</ul>
+</section>
+<section id="planilhas-corporativas">
+<h3>Planilhas Corporativas<a class="headerlink" href="#planilhas-corporativas" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Suporte a formatos Excel</p></li>
+<li><p>Mapeamento de colunas</p></li>
+<li><p>Validação de integridade</p></li>
+</ul>
+</section>
+</section>
+<section id="seguranca-e-compliance">
+<h2>Segurança e Compliance<a class="headerlink" href="#seguranca-e-compliance" title="Link to this heading">#</a></h2>
+<section id="autenticacao">
+<h3>Autenticação<a class="headerlink" href="#autenticacao" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Multi-fator (MFA) via apps móveis</p></li>
+<li><p>Integração com Active Directory</p></li>
+<li><p>Single Sign-On (SSO)</p></li>
+</ul>
+</section>
+<section id="autorizacao">
+<h3>Autorização<a class="headerlink" href="#autorizacao" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Controle granular de permissões</p></li>
+<li><p>Grupos de usuários</p></li>
+<li><p>Auditoria de acesso</p></li>
+</ul>
+</section>
+<section id="dados">
+<h3>Dados<a class="headerlink" href="#dados" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Criptografia em trânsito (HTTPS)</p></li>
+<li><p>Backup automático</p></li>
+<li><p>Logs de auditoria</p></li>
+</ul>
+</section>
+</section>
+<section id="performance-e-escalabilidade">
+<h2>Performance e Escalabilidade<a class="headerlink" href="#performance-e-escalabilidade" title="Link to this heading">#</a></h2>
+<section id="otimizacoes-implementadas">
+<h3>Otimizações Implementadas<a class="headerlink" href="#otimizacoes-implementadas" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Cache Redis</strong> para dados frequentes</p></li>
+<li><p><strong>Paginação</strong> inteligente</p></li>
+<li><p><strong>Queries otimizadas</strong> com select_related</p></li>
+<li><p><strong>Compressão</strong> de assets estáticos</p></li>
+</ul>
+</section>
+<section id="monitoramento">
+<h3>Monitoramento<a class="headerlink" href="#monitoramento" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Métricas de performance</p></li>
+<li><p>Alertas automáticos</p></li>
+<li><p>Dashboard administrativo</p></li>
+</ul>
+</section>
+<section id="escalabilidade-horizontal">
+<h3>Escalabilidade Horizontal<a class="headerlink" href="#escalabilidade-horizontal" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Suporte a load balancers</p></li>
+<li><p>Separação de leitura/escrita</p></li>
+<li><p>Cache distribuído</p></li>
+</ul>
+</section>
+</section>
+<section id="roadmap-de-desenvolvimento">
+<h2>Roadmap de Desenvolvimento<a class="headerlink" href="#roadmap-de-desenvolvimento" title="Link to this heading">#</a></h2>
+<section id="versao-1-1-q2-2025">
+<h3>Versão 1.1 (Q2 2025)<a class="headerlink" href="#versao-1-1-q2-2025" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>✅ API REST completa</p></li>
+<li><p>✅ Mobile app (React Native)</p></li>
+<li><p>✅ Notificações push</p></li>
+<li><p>✅ Workflow de aprovações</p></li>
+</ul>
+</section>
+<section id="versao-1-2-q3-2025">
+<h3>Versão 1.2 (Q3 2025)<a class="headerlink" href="#versao-1-2-q3-2025" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>🔄 Machine Learning para previsões</p></li>
+<li><p>🔄 Dashboard executivo avançado</p></li>
+<li><p>🔄 Integração com BI tools</p></li>
+<li><p>🔄 Multi-tenancy</p></li>
+</ul>
+</section>
+<section id="versao-2-0-q4-2025">
+<h3>Versão 2.0 (Q4 2025)<a class="headerlink" href="#versao-2-0-q4-2025" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>📋 Microserviços architecture</p></li>
+<li><p>📋 Kubernetes deployment</p></li>
+<li><p>📋 Advanced analytics</p></li>
+<li><p>📋 AI-powered insights</p></li>
+</ul>
+</section>
+</section>
+<section id="suporte-e-comunidade">
+<h2>Suporte e Comunidade<a class="headerlink" href="#suporte-e-comunidade" title="Link to this heading">#</a></h2>
+<section id="documentacao">
+<h3>Documentação<a class="headerlink" href="#documentacao" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Guia do Usuário</strong>: Tutorial passo-a-passo</p></li>
+<li><p><strong>API Reference</strong>: Documentação técnica completa</p></li>
+<li><p><strong>FAQ</strong>: Perguntas frequentes</p></li>
+<li><p><strong>Troubleshooting</strong>: Solução de problemas</p></li>
+</ul>
+</section>
+<section id="canais-de-suporte">
+<h3>Canais de Suporte<a class="headerlink" href="#canais-de-suporte" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Issues no GitHub</strong>: Bugs e feature requests</p></li>
+<li><p><strong>Fórum da Comunidade</strong>: Discussões e dúvidas</p></li>
+<li><p><strong>Email</strong>: <a class="reference external" href="mailto:suporte&#37;&#52;&#48;nexo&#46;gov&#46;br">suporte<span>&#64;</span>nexo<span>&#46;</span>gov<span>&#46;</span>br</a></p></li>
+<li><p><strong>Chat</strong>: Slack/Discord da comunidade</p></li>
+</ul>
+</section>
+<section id="contribuicao">
+<h3>Contribuição<a class="headerlink" href="#contribuicao" title="Link to this heading">#</a></h3>
+<p>O projeto é open source e aceita contribuições:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fork do repositório</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/seu-usuario/nexo.git
+
+<span class="c1"># Criar branch para feature</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>nova-funcionalidade
+
+<span class="c1"># Desenvolver e testar</span>
+python<span class="w"> </span>manage.py<span class="w"> </span><span class="nb">test</span>
+
+<span class="c1"># Enviar pull request</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>nova-funcionalidade
+</pre></div>
+</div>
+</section>
+</section>
+<section id="licenciamento">
+<h2>Licenciamento<a class="headerlink" href="#licenciamento" title="Link to this heading">#</a></h2>
+<p>O Nexo é distribuído sob a licença MIT, permitindo:</p>
+<ul class="simple">
+<li><p>✅ Uso comercial</p></li>
+<li><p>✅ Modificação</p></li>
+<li><p>✅ Distribuição</p></li>
+<li><p>✅ Uso privado</p></li>
+</ul>
+<p>Com as seguintes obrigações:</p>
+<ul class="simple">
+<li><p>📋 Incluir copyright</p></li>
+<li><p>📋 Incluir licença</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>Para mais detalhes sobre funcionalidades específicas, consulte as seções correspondentes desta documentação.</p>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">Nexo - Sistema de Gestão Organizacional</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="installation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">próximo</p>
+        <p class="prev-next-title">Guia de Instalação</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Conteúdo
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#principais-funcionalidades">Principais Funcionalidades</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#arquitetura-do-sistema">Arquitetura do Sistema</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-django">Backend (Django)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frontend">Frontend</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#banco-de-dados">Banco de Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fluxo-de-trabalho-tipico">Fluxo de Trabalho Típico</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#casos-de-uso">Casos de Uso</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orgaos-publicos">Órgãos Públicos</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#empresas-privadas">Empresas Privadas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integracao-com-sistemas-externos">Integração com Sistemas Externos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#siorg-sistema-de-informacoes-organizacionais">SIORG (Sistema de Informações Organizacionais)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sistemas-de-rh">Sistemas de RH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#planilhas-corporativas">Planilhas Corporativas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seguranca-e-compliance">Segurança e Compliance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autenticacao">Autenticação</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autorizacao">Autorização</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dados">Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-e-escalabilidade">Performance e Escalabilidade</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#otimizacoes-implementadas">Otimizações Implementadas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monitoramento">Monitoramento</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#escalabilidade-horizontal">Escalabilidade Horizontal</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap-de-desenvolvimento">Roadmap de Desenvolvimento</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-1-1-q2-2025">Versão 1.1 (Q2 2025)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-1-2-q3-2025">Versão 1.2 (Q3 2025)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versao-2-0-q4-2025">Versão 2.0 (Q4 2025)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#suporte-e-comunidade">Suporte e Comunidade</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentacao">Documentação</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#canais-de-suporte">Canais de Suporte</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#contribuicao">Contribuição</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licenciamento">Licenciamento</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+De Eduardo Moura da Silva
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Eduardo Moura da Silva - CGEST/SAGE/MPO.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

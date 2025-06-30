@@ -281,3 +281,204 @@ class RelatorioEfetivo(models.Model):
     
     def __str__(self):
         return f"{self.qt} - {self.nome_completo} - {self.funcao}"
+
+
+# === MODELOS ADICIONAIS PARA SISTEMA DE RELATÓRIOS ===
+
+
+class Decreto(models.Model):
+    """
+    Modelo para armazenar histórico de decretos.
+    """
+    numero = models.CharField(max_length=100, verbose_name="Número do Decreto", unique=True)
+    data_publicacao = models.DateField(verbose_name="Data de Publicação")
+    titulo = models.TextField(verbose_name="Título/Ementa")
+    tipo = models.CharField(
+        max_length=50,
+        choices=[
+            ('estrutura_regimental', 'Estrutura Regimental'),
+            ('reorganizacao', 'Reorganização'),
+            ('criacao', 'Criação de Órgão'),
+            ('extincao', 'Extinção de Órgão'),
+            ('alteracao', 'Alteração'),
+            ('outro', 'Outro'),
+        ],
+        verbose_name="Tipo de Decreto"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('vigente', 'Vigente'),
+            ('revogado', 'Revogado'),
+            ('alterado', 'Alterado'),
+        ],
+        default='vigente',
+        verbose_name="Status"
+    )
+    arquivo = models.FileField(
+        upload_to='decretos/',
+        blank=True,
+        null=True,
+        verbose_name="Arquivo do Decreto"
+    )
+    observacoes = models.TextField(blank=True, verbose_name="Observações")
+    data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name="Data de Cadastro")
+    usuario_cadastro = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Usuário que Cadastrou"
+    )
+
+    class Meta:
+        verbose_name = "Decreto"
+        verbose_name_plural = "Decretos"
+        ordering = ['-data_publicacao']
+
+    def __str__(self):
+        return f"{self.numero} - {self.titulo[:50]}..."
+
+
+class SolicitacaoRealocacao(models.Model):
+    """
+    Modelo para solicitações de realocação de servidores.
+    """
+    nome_servidor = models.CharField(max_length=255, verbose_name="Nome do Servidor")
+    matricula_siape = models.CharField(max_length=50, verbose_name="Matrícula SIAPE")
+    unidade_atual = models.CharField(max_length=255, verbose_name="Unidade Atual")
+    unidade_destino = models.CharField(max_length=255, verbose_name="Unidade Destino")
+    justificativa = models.TextField(verbose_name="Justificativa")
+    
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pendente', 'Pendente'),
+            ('em_analise', 'Em Análise'),
+            ('aprovada', 'Aprovada'),
+            ('rejeitada', 'Rejeitada'),
+        ],
+        default='pendente',
+        verbose_name="Status"
+    )
+    
+    data_solicitacao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Solicitação")
+    usuario_solicitante = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="Usuário Solicitante"
+    )
+    
+    data_analise = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Data da Análise"
+    )
+    usuario_analista = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analises_realocacao',
+        verbose_name="Usuário Analista"
+    )
+    
+    observacoes_analise = models.TextField(
+        blank=True,
+        verbose_name="Observações da Análise"
+    )
+
+    class Meta:
+        verbose_name = "Solicitação de Realocação"
+        verbose_name_plural = "Solicitações de Realocação"
+        ordering = ['-data_solicitacao']
+
+    def __str__(self):
+        return f"{self.nome_servidor} - {self.unidade_atual} → {self.unidade_destino}"
+
+
+class SolicitacaoPermuta(models.Model):
+    """
+    Modelo para solicitações de permuta entre servidores.
+    """
+    # Servidor 1
+    nome_servidor1 = models.CharField(max_length=255, verbose_name="Nome do Servidor 1")
+    matricula_servidor1 = models.CharField(max_length=50, verbose_name="Matrícula SIAPE Servidor 1")
+    unidade_servidor1 = models.CharField(max_length=255, verbose_name="Unidade do Servidor 1")
+    
+    # Servidor 2
+    nome_servidor2 = models.CharField(max_length=255, verbose_name="Nome do Servidor 2")
+    matricula_servidor2 = models.CharField(max_length=50, verbose_name="Matrícula SIAPE Servidor 2")
+    unidade_servidor2 = models.CharField(max_length=255, verbose_name="Unidade do Servidor 2")
+    
+    # Informações da permuta
+    observacoes = models.TextField(blank=True, verbose_name="Observações")
+    
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pendente', 'Pendente'),
+            ('em_analise', 'Em Análise'),
+            ('aprovada', 'Aprovada'),
+            ('rejeitada', 'Rejeitada'),
+        ],
+        default='pendente',
+        verbose_name="Status"
+    )
+    
+    data_solicitacao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Solicitação")
+    usuario_solicitante = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="Usuário Solicitante"
+    )
+    
+    data_analise = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Data da Análise"
+    )
+    usuario_analista = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analises_permuta',
+        verbose_name="Usuário Analista"
+    )
+    
+    observacoes_analise = models.TextField(
+        blank=True,
+        verbose_name="Observações da Análise"
+    )
+
+    class Meta:
+        verbose_name = "Solicitação de Permuta"
+        verbose_name_plural = "Solicitações de Permuta"
+        ordering = ['-data_solicitacao']
+
+    def __str__(self):
+        return f"Permuta: {self.nome_servidor1} ↔ {self.nome_servidor2}"
+
+
+class ConfiguracaoRelatorio(models.Model):
+    """
+    Modelo para configurações do sistema de relatórios.
+    """
+    chave = models.CharField(max_length=100, unique=True, verbose_name="Chave de Configuração")
+    valor = models.TextField(verbose_name="Valor")
+    descricao = models.CharField(max_length=255, blank=True, verbose_name="Descrição")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    usuario_atualizacao = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Usuário que Atualizou"
+    )
+
+    class Meta:
+        verbose_name = "Configuração de Relatório"
+        verbose_name_plural = "Configurações de Relatórios"
+        ordering = ['chave']
+
+    def __str__(self):
+        return f"{self.chave}: {self.valor[:50]}..."

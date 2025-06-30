@@ -258,6 +258,7 @@
             <a class="nav-link" href="{% url 'financeira' %}">Painel de Bordo</a>
             <a class="nav-link" href="{% url 'comparador' %}">Comparador</a>
             <a class="nav-link" href="{% url 'simulador' %}">Simulador</a>
+            <a class="nav-link" href="{% url 'relatorios' %}">Relatórios</a>
             <!-- Menu dropdown do perfil -->
             <div class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -348,6 +349,10 @@
           }
           // Caso especial para comparador
           else if (currentPath.includes('/comparador/') && link.textContent.trim() === 'Comparador') {
+            link.classList.add('active');
+          }
+          // Caso especial para relatórios
+          else if (currentPath.includes('/relatorios/') && link.textContent.trim() === 'Relatórios') {
             link.classList.add('active');
           }
         });

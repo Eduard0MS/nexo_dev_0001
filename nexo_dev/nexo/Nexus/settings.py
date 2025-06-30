@@ -1,5 +1,4 @@
 from pathlib import Path
-import allauth
 import os
 from dotenv import load_dotenv, find_dotenv
 import io
@@ -230,7 +229,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Configurações do allauth
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

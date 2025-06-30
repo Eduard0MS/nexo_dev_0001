@@ -2,7 +2,8 @@ from django.contrib import admin, messages
 from django.urls import path
 from django.shortcuts import render, redirect
 from django import forms
-from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada, SimulacaoSalva, RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, RelatorioGratificacoesPlan1
+from django.db import models
+from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada, SimulacaoSalva, RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, RelatorioGratificacoesPlan1, Decreto, SolicitacaoRealocacao, SolicitacaoPermuta, ConfiguracaoRelatorio
 from .utils import processa_planilhas
 from .siorg_scraper import scrape_siorg
 import os
@@ -15,31 +16,29 @@ from django.db.models.fields.related import ForeignObjectRel
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils import timezone
 
 # Customização do Admin
 admin.site.site_header = "Administração do Nexo"
 admin.site.site_title = "Administração do Nexo"
 admin.site.index_title = "Administração do Site"
 
-# Importar a função de geração do arquivo JSON
-try:
-    from gerar_dados_json import gerar_dados_json
-    from atualizar_dados_organograma import atualizar_dados_organograma
-except ImportError:
-    # Função para atualizar os dados do organograma
-    def atualizar_dados_organograma():
-        """Atualiza o arquivo organograma.json a partir do dados.json."""
-        try:
-            # Não é mais necessário copiar o arquivo, já que
-            # o organograma agora acessa o dados.json diretamente via API
-            print("Organograma será atualizado via API ao ser carregado")
-            return True
-        except Exception as e:
-            print(f"Erro ao atualizar organograma: {str(e)}")
-            return False
-            
-    # Função para gerar o arquivo dados.json
-    def gerar_dados_json():
+# Funções auxiliares para geração de dados
+
+# Função para atualizar os dados do organograma
+def atualizar_dados_organograma():
+    """Atualiza o arquivo organograma.json a partir do dados.json."""
+    try:
+        # Não é mais necessário copiar o arquivo, já que
+        # o organograma agora acessa o dados.json diretamente via API
+        print("Organograma será atualizado via API ao ser carregado")
+        return True
+    except Exception as e:
+        print(f"Erro ao atualizar organograma: {str(e)}")
+        return False
+        
+# Função para gerar o arquivo dados.json
+def gerar_dados_json():
         """
         Gera um arquivo JSON com dados das tabelas UnidadeCargo e CargoSIORG.
         O arquivo será salvo como organograma.json.
@@ -1164,3 +1163,145 @@ class RelatorioGratificacoesPlan1Admin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['show_import_button'] = True
         return super().changelist_view(request, extra_context)
+
+
+# === ADMIN PARA NOVOS MODELOS DO SISTEMA DE RELATÓRIOS ===
+
+@admin.register(Decreto)
+class DecretoAdmin(admin.ModelAdmin):
+    list_display = ('numero', 'data_publicacao', 'titulo_resumido', 'tipo', 'status', 'data_cadastro')
+    list_filter = ('tipo', 'status', 'data_publicacao', 'data_cadastro')
+    search_fields = ('numero', 'titulo')
+    readonly_fields = ('data_cadastro',)
+    date_hierarchy = 'data_publicacao'
+    
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('numero', 'data_publicacao', 'titulo', 'tipo', 'status')
+        }),
+        ('Documentação', {
+            'fields': ('arquivo', 'observacoes')
+        }),
+        ('Controle', {
+            'fields': ('usuario_cadastro', 'data_cadastro'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def titulo_resumido(self, obj):
+        return obj.titulo[:100] + '...' if len(obj.titulo) > 100 else obj.titulo
+    titulo_resumido.short_description = 'Título'
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Se está criando um novo objeto
+            obj.usuario_cadastro = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(SolicitacaoRealocacao)
+class SolicitacaoRealocacaoAdmin(admin.ModelAdmin):
+    list_display = ('nome_servidor', 'matricula_siape', 'unidade_atual', 'unidade_destino', 'status', 'data_solicitacao')
+    list_filter = ('status', 'data_solicitacao', 'unidade_atual', 'unidade_destino')
+    search_fields = ('nome_servidor', 'matricula_siape', 'unidade_atual', 'unidade_destino')
+    readonly_fields = ('data_solicitacao', 'usuario_solicitante')
+    date_hierarchy = 'data_solicitacao'
+    
+    fieldsets = (
+        ('Informações do Servidor', {
+            'fields': ('nome_servidor', 'matricula_siape')
+        }),
+        ('Realocação', {
+            'fields': ('unidade_atual', 'unidade_destino', 'justificativa')
+        }),
+        ('Status e Análise', {
+            'fields': ('status', 'data_analise', 'usuario_analista', 'observacoes_analise')
+        }),
+        ('Controle', {
+            'fields': ('usuario_solicitante', 'data_solicitacao'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(self.readonly_fields)
+        if obj and obj.status != 'pendente':
+            # Se já foi analisada, tornar alguns campos readonly
+            readonly.extend(['nome_servidor', 'matricula_siape', 'unidade_atual', 'unidade_destino'])
+        return readonly
+    
+    def save_model(self, request, obj, form, change):
+        if change and 'status' in form.changed_data:
+            # Se o status mudou, registrar data e usuário da análise
+            if obj.status in ['aprovada', 'rejeitada']:
+                obj.data_analise = timezone.now()
+                obj.usuario_analista = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(SolicitacaoPermuta)
+class SolicitacaoPermutaAdmin(admin.ModelAdmin):
+    list_display = ('nome_servidor1', 'nome_servidor2', 'unidade_servidor1', 'unidade_servidor2', 'status', 'data_solicitacao')
+    list_filter = ('status', 'data_solicitacao', 'unidade_servidor1', 'unidade_servidor2')
+    search_fields = ('nome_servidor1', 'nome_servidor2', 'matricula_servidor1', 'matricula_servidor2')
+    readonly_fields = ('data_solicitacao', 'usuario_solicitante')
+    date_hierarchy = 'data_solicitacao'
+    
+    fieldsets = (
+        ('Servidor 1', {
+            'fields': ('nome_servidor1', 'matricula_servidor1', 'unidade_servidor1')
+        }),
+        ('Servidor 2', {
+            'fields': ('nome_servidor2', 'matricula_servidor2', 'unidade_servidor2')
+        }),
+        ('Informações da Permuta', {
+            'fields': ('observacoes',)
+        }),
+        ('Status e Análise', {
+            'fields': ('status', 'data_analise', 'usuario_analista', 'observacoes_analise')
+        }),
+        ('Controle', {
+            'fields': ('usuario_solicitante', 'data_solicitacao'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(self.readonly_fields)
+        if obj and obj.status != 'pendente':
+            # Se já foi analisada, tornar alguns campos readonly
+            readonly.extend(['nome_servidor1', 'nome_servidor2', 'matricula_servidor1', 'matricula_servidor2'])
+        return readonly
+    
+    def save_model(self, request, obj, form, change):
+        if change and 'status' in form.changed_data:
+            # Se o status mudou, registrar data e usuário da análise
+            if obj.status in ['aprovada', 'rejeitada']:
+                obj.data_analise = timezone.now()
+                obj.usuario_analista = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ConfiguracaoRelatorio)
+class ConfiguracaoRelatorioAdmin(admin.ModelAdmin):
+    list_display = ('chave', 'valor_resumido', 'descricao', 'data_atualizacao', 'usuario_atualizacao')
+    list_filter = ('data_atualizacao', 'usuario_atualizacao')
+    search_fields = ('chave', 'descricao', 'valor')
+    readonly_fields = ('data_atualizacao',)
+    
+    fieldsets = (
+        ('Configuração', {
+            'fields': ('chave', 'valor', 'descricao')
+        }),
+        ('Controle', {
+            'fields': ('usuario_atualizacao', 'data_atualizacao'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def valor_resumido(self, obj):
+        return obj.valor[:50] + '...' if len(obj.valor) > 50 else obj.valor
+    valor_resumido.short_description = 'Valor'
+    
+    def save_model(self, request, obj, form, change):
+        obj.usuario_atualizacao = request.user
+        super().save_model(request, obj, form, change)

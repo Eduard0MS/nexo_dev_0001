@@ -1815,3 +1815,566 @@ def deletar_simulacao(request, simulacao_id):
         })
     except SimulacaoSalva.DoesNotExist:
         return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+
+
+# === VIEWS PARA SISTEMA DE RELATÓRIOS ===
+
+@login_required
+def relatorios(request):
+    """
+    Página principal do sistema de relatórios.
+    Inclui todas as funcionalidades solicitadas.
+    """
+    from .models import RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, UnidadeCargo
+    from django.db.models import Count, Sum, Avg
+    
+    context = {}
+    
+    # Dados para o relatório de pontos e gratificações
+    try:
+        # Estatísticas básicas
+        total_servidores = RelatorioGratificacoes.objects.count()
+        total_unidades = RelatorioGratificacoes.objects.values('unidade_lotacao').distinct().count()
+        total_cargos = RelatorioGratificacoes.objects.values('cargo').distinct().count()
+        
+        # Dados por unidade para cálculo dos índices
+        unidades_data = RelatorioGratificacoes.objects.values(
+            'unidade_lotacao', 'sigla_unidade'
+        ).annotate(
+            total_servidores=Count('id'),
+            cargos_unicos=Count('cargo', distinct=True)
+        ).order_by('-total_servidores')
+        
+        # Dados do organograma para cálculo de pontos
+        pontos_data = UnidadeCargo.objects.values(
+            'denominacao_unidade', 'sigla_unidade'
+        ).annotate(
+            total_pontos=Sum('pontos_total'),
+            total_quantidade=Sum('quantidade')
+        ).filter(total_pontos__gt=0)
+        
+        context.update({
+            'total_servidores': total_servidores,
+            'total_unidades': total_unidades,
+            'total_cargos': total_cargos,
+            'unidades_data': list(unidades_data),
+            'pontos_data': list(pontos_data),
+        })
+        
+    except Exception as e:
+        context['erro_dados'] = f"Erro ao carregar dados: {str(e)}"
+    
+    return render(request, 'core/relatorios.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_relatorio_pontos_gratificacoes(request):
+    """
+    API para dados do relatório usando a API do organograma.
+    Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)
+    """
+    from django.http import HttpRequest
+    import json
+    
+    try:
+        # Parâmetros de filtro e paginação
+        filtro_unidade = request.GET.get('unidade', '').strip()
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 11))
+        
+        # Criar uma requisição interna para a API do organograma
+        internal_request = HttpRequest()
+        internal_request.method = 'GET'
+        internal_request.user = request.user
+        internal_request.GET = request.GET.copy()
+        
+        # Chamar a API do organograma
+        response = api_organograma(internal_request)
+        
+        if response.status_code == 200:
+            data = json.loads(response.content)
+            registros = data.get('core_unidadecargo', [])
+            
+            # Processar dados do organograma
+            tabela_gratificacoes = []
+            unidades_unicas = {}
+            
+            for registro in registros:
+                unidade = registro.get('denominacao_unidade', '')
+                pontos = float(registro.get('pontos_total', 0))
+                
+                # Aplicar filtro se fornecido
+                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
+                    continue
+                
+                if unidade:  # Só incluir se tem nome da unidade
+                    if unidade in unidades_unicas:
+                        unidades_unicas[unidade]['pontos'] += pontos
+                    else:
+                        unidades_unicas[unidade] = {
+                            'unidade': unidade,
+                            'pontos': pontos,
+                            'gsist': 0,  # Por enquanto zerado
+                            'gsisp': 0   # Por enquanto zerado
+                        }
+            
+            # Converter para lista e ordenar
+            tabela_final = list(unidades_unicas.values())
+            tabela_final.sort(key=lambda x: x['unidade'])
+            
+            # Arredondar pontos
+            for item in tabela_final:
+                item['pontos'] = round(item['pontos'], 2)
+            
+            # Implementar paginação
+            total_registros = len(tabela_final)
+            total_pages = (total_registros + per_page - 1) // per_page
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            dados_paginados = tabela_final[start_index:end_index]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': dados_paginados,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'total_registros': total_registros,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                },
+                'filtros': {
+                    'unidade': filtro_unidade,
+                    'total_registros': total_registros
+                }
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Erro ao acessar dados do organograma'
+            }, status=500)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar dados de gratificações: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_relatorio_dimensionamento(request):
+    """
+    API para dados do dimensionamento usando a API do organograma.
+    Segunda tabela: Unidade, Pontos da área, Colaboradores (quantidade), IEE
+    """
+    from django.http import HttpRequest
+    import json
+    
+    try:
+        # Parâmetros de filtro e paginação
+        filtro_unidade = request.GET.get('unidade', '').strip()
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 11))
+        
+        # Criar uma requisição interna para a API do organograma
+        internal_request = HttpRequest()
+        internal_request.method = 'GET'
+        internal_request.user = request.user
+        internal_request.GET = request.GET.copy()
+        
+        # Chamar a API do organograma
+        response = api_organograma(internal_request)
+        
+        if response.status_code == 200:
+            data = json.loads(response.content)
+            registros = data.get('core_unidadecargo', [])
+            
+            # Processar dados do organograma
+            tabela_dimensionamento = []
+            total_colaboradores_instituicao = 0
+            total_pontos_instituicao = 0
+            
+            # Agrupar por unidade
+            unidades_dados = {}
+            for registro in registros:
+                unidade = registro.get('denominacao_unidade', '')
+                pontos = float(registro.get('pontos_total', 0))
+                quantidade = int(registro.get('quantidade', 0))
+                
+                # Aplicar filtro se fornecido
+                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
+                    continue
+                
+                if unidade:
+                    if unidade in unidades_dados:
+                        unidades_dados[unidade]['pontos'] += pontos
+                        unidades_dados[unidade]['colaboradores'] += quantidade
+                    else:
+                        unidades_dados[unidade] = {
+                            'unidade': unidade,
+                            'pontos': pontos,
+                            'colaboradores': quantidade,
+                            'consultoria': 0  # Por enquanto zerado
+                        }
+            
+            # Calcular totais para IEE
+            for dados in unidades_dados.values():
+                total_colaboradores_instituicao += dados['colaboradores']
+                total_pontos_instituicao += dados['pontos']
+            
+            # Calcular IEE: (Servidores na Unidade / Número de Pontos)
+            for dados in unidades_dados.values():
+                colaboradores = dados['colaboradores']
+                pontos = dados['pontos']
+                
+                # IEE = Servidores na Unidade / Número de Pontos
+                iee = round(colaboradores / pontos, 3) if pontos > 0 else 0
+                
+                tabela_dimensionamento.append({
+                    'unidade': dados['unidade'],
+                    'pontos': round(pontos, 2),
+                    'colaboradores': colaboradores,
+                    'consultoria': dados['consultoria'],
+                    'iee': iee
+                })
+            
+            # Ordenar por nome da unidade
+            tabela_dimensionamento.sort(key=lambda x: x['unidade'])
+            
+            # Implementar paginação
+            total_registros = len(tabela_dimensionamento)
+            total_pages = (total_registros + per_page - 1) // per_page
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            dados_paginados = tabela_dimensionamento[start_index:end_index]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': dados_paginados,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'total_registros': total_registros,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                },
+                'filtros': {
+                    'unidade': filtro_unidade,
+                    'total_registros': total_registros
+                },
+                'estatisticas': {
+                    'total_colaboradores_instituicao': total_colaboradores_instituicao,
+                    'total_pontos_instituicao': round(total_pontos_instituicao, 2),
+                    'formula_iee': 'IEE = (Servidores na Unidade / Número de Pontos)'
+                }
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Erro ao acessar dados do organograma'
+            }, status=500)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar dados de dimensionamento: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_historico_decretos(request):
+    """
+    API para histórico de decretos.
+    """
+    from .models import Decreto
+    
+    try:
+        decretos_db = Decreto.objects.all().order_by('-data_publicacao')
+        
+        decretos = []
+        for decreto in decretos_db:
+            decretos.append({
+                'id': decreto.id,
+                'numero': decreto.numero,
+                'data': decreto.data_publicacao.strftime('%Y-%m-%d'),
+                'titulo': decreto.titulo,
+                'tipo': decreto.get_tipo_display(),
+                'status': decreto.get_status_display()
+            })
+        
+        # Se não há decretos no banco, usar dados simulados
+        if not decretos:
+            decretos = [
+                {
+                    'id': 1,
+                    'numero': 'Decreto nº 10.185/2019',
+                    'data': '2019-12-20',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério da Economia',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Vigente'
+                },
+                {
+                    'id': 2,
+                    'numero': 'Decreto nº 9.745/2019',
+                    'data': '2019-04-08',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério do Planejamento, Desenvolvimento e Gestão',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Revogado'
+                },
+                {
+                    'id': 3,
+                    'numero': 'Decreto nº 11.355/2022',
+                    'data': '2022-12-30',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério do Planejamento e Orçamento',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Vigente'
+                }
+            ]
+        
+        return JsonResponse({
+            'status': 'success',
+            'decretos': decretos
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar decretos: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_siglario(request):
+    """
+    API para o siglário institucional.
+    """
+    from .models import UnidadeCargo
+    
+    try:
+        # Buscar todas as siglas únicas do organograma
+        siglas = UnidadeCargo.objects.values(
+            'sigla_unidade', 'denominacao_unidade', 'categoria_unidade'
+        ).distinct().exclude(
+            sigla_unidade__isnull=True
+        ).exclude(
+            sigla_unidade__exact=''
+        ).order_by('sigla_unidade')
+        
+        siglario_data = []
+        for item in siglas:
+            siglario_data.append({
+                'sigla': item['sigla_unidade'],
+                'denominacao': item['denominacao_unidade'],
+                'categoria': item['categoria_unidade'] or 'Não categorizado'
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': siglario_data,
+            'total': len(siglario_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar siglário: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_unidades_disponiveis(request):
+    """
+    API para buscar unidades disponíveis para formulários.
+    """
+    from .models import UnidadeCargo
+    
+    try:
+        unidades = UnidadeCargo.objects.values(
+            'denominacao_unidade', 'sigla_unidade'
+        ).distinct().exclude(
+            denominacao_unidade__isnull=True
+        ).exclude(
+            denominacao_unidade__exact=''
+        ).order_by('denominacao_unidade')
+        
+        unidades_data = []
+        for unidade in unidades:
+            unidades_data.append({
+                'nome': unidade['denominacao_unidade'],
+                'sigla': unidade['sigla_unidade'] or ''
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'unidades': unidades_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar unidades: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_solicitacao_realocacao(request):
+    """
+    Processa o envio de solicitação de realocação.
+    """
+    from .models import SolicitacaoRealocacao
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        campos_obrigatorios = ['nome_servidor', 'matricula', 'unidade_atual', 'unidade_destino', 'justificativa']
+        for campo in campos_obrigatorios:
+            if not data.get(campo):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Campo obrigatório não preenchido: {campo}'
+                }, status=400)
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoRealocacao.objects.create(
+            nome_servidor=data['nome_servidor'],
+            matricula_siape=data['matricula'],
+            unidade_atual=data['unidade_atual'],
+            unidade_destino=data['unidade_destino'],
+            justificativa=data['justificativa'],
+            usuario_solicitante=request.user
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Solicitação de realocação enviada com sucesso!',
+            'id': solicitacao.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Dados inválidos'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao processar solicitação: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_solicitacao_permuta(request):
+    """
+    Processa o envio de solicitação de permuta.
+    """
+    from .models import SolicitacaoPermuta
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        campos_obrigatorios = ['servidor1', 'matricula1', 'servidor2', 'matricula2']
+        for campo in campos_obrigatorios:
+            if not data.get(campo):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Campo obrigatório não preenchido: {campo}'
+                }, status=400)
+        
+        # Buscar unidades dos servidores (simplificado - em produção seria mais complexo)
+        unidade1 = "Unidade a definir"  # Aqui seria feita uma busca real
+        unidade2 = "Unidade a definir"  # Aqui seria feita uma busca real
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoPermuta.objects.create(
+            nome_servidor1=data['servidor1'],
+            matricula_servidor1=data['matricula1'],
+            unidade_servidor1=unidade1,
+            nome_servidor2=data['servidor2'],
+            matricula_servidor2=data['matricula2'],
+            unidade_servidor2=unidade2,
+            observacoes=data.get('observacoes', ''),
+            usuario_solicitante=request.user
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Solicitação de permuta enviada com sucesso!',
+            'id': solicitacao.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Dados inválidos'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao processar solicitação: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_minhas_solicitacoes(request):
+    """
+    API para listar solicitações do usuário atual.
+    """
+    from .models import SolicitacaoRealocacao, SolicitacaoPermuta
+    
+    try:
+        # Buscar realocações
+        realocacoes = SolicitacaoRealocacao.objects.filter(
+            usuario_solicitante=request.user
+        ).order_by('-data_solicitacao')
+        
+        # Buscar permutas
+        permutas = SolicitacaoPermuta.objects.filter(
+            usuario_solicitante=request.user
+        ).order_by('-data_solicitacao')
+        
+        realocacoes_data = []
+        for r in realocacoes:
+            realocacoes_data.append({
+                'id': r.id,
+                'tipo': 'realocacao',
+                'servidor': r.nome_servidor,
+                'unidade_origem': r.unidade_atual,
+                'unidade_destino': r.unidade_destino,
+                'status': r.get_status_display(),
+                'data': r.data_solicitacao.strftime('%d/%m/%Y %H:%M')
+            })
+        
+        permutas_data = []
+        for p in permutas:
+            permutas_data.append({
+                'id': p.id,
+                'tipo': 'permuta',
+                'servidor1': p.nome_servidor1,
+                'servidor2': p.nome_servidor2,
+                'status': p.get_status_display(),
+                'data': p.data_solicitacao.strftime('%d/%m/%Y %H:%M')
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'realocacoes': realocacoes_data,
+            'permutas': permutas_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar solicitações: {str(e)}'
+        }, status=500)

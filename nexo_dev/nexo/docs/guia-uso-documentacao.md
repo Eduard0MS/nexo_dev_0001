@@ -264,7 +264,7 @@ PS C:\...\nexo_dev_0001\nexo_dev\nexo> python manage.py gerar_documentacao --aca
 | AUTO | ✅ Funcionando | Detecção automática |
 | Multi-formato | ✅ Funcionando | HTML, PDF, EPUB |
 | Frontend docs | ✅ Funcionando | Templates, CSS, JS |
-| Credenciais | ✅ **Atualizado** | **Eduardo/CGEST-SAGE/MPO** |
+| Credenciais | ✅ **Atualizado** | **Nome/CGEST-SAGE/MPO** |
 | GitHub Config | ✅ **Atualizado** | **Eduard0MS/nexo_dev_0001** |
 | Auto-navegador | 🆕 **NOVO** | **Abre automaticamente** |
 

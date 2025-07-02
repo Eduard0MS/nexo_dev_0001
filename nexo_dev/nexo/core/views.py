@@ -19,7 +19,14 @@ from .forms import (
     PerfilUpdateForm,
     CustomPasswordChangeForm
 )
-from .models import UnidadeCargo, CargoSIORG
+from .models import (
+    UnidadeCargo, 
+    CargoSIORG, 
+    SimulacaoSalva, 
+    TipoUsuario, 
+    SolicitacaoSimulacao, 
+    NotificacaoSimulacao
+)
 from .utils import processa_planilhas, processa_organograma, estrutura_json_organograma, processa_json_organograma, gerar_anexo_simulacao
 import os
 from django.conf import settings
@@ -47,7 +54,7 @@ from .dados_json_update import gerar_organograma_json
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views import View
-from .models import SimulacaoSalva
+from django.contrib.auth.models import User, Group
 
 
 class CustomLoginView(LoginView):
@@ -1693,16 +1700,46 @@ class BaixarAnexoSimulacaoView(View):
 @login_required
 @require_http_methods(["GET"])
 def listar_simulacoes(request):
-    """Lista todas as simulações salvas do usuário atual"""
-    simulacoes = SimulacaoSalva.objects.filter(usuario=request.user)
+    """Lista simulações baseado no tipo de usuário"""
+    from .models import obter_tipo_usuario
+    
+    user = request.user
+    tipo_usuario = obter_tipo_usuario(user)
+    
+    # Se for gerente, pode ver simulações próprias + enviadas para análise + rejeitadas
+    if tipo_usuario == 'gerente':
+        simulacoes_proprias = SimulacaoSalva.objects.filter(usuario=user)
+        simulacoes_analise = SimulacaoSalva.objects.filter(
+            status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+            visivel_para_gerentes=True
+        ).exclude(usuario=user)
+        simulacoes = simulacoes_proprias.union(simulacoes_analise).order_by('-atualizado_em')
+    else:
+        # Usuários normais veem apenas suas próprias simulações
+        simulacoes = SimulacaoSalva.objects.filter(usuario=user)
     
     data = []
     for sim in simulacoes:
+        is_owner = sim.usuario == user
+        
+        # Para simulações de análise, verificar se o usuário criador é realmente interno
+        if not is_owner and sim.status == 'enviada_analise':
+            if sim.tipo_usuario_atual != 'interno':
+                continue  # Pular simulações de usuários que não são internos
+        
         data.append({
             'id': sim.id,
             'nome': sim.nome,
             'descricao': sim.descricao or '',
             'unidade_base': sim.unidade_base or '',
+            'status': sim.get_status_display(),
+            'status_code': sim.status,
+            'tipo_usuario': sim.get_tipo_usuario_display_atual(),  # Usar o método dinâmico
+            'usuario': sim.usuario.get_full_name() or sim.usuario.username if not is_owner else 'Você',
+            'usuario_email': sim.usuario.email if not is_owner else '',
+            'is_owner': is_owner,
+            'pode_enviar_analise': is_owner and sim.status in ['rascunho', 'rejeitada', 'rejeitada_editada'] and sim.tipo_usuario_atual == 'interno',  # Usar propriedade dinâmica
+            'pode_avaliar': not is_owner and tipo_usuario == 'gerente' and sim.status in ['enviada_analise', 'rejeitada', 'rejeitada_editada'],
             'criado_em': sim.criado_em.strftime('%d/%m/%Y %H:%M'),
             'atualizado_em': sim.atualizado_em.strftime('%d/%m/%Y %H:%M')
         })
@@ -1710,7 +1747,8 @@ def listar_simulacoes(request):
     return JsonResponse({
         'simulacoes': data,
         'total': len(data),
-        'limite': 5
+        'limite': 5,
+        'user_type': tipo_usuario
     })
 
 @login_required
@@ -1751,12 +1789,14 @@ def salvar_simulacao(request):
                 return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
         else:
             # Criação
-            # Verificar limite de 5 simulações
-            total_simulacoes = SimulacaoSalva.objects.filter(usuario=request.user).count()
-            if total_simulacoes >= 5:
-                return JsonResponse({
-                    'erro': 'Limite de 5 simulações atingido. Delete uma simulação existente antes de criar uma nova.'
-                }, status=400)
+            # Verificar limite de 5 simulações (não se aplica a gerentes)
+            from .models import obter_tipo_usuario
+            if obter_tipo_usuario(request.user) != 'gerente':
+                total_simulacoes = SimulacaoSalva.objects.filter(usuario=request.user).count()
+                if total_simulacoes >= 5:
+                    return JsonResponse({
+                        'erro': 'Limite de 5 simulações atingido. Delete uma simulação existente antes de criar uma nova.'
+                    }, status=400)
             
             # Verificar se já existe simulação com mesmo nome
             if SimulacaoSalva.objects.filter(usuario=request.user, nome=nome).exists():
@@ -1787,7 +1827,27 @@ def salvar_simulacao(request):
 def carregar_simulacao(request, simulacao_id):
     """Carrega os dados de uma simulação específica"""
     try:
-        simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        from .models import obter_tipo_usuario
+        
+        user = request.user
+        tipo_usuario = obter_tipo_usuario(user)
+        
+        # Lógica de permissões baseada no tipo de usuário
+        if tipo_usuario == 'gerente':
+            # Gerentes podem carregar simulações próprias + enviadas para análise
+            try:
+                # Primeiro tenta carregar simulação própria
+                simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
+            except SimulacaoSalva.DoesNotExist:
+                # Se não for própria, verifica se é uma simulação enviada para análise ou rejeitada
+                simulacao = SimulacaoSalva.objects.get(
+                    id=simulacao_id,
+                    status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+                    visivel_para_gerentes=True
+                )
+        else:
+            # Usuários normais só podem carregar simulações próprias
+            simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
         
         return JsonResponse({
             'id': simulacao.id,
@@ -1796,10 +1856,13 @@ def carregar_simulacao(request, simulacao_id):
             'dados_estrutura': simulacao.dados_estrutura,
             'unidade_base': simulacao.unidade_base or '',
             'criado_em': simulacao.criado_em.strftime('%d/%m/%Y %H:%M'),
-            'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M'),
+            'usuario': simulacao.usuario.get_full_name() or simulacao.usuario.username,
+            'status': simulacao.get_status_display(),
+            'tipo_usuario_autor': simulacao.tipo_usuario_atual
         })
     except SimulacaoSalva.DoesNotExist:
-        return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+        return JsonResponse({'erro': 'Simulação não encontrada ou sem permissão de acesso'}, status=404)
 
 @login_required
 @require_http_methods(["DELETE"])
@@ -1815,6 +1878,72 @@ def deletar_simulacao(request, simulacao_id):
         })
     except SimulacaoSalva.DoesNotExist:
         return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+
+
+@login_required
+@require_http_methods(["PUT", "PATCH"])
+def atualizar_simulacao(request, simulacao_id):
+    """View para atualizar uma simulação existente (auto-save)"""
+    import json
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    from .models import SimulacaoSalva, obter_tipo_usuario
+    
+    try:
+        # Verificar se usuário tem permissão para editar
+        simulacao = get_object_or_404(SimulacaoSalva, id=simulacao_id)
+        
+        # Verificar permissões
+        if simulacao.usuario != request.user:
+            # Verificar se é gerente e pode editar simulações enviadas para análise
+            user_tipo = obter_tipo_usuario(request.user)
+            if user_tipo != 'gerente' or simulacao.status not in ['enviada_analise', 'rejeitada', 'rejeitada_editada']:
+                return JsonResponse({'success': False, 'message': 'Você não tem permissão para editar esta simulação'}, status=403)
+        
+        # Parse dos dados JSON
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        if 'dados_estrutura' not in data:
+            return JsonResponse({'success': False, 'message': 'Dados da estrutura são obrigatórios'}, status=400)
+        
+        # Atualizar campos opcionais se fornecidos
+        if 'nome' in data:
+            simulacao.nome = data['nome']
+        if 'descricao' in data:
+            simulacao.descricao = data['descricao']
+        if 'unidade_base' in data:
+            simulacao.unidade_base = data['unidade_base']
+        
+        # Atualizar dados da estrutura
+        simulacao.dados_estrutura = data['dados_estrutura']
+        
+        # Se simulação foi rejeitada e está sendo editada, marcar como rejeitada_editada
+        if simulacao.status == 'rejeitada':
+            simulacao.status = 'rejeitada_editada'
+        
+        simulacao.save()
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Simulação atualizada com sucesso',
+            'simulacao': {
+                'id': simulacao.id,
+                'nome': simulacao.nome,
+                'descricao': simulacao.descricao,
+                'status': simulacao.get_status_display(),
+                'status_code': simulacao.status,
+                'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Dados JSON inválidos'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao atualizar simulação {simulacao_id}: {str(e)}")
+        return JsonResponse({'success': False, 'message': f'Erro interno: {str(e)}'}, status=500)
 
 
 # === VIEWS PARA SISTEMA DE RELATÓRIOS ===
@@ -2329,52 +2458,611 @@ def enviar_solicitacao_permuta(request):
 @require_http_methods(["GET"])
 def api_minhas_solicitacoes(request):
     """
-    API para listar solicitações do usuário atual.
+    API para listar as solicitações do usuário (realocações e permutas).
     """
-    from .models import SolicitacaoRealocacao, SolicitacaoPermuta
-    
     try:
-        # Buscar realocações
-        realocacoes = SolicitacaoRealocacao.objects.filter(
+        # Buscar solicitações de realocação
+        solicitacoes_realocacao = SolicitacaoRealocacao.objects.filter(
             usuario_solicitante=request.user
         ).order_by('-data_solicitacao')
         
-        # Buscar permutas
-        permutas = SolicitacaoPermuta.objects.filter(
+        # Buscar solicitações de permuta
+        solicitacoes_permuta = SolicitacaoPermuta.objects.filter(
             usuario_solicitante=request.user
         ).order_by('-data_solicitacao')
         
+        # Preparar dados
         realocacoes_data = []
-        for r in realocacoes:
+        for sol in solicitacoes_realocacao:
             realocacoes_data.append({
-                'id': r.id,
+                'id': sol.id,
                 'tipo': 'realocacao',
-                'servidor': r.nome_servidor,
-                'unidade_origem': r.unidade_atual,
-                'unidade_destino': r.unidade_destino,
-                'status': r.get_status_display(),
-                'data': r.data_solicitacao.strftime('%d/%m/%Y %H:%M')
+                'nome_servidor': sol.nome_servidor,
+                'unidade_atual': sol.unidade_atual,
+                'unidade_destino': sol.unidade_destino,
+                'status': sol.status,
+                'data_solicitacao': sol.data_solicitacao.strftime('%d/%m/%Y %H:%M'),
+                'observacoes': sol.observacoes_analise or ''
             })
         
         permutas_data = []
-        for p in permutas:
+        for sol in solicitacoes_permuta:
             permutas_data.append({
-                'id': p.id,
+                'id': sol.id,
                 'tipo': 'permuta',
-                'servidor1': p.nome_servidor1,
-                'servidor2': p.nome_servidor2,
-                'status': p.get_status_display(),
-                'data': p.data_solicitacao.strftime('%d/%m/%Y %H:%M')
+                'servidor1': f"{sol.nome_servidor1} ({sol.unidade_servidor1})",
+                'servidor2': f"{sol.nome_servidor2} ({sol.unidade_servidor2})",
+                'status': sol.status,
+                'data_solicitacao': sol.data_solicitacao.strftime('%d/%m/%Y %H:%M'),
+                'observacoes': sol.observacoes_analise or ''
             })
         
         return JsonResponse({
-            'status': 'success',
             'realocacoes': realocacoes_data,
-            'permutas': permutas_data
+            'permutas': permutas_data,
+            'total': len(realocacoes_data) + len(permutas_data)
         })
         
     except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+# === NOVAS VIEWS PARA SISTEMA DE TRÊS NÍVEIS DE USUÁRIOS ===
+
+@login_required
+@require_http_methods(["GET"])
+def listar_simulacoes_gerente(request):
+    """
+    Lista simulações visíveis para gerentes (enviadas para análise por usuários internos)
+    """
+    from .models import obter_tipo_usuario
+    
+    if obter_tipo_usuario(request.user) != 'gerente':
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    # Buscar simulações enviadas para análise e rejeitadas por usuários internos
+    simulacoes = SimulacaoSalva.objects.filter(
+        status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+        visivel_para_gerentes=True
+    ).order_by('-atualizado_em')
+    
+    data = []
+    for sim in simulacoes:
+        # Só incluir se o usuário for realmente interno
+        if sim.tipo_usuario_atual == 'interno':
+            data.append({
+                'id': sim.id,
+                'nome': sim.nome,
+                'descricao': sim.descricao or '',
+                'unidade_base': sim.unidade_base or '',
+                'usuario': sim.usuario.get_full_name() or sim.usuario.username,
+                'usuario_email': sim.usuario.email,
+                'status': sim.get_status_display(),
+                'tipo_usuario': sim.get_tipo_usuario_display_atual(),
+                'criado_em': sim.criado_em.strftime('%d/%m/%Y %H:%M'),
+                'atualizado_em': sim.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            })
+    
         return JsonResponse({
-            'status': 'error',
-            'message': f'Erro ao carregar solicitações: {str(e)}'
-        }, status=500)
+        'simulacoes': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_simulacao_para_analise(request):
+    """
+    Envia uma simulação para análise (disponível para usuários internos)
+    """
+    try:
+        data = json.loads(request.body)
+        simulacao_id = data.get('simulacao_id')
+        
+        if not simulacao_id:
+            return JsonResponse({'erro': 'ID da simulação é obrigatório'}, status=400)
+        
+        # Verificar se o usuário é interno (tem permissão para enviar para análise)
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'interno':
+            return JsonResponse({'erro': 'Apenas usuários internos podem enviar simulações para análise'}, status=403)
+        
+        # Buscar a simulação
+        try:
+            simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        except SimulacaoSalva.DoesNotExist:
+            return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+        
+        # Verificar se está em status válido para envio
+        if simulacao.status not in ['rascunho', 'rejeitada', 'rejeitada_editada']:
+            return JsonResponse({'erro': 'Esta simulação já foi enviada para análise ou aprovada'}, status=400)
+        
+        # Atualizar status
+        status_anterior = simulacao.status
+        simulacao.status = 'enviada_analise'
+        simulacao.save()
+        
+        # Criar notificações para gerentes
+        from .models import TipoUsuario
+        gerentes = User.objects.filter(tipo_usuario_simulacao__tipo='gerente', tipo_usuario_simulacao__ativo=True)
+        for gerente in gerentes:
+            if status_anterior in ['rejeitada', 'rejeitada_editada']:
+                titulo = f'Simulação corrigida para reavaliação: {simulacao.nome}'
+                mensagem = f'{request.user.get_full_name() or request.user.username} corrigiu e reenviou a simulação "{simulacao.nome}" para nova análise.'
+            else:
+                titulo = f'Nova simulação para análise: {simulacao.nome}'
+                mensagem = f'{request.user.get_full_name() or request.user.username} enviou a simulação "{simulacao.nome}" para análise.'
+            
+            NotificacaoSimulacao.objects.create(
+                usuario=gerente,
+                tipo='simulacao_enviada',
+                titulo=titulo,
+                mensagem=mensagem,
+                simulacao=simulacao
+            )
+        
+        if status_anterior in ['rejeitada', 'rejeitada_editada']:
+            mensagem_sucesso = 'Simulação corrigida e reenviada para análise com sucesso'
+        else:
+            mensagem_sucesso = 'Simulação enviada para análise com sucesso'
+        
+        return JsonResponse({
+            'mensagem': mensagem_sucesso,
+            'status': simulacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def avaliar_simulacao(request):
+    """
+    Permite que gerentes aprovem ou rejeitem simulações
+    """
+    try:
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Acesso negado'}, status=403)
+        
+        data = json.loads(request.body)
+        simulacao_id = data.get('simulacao_id')
+        acao = data.get('acao')  # 'aprovar' ou 'rejeitar'
+        observacoes = data.get('observacoes', '')
+        
+        if not all([simulacao_id, acao]):
+            return JsonResponse({'erro': 'ID da simulação e ação são obrigatórios'}, status=400)
+        
+        if acao not in ['aprovar', 'rejeitar']:
+            return JsonResponse({'erro': 'Ação deve ser "aprovar" ou "rejeitar"'}, status=400)
+        
+        # Buscar a simulação (pode estar em análise ou rejeitada para reavaliação)
+        try:
+            simulacao = SimulacaoSalva.objects.get(
+                id=simulacao_id, 
+                status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+                visivel_para_gerentes=True
+            )
+        except SimulacaoSalva.DoesNotExist:
+            return JsonResponse({'erro': 'Simulação não encontrada ou não disponível para avaliação'}, status=404)
+        
+        # Atualizar status
+        status_anterior = simulacao.status
+        if acao == 'aprovar':
+            simulacao.status = 'aprovada'
+            mensagem_tipo = 'simulacao_aprovada'
+            if status_anterior in ['rejeitada', 'rejeitada_editada']:
+                mensagem_titulo = f'Simulação reavaliada e aprovada: {simulacao.nome}'
+                mensagem_texto = f'Sua simulação "{simulacao.nome}" foi reavaliada e aprovada após as correções.'
+            else:
+                mensagem_titulo = f'Simulação aprovada: {simulacao.nome}'
+                mensagem_texto = f'Sua simulação "{simulacao.nome}" foi aprovada.'
+        else:
+            simulacao.status = 'rejeitada'
+            mensagem_tipo = 'simulacao_rejeitada'
+            mensagem_titulo = f'Simulação rejeitada: {simulacao.nome}'
+            mensagem_texto = f'Sua simulação "{simulacao.nome}" foi rejeitada. Faça as correções necessárias e solicite nova avaliação.'
+        
+        if observacoes:
+            mensagem_texto += f' Observações: {observacoes}'
+        
+        simulacao.save()
+        
+        # Criar notificação para o criador da simulação
+        NotificacaoSimulacao.objects.create(
+            usuario=simulacao.usuario,
+            tipo=mensagem_tipo,
+            titulo=mensagem_titulo,
+            mensagem=mensagem_texto,
+            simulacao=simulacao
+        )
+        
+        return JsonResponse({
+            'mensagem': f'Simulação {acao}da com sucesso',
+            'status': simulacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def criar_solicitacao_simulacao(request):
+    """
+    Permite que gerentes criem solicitações de simulação para usuários internos
+    """
+    try:
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Apenas gerentes podem criar solicitações'}, status=403)
+        
+        data = json.loads(request.body)
+        usuario_designado_id = data.get('usuario_designado_id')
+        titulo = data.get('titulo', '').strip()
+        descricao = data.get('descricao', '').strip()
+        unidade_base_sugerida = data.get('unidade_base_sugerida', '').strip()
+        prazo_estimado = data.get('prazo_estimado')
+        prioridade = data.get('prioridade', 'normal')
+        
+        # Validações
+        if not all([usuario_designado_id, titulo, descricao]):
+            return JsonResponse({'erro': 'Usuário designado, título e descrição são obrigatórios'}, status=400)
+        
+        # Verificar se o usuário designado existe e é interno
+        try:
+            usuario_designado = User.objects.get(id=usuario_designado_id)
+            if obter_tipo_usuario(usuario_designado) != 'interno':
+                return JsonResponse({'erro': 'Usuário designado deve ser um usuário interno'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'erro': 'Usuário designado não encontrado'}, status=404)
+        
+        # Converter prazo se fornecido
+        prazo_obj = None
+        if prazo_estimado:
+            try:
+                from datetime import datetime
+                prazo_obj = datetime.strptime(prazo_estimado, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'erro': 'Formato de data inválido para prazo estimado'}, status=400)
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoSimulacao.objects.create(
+            solicitante=request.user,
+            usuario_designado=usuario_designado,
+            titulo=titulo,
+            descricao=descricao,
+            unidade_base_sugerida=unidade_base_sugerida,
+            prazo_estimado=prazo_obj,
+            prioridade=prioridade
+        )
+        
+        # Criar notificação para o usuário designado
+        NotificacaoSimulacao.objects.create(
+            usuario=usuario_designado,
+            tipo='nova_solicitacao',
+            titulo=f'Nova solicitação de simulação: {titulo}',
+            mensagem=f'Você recebeu uma nova solicitação de simulação de {request.user.get_full_name() or request.user.username}.',
+            solicitacao=solicitacao
+        )
+        
+        return JsonResponse({
+            'mensagem': 'Solicitação criada com sucesso',
+            'solicitacao_id': solicitacao.id
+        }, status=201)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def listar_usuarios_internos(request):
+    """
+    Lista usuários internos disponíveis para receber solicitações
+    """
+    from .models import obter_tipo_usuario, TipoUsuario
+    
+    if obter_tipo_usuario(request.user) != 'gerente':
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    # Buscar usuários que são internos baseado no modelo TipoUsuario
+    usuarios_internos = User.objects.filter(
+        tipo_usuario_simulacao__tipo='interno',
+        tipo_usuario_simulacao__ativo=True,
+        is_active=True
+    ).distinct()
+    
+    data = []
+    for usuario in usuarios_internos:
+        nome_completo = usuario.get_full_name()
+        if not nome_completo or nome_completo.strip() == '':
+            nome_completo = usuario.username
+            
+        data.append({
+            'id': usuario.id,
+            'username': usuario.username,
+            'nome_completo': nome_completo,
+            'email': usuario.email or 'Sem email',
+            'grupos': [group.name for group in usuario.groups.all()]
+        })
+    
+    return JsonResponse({
+        'usuarios': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def minhas_solicitacoes_simulacao(request):
+    """
+    Lista solicitações de simulação recebidas pelo usuário
+    """
+    # Buscar solicitações recebidas
+    solicitacoes = SolicitacaoSimulacao.objects.filter(
+        usuario_designado=request.user
+    ).order_by('-criada_em')
+    
+    data = []
+    for sol in solicitacoes:
+        data.append({
+            'id': sol.id,
+            'titulo': sol.titulo,
+            'descricao': sol.descricao,
+            'solicitante': sol.solicitante.get_full_name() or sol.solicitante.username,
+            'solicitante_email': sol.solicitante.email,
+            'unidade_base_sugerida': sol.unidade_base_sugerida or '',
+            'prazo_estimado': sol.prazo_estimado.strftime('%d/%m/%Y') if sol.prazo_estimado else '',
+            'prioridade': sol.get_prioridade_display(),
+            'status': sol.get_status_display(),
+            'criada_em': sol.criada_em.strftime('%d/%m/%Y %H:%M'),
+            'aceita_em': sol.aceita_em.strftime('%d/%m/%Y %H:%M') if sol.aceita_em else '',
+            'simulacao_criada_id': sol.simulacao_criada.id if sol.simulacao_criada else None,
+            'simulacao_criada_nome': sol.simulacao_criada.nome if sol.simulacao_criada else '',
+            'observacoes_usuario': sol.observacoes_usuario or ''
+        })
+    
+    return JsonResponse({
+        'solicitacoes': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def aceitar_solicitacao_simulacao(request):
+    """
+    Permite que usuários aceitem uma solicitação de simulação
+    """
+    try:
+        data = json.loads(request.body)
+        solicitacao_id = data.get('solicitacao_id')
+        observacoes = data.get('observacoes', '')
+        
+        if not solicitacao_id:
+            return JsonResponse({'erro': 'ID da solicitação é obrigatório'}, status=400)
+        
+        # Buscar a solicitação
+        try:
+            solicitacao = SolicitacaoSimulacao.objects.get(
+                id=solicitacao_id, 
+                usuario_designado=request.user,
+                status='pendente'
+            )
+        except SolicitacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Solicitação não encontrada ou já foi processada'}, status=404)
+        
+        # Atualizar solicitação
+        solicitacao.status = 'em_andamento'
+        solicitacao.aceita_em = timezone.now()
+        if observacoes:
+            solicitacao.observacoes_usuario = observacoes
+        solicitacao.save()
+        
+        # Criar notificação para o solicitante
+        NotificacaoSimulacao.objects.create(
+            usuario=solicitacao.solicitante,
+            tipo='solicitacao_aceita',
+            titulo=f'Solicitação aceita: {solicitacao.titulo}',
+            mensagem=f'{request.user.get_full_name() or request.user.username} aceitou sua solicitação de simulação.',
+            solicitacao=solicitacao
+        )
+        
+        return JsonResponse({
+            'mensagem': 'Solicitação aceita com sucesso',
+            'status': solicitacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def vincular_simulacao_solicitacao(request):
+    """
+    Vincula uma simulação criada a uma solicitação
+    """
+    try:
+        data = json.loads(request.body)
+        solicitacao_id = data.get('solicitacao_id')
+        simulacao_id = data.get('simulacao_id')
+        
+        if not all([solicitacao_id, simulacao_id]):
+            return JsonResponse({'erro': 'ID da solicitação e da simulação são obrigatórios'}, status=400)
+        
+        # Buscar solicitação e simulação
+        try:
+            solicitacao = SolicitacaoSimulacao.objects.get(
+                id=solicitacao_id,
+                usuario_designado=request.user
+            )
+            simulacao = SimulacaoSalva.objects.get(
+                id=simulacao_id,
+                usuario=request.user
+            )
+        except (SolicitacaoSimulacao.DoesNotExist, SimulacaoSalva.DoesNotExist):
+            return JsonResponse({'erro': 'Solicitação ou simulação não encontrada'}, status=404)
+        
+        # Vincular simulação à solicitação
+        solicitacao.simulacao_criada = simulacao
+        solicitacao.status = 'concluida'
+        solicitacao.save()
+        
+        return JsonResponse({
+            'mensagem': 'Simulação vinculada à solicitação com sucesso'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def minhas_notificacoes(request):
+    """
+    Lista notificações do usuário
+    """
+    notificacoes = NotificacaoSimulacao.objects.filter(
+        usuario=request.user
+    ).order_by('-criada_em')[:20]  # Últimas 20 notificações
+    
+    data = []
+    for notif in notificacoes:
+        data.append({
+            'id': notif.id,
+            'tipo': notif.tipo,
+            'titulo': notif.titulo,
+            'mensagem': notif.mensagem,
+            'lida': notif.lida,
+            'criada_em': notif.criada_em.strftime('%d/%m/%Y %H:%M'),
+            'solicitacao_id': notif.solicitacao.id if notif.solicitacao else None,
+            'simulacao_id': notif.simulacao.id if notif.simulacao else None
+        })
+    
+    # Contar não lidas
+    nao_lidas = NotificacaoSimulacao.objects.filter(
+        usuario=request.user,
+        lida=False
+    ).count()
+    
+    return JsonResponse({
+        'notificacoes': data,
+        'total': len(data),
+        'nao_lidas': nao_lidas
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def marcar_notificacao_lida(request):
+    """
+    Marca uma notificação como lida
+    """
+    try:
+        data = json.loads(request.body)
+        notificacao_id = data.get('notificacao_id')
+        
+        if not notificacao_id:
+            return JsonResponse({'erro': 'ID da notificação é obrigatório'}, status=400)
+        
+        try:
+            notificacao = NotificacaoSimulacao.objects.get(
+                id=notificacao_id,
+                usuario=request.user
+            )
+            notificacao.lida = True
+            notificacao.save()
+            
+            return JsonResponse({'mensagem': 'Notificação marcada como lida'})
+        except NotificacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Notificação não encontrada'}, status=404)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def excluir_notificacao(request):
+    """
+    Exclui uma notificação específica do usuário
+    """
+    try:
+        # Verificar se há dados no corpo da requisição
+        if hasattr(request, 'body') and request.body:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                notificacao_id = data.get('notificacao_id')
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return JsonResponse({'erro': 'Dados JSON inválidos'}, status=400)
+        else:
+            return JsonResponse({'erro': 'Dados não fornecidos'}, status=400)
+        
+        if not notificacao_id:
+            return JsonResponse({'erro': 'ID da notificação é obrigatório'}, status=400)
+        
+        try:
+            notificacao = NotificacaoSimulacao.objects.get(
+                id=notificacao_id,
+                usuario=request.user
+            )
+            notificacao.delete()
+            
+            return JsonResponse({'mensagem': 'Notificação excluída com sucesso'})
+        except NotificacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Notificação não encontrada'}, status=404)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Erro ao excluir notificação: {str(e)}')
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def excluir_todas_notificacoes(request):
+    """
+    Exclui todas as notificações do usuário
+    """
+    try:
+        # Contar quantas notificações serão excluídas
+        total_notificacoes = NotificacaoSimulacao.objects.filter(
+            usuario=request.user
+        ).count()
+        
+        if total_notificacoes == 0:
+            return JsonResponse({'mensagem': 'Nenhuma notificação encontrada para excluir'})
+        
+        # Excluir todas as notificações do usuário
+        NotificacaoSimulacao.objects.filter(
+            usuario=request.user
+        ).delete()
+        
+        return JsonResponse({
+            'mensagem': f'{total_notificacoes} notificações excluídas com sucesso',
+            'total_excluidas': total_notificacoes
+        })
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Erro ao excluir todas as notificações: {str(e)}')
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)

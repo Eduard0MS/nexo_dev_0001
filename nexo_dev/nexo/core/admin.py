@@ -3,7 +3,13 @@ from django.urls import path
 from django.shortcuts import render, redirect
 from django import forms
 from django.db import models
-from .models import UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada, SimulacaoSalva, RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, RelatorioGratificacoesPlan1, Decreto, SolicitacaoRealocacao, SolicitacaoPermuta, ConfiguracaoRelatorio
+from .models import (
+    UnidadeCargo, Perfil, CargoSIORG, PlanilhaImportada, SimulacaoSalva, 
+    RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, 
+    RelatorioGratificacoesPlan1, Decreto, SolicitacaoRealocacao, 
+    SolicitacaoPermuta, ConfiguracaoRelatorio, TipoUsuario, 
+    SolicitacaoSimulacao, NotificacaoSimulacao
+)
 from .utils import processa_planilhas
 from .siorg_scraper import scrape_siorg
 import os
@@ -453,14 +459,17 @@ class ImportarPlanilhaForm(forms.Form):
 
 @admin.register(SimulacaoSalva)
 class SimulacaoSalvaAdmin(admin.ModelAdmin):
-    list_display = ['nome', 'usuario', 'unidade_base', 'criado_em', 'atualizado_em']
-    list_filter = ['usuario', 'unidade_base', 'criado_em']
+    list_display = ['nome', 'usuario', 'status', 'tipo_usuario', 'visivel_para_gerentes', 'unidade_base', 'criado_em', 'atualizado_em']
+    list_filter = ['status', 'tipo_usuario', 'visivel_para_gerentes', 'usuario', 'unidade_base', 'criado_em']
     search_fields = ['nome', 'descricao', 'usuario__username', 'usuario__email']
     readonly_fields = ['criado_em', 'atualizado_em']
     
     fieldsets = (
         ('Informações da Simulação', {
             'fields': ('nome', 'descricao', 'unidade_base')
+        }),
+        ('Status e Controle', {
+            'fields': ('status', 'tipo_usuario', 'visivel_para_gerentes')
         }),
         ('Dados da Simulação', {
             'fields': ('dados_estrutura',),
@@ -1303,5 +1312,141 @@ class ConfiguracaoRelatorioAdmin(admin.ModelAdmin):
     valor_resumido.short_description = 'Valor'
     
     def save_model(self, request, obj, form, change):
-        obj.usuario_atualizacao = request.user
+        if not change:  # Se é uma nova configuração
+            obj.usuario_atualizacao = request.user
         super().save_model(request, obj, form, change)
+
+
+# === ADMINS PARA SISTEMA DE TRÊS NÍVEIS DE USUÁRIOS ===
+
+@admin.register(TipoUsuario)
+class TipoUsuarioAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'tipo', 'pode_solicitar', 'pode_ver_todas', 'ativo', 'criado_em', 'atualizado_em')
+    list_filter = ('tipo', 'pode_solicitar', 'pode_ver_todas', 'ativo', 'criado_em')
+    search_fields = ('usuario__username', 'usuario__email', 'usuario__first_name', 'usuario__last_name')
+    readonly_fields = ('criado_em', 'atualizado_em')
+    
+    fieldsets = (
+        ('Usuário', {
+            'fields': ('usuario',)
+        }),
+        ('Configurações de Acesso', {
+            'fields': ('tipo', 'pode_solicitar', 'pode_ver_todas', 'ativo')
+        }),
+        ('Informações do Sistema', {
+            'fields': ('criado_em', 'atualizado_em'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # Usuários não-superuser só veem seus próprios tipos
+            qs = qs.filter(usuario=request.user)
+        return qs
+
+
+@admin.register(SolicitacaoSimulacao)
+class SolicitacaoSimulacaoAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'solicitante', 'usuario_designado', 'prioridade', 'status', 'criada_em', 'aceita_em')
+    list_filter = ('status', 'prioridade', 'criada_em', 'aceita_em')
+    search_fields = ('titulo', 'descricao', 'solicitante__username', 'usuario_designado__username', 'unidade_base_sugerida')
+    readonly_fields = ('criada_em', 'atualizada_em')
+    date_hierarchy = 'criada_em'
+    
+    fieldsets = (
+        ('Informações da Solicitação', {
+            'fields': ('titulo', 'descricao', 'unidade_base_sugerida', 'prazo_estimado', 'prioridade')
+        }),
+        ('Usuários Envolvidos', {
+            'fields': ('solicitante', 'usuario_designado')
+        }),
+        ('Status e Progresso', {
+            'fields': ('status', 'aceita_em', 'simulacao_criada', 'observacoes_usuario')
+        }),
+        ('Informações do Sistema', {
+            'fields': ('criada_em', 'atualizada_em'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # Usuários não-superuser só veem solicitações onde estão envolvidos
+            qs = qs.filter(
+                Q(solicitante=request.user) | Q(usuario_designado=request.user)
+            )
+        return qs
+    
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(self.readonly_fields)
+        
+        # Se não é superuser, restringir algumas alterações
+        if not request.user.is_superuser:
+            if obj and obj.solicitante != request.user:
+                # Se não é o solicitante, não pode alterar dados básicos
+                readonly.extend(['titulo', 'descricao', 'unidade_base_sugerida', 
+                               'prazo_estimado', 'prioridade', 'solicitante', 'usuario_designado'])
+        
+        return readonly
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Se é uma nova solicitação
+            obj.solicitante = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(NotificacaoSimulacao)
+class NotificacaoSimulacaoAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'usuario', 'tipo', 'lida', 'criada_em')
+    list_filter = ('tipo', 'lida', 'criada_em')
+    search_fields = ('titulo', 'mensagem', 'usuario__username', 'usuario__email')
+    readonly_fields = ('criada_em',)
+    date_hierarchy = 'criada_em'
+    
+    fieldsets = (
+        ('Notificação', {
+            'fields': ('usuario', 'tipo', 'titulo', 'mensagem', 'lida')
+        }),
+        ('Relacionamentos', {
+            'fields': ('solicitacao', 'simulacao'),
+            'classes': ('collapse',)
+        }),
+        ('Informações do Sistema', {
+            'fields': ('criada_em',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # Usuários não-superuser só veem suas próprias notificações
+            qs = qs.filter(usuario=request.user)
+        return qs
+    
+    def has_add_permission(self, request):
+        # Apenas superusuários podem criar notificações manualmente
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        # Usuários podem marcar suas notificações como lidas
+        if request.user.is_superuser:
+            return True
+        if obj is not None:
+            return obj.usuario == request.user
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        # Apenas superusuários podem deletar notificações
+        return request.user.is_superuser
+
+
+# Registrar customizações existentes
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+# Registrar outros modelos que não têm @admin.register
+# (Todos os modelos agora usam @admin.register decorators)

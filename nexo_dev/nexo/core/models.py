@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from allauth.socialaccount.models import SocialAccount
+from django.core.exceptions import ValidationError
+import json
 
 class UnidadeCargo(models.Model):
     nivel_hierarquico = models.IntegerField(verbose_name="Nível Hierárquico")
@@ -110,6 +112,26 @@ def save_user_profile(sender, instance, **kwargs):
     except Perfil.DoesNotExist:
         Perfil.objects.create(usuario=instance)
 
+
+@receiver(post_save, sender=User)
+def create_or_update_tipo_usuario(sender, instance, created, **kwargs):
+    """
+    Sinal para criar ou atualizar o TipoUsuario baseado nos grupos do usuário
+    """
+    # Usar a função helper para garantir que o TipoUsuario existe
+    obter_tipo_usuario(instance)
+
+
+@receiver(post_save, sender='core.TipoUsuario')
+def atualizar_simulacoes_usuario(sender, instance, **kwargs):
+    """
+    Atualiza as simulações do usuário quando seu tipo muda
+    """
+    # Atualizar todas as simulações do usuário para refletir o novo tipo
+    SimulacaoSalva.objects.filter(usuario=instance.usuario).update(
+        tipo_usuario=instance.tipo
+    )
+
 class CargoSIORG(models.Model):
     cargo = models.CharField(max_length=255, verbose_name="Cargo")
     nivel = models.CharField(max_length=50, verbose_name="Nível")
@@ -151,15 +173,60 @@ class PlanilhaImportada(models.Model):
             PlanilhaImportada.objects.filter(ativo=True).update(ativo=False)
         super().save(*args, **kwargs)
 
+def obter_tipo_usuario(usuario):
+    """
+    Função helper para obter o tipo de usuário baseado no modelo TipoUsuario.
+    Se não existir, cria um baseado nos grupos do usuário.
+    """
+    try:
+        tipo_usuario_obj = usuario.tipo_usuario_simulacao
+        return tipo_usuario_obj.tipo
+    except TipoUsuario.DoesNotExist:
+        # Se não existe o TipoUsuario, criar baseado nos grupos
+        if usuario.groups.filter(name='user_gerente').exists():
+            tipo = 'gerente'
+        elif (usuario.groups.filter(name='Administradores').exists() or 
+              usuario.groups.filter(name='Gerentes').exists() or 
+              usuario.is_superuser):
+            tipo = 'interno'
+        else:
+            tipo = 'externo'
+        
+        # Criar o registro TipoUsuario
+        TipoUsuario.objects.create(
+            usuario=usuario,
+            tipo=tipo,
+            pode_solicitar=(tipo == 'gerente'),
+            pode_ver_todas=(tipo in ['gerente', 'interno'])
+        )
+        return tipo
+
 class SimulacaoSalva(models.Model):
     """
     Modelo para armazenar simulações salvas pelos usuários.
     """
+    STATUS_CHOICES = [
+        ('rascunho', 'Rascunho'),
+        ('enviada_analise', 'Enviada para Análise'),
+        ('aprovada', 'Aprovada'),
+        ('rejeitada', 'Rejeitada'),
+        ('rejeitada_editada', 'Rejeitada (Editada)'),
+    ]
+    
+    TIPO_USUARIO_CHOICES = [
+        ('externo', 'Usuário Externo'),
+        ('interno', 'Usuário Interno'),
+        ('gerente', 'Usuário Gerente'),
+    ]
+    
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuário")
     nome = models.CharField(max_length=255, verbose_name="Nome da Simulação")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     dados_estrutura = models.JSONField(verbose_name="Dados da Estrutura")
     unidade_base = models.CharField(max_length=100, blank=True, null=True, verbose_name="Unidade Base")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='rascunho', verbose_name="Status")
+    tipo_usuario = models.CharField(max_length=10, choices=TIPO_USUARIO_CHOICES, default='externo', verbose_name="Tipo de Usuário")
+    visivel_para_gerentes = models.BooleanField(default=False, verbose_name="Visível para Gerentes")
     criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     atualizado_em = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
@@ -171,15 +238,164 @@ class SimulacaoSalva(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.usuario.username}"
+    
+    @property
+    def tipo_usuario_atual(self):
+        """Retorna o tipo atual do usuário (sempre atualizado)"""
+        return obter_tipo_usuario(self.usuario)
+    
+    def get_tipo_usuario_display_atual(self):
+        """Retorna o display do tipo atual do usuário"""
+        tipo_map = {
+            'externo': 'Usuário Externo',
+            'interno': 'Usuário Interno',
+            'gerente': 'Usuário Gerente'
+        }
+        return tipo_map.get(self.tipo_usuario_atual, 'Usuário Externo')
 
     def save(self, *args, **kwargs):
-        # Validar que o usuário não tenha mais de 5 simulações
+        # Validar que o usuário não tenha mais de 5 simulações (não se aplica a gerentes)
         if not self.pk:  # Se é uma nova simulação (não uma atualização)
-            count = SimulacaoSalva.objects.filter(usuario=self.usuario).count()
-            if count >= 5:
-                from django.core.exceptions import ValidationError
-                raise ValidationError("Cada usuário pode ter no máximo 5 simulações salvas.")
+            tipo_usuario_atual = obter_tipo_usuario(self.usuario)
+            if tipo_usuario_atual != 'gerente':
+                count = SimulacaoSalva.objects.filter(usuario=self.usuario).count()
+                if count >= 5:
+                    from django.core.exceptions import ValidationError
+                    raise ValidationError("Cada usuário pode ter no máximo 5 simulações salvas.")
+        
+        # Definir tipo de usuário baseado no modelo TipoUsuario
+        self.tipo_usuario = obter_tipo_usuario(self.usuario)
+        
+        # Se status é enviada_analise ou rejeitada e usuário é interno, tornar visível para gerentes
+        if self.status in ['enviada_analise', 'rejeitada', 'rejeitada_editada'] and self.tipo_usuario_atual == 'interno':
+            self.visivel_para_gerentes = True
+        # Se aprovada, pode ser ocultada dos gerentes (opcional)
+        elif self.status == 'aprovada':
+            self.visivel_para_gerentes = False
+        
         super().save(*args, **kwargs)
+
+    def pode_ser_vista_por(self, usuario):
+        """Verifica se uma simulação pode ser vista por um usuário específico"""
+        # Proprietário sempre pode ver
+        if self.usuario == usuario:
+            return True
+        
+        # Usar o tipo de usuário do modelo TipoUsuario
+        tipo_visualizador = obter_tipo_usuario(usuario)
+        
+        # Gerentes podem ver simulações enviadas para análise ou rejeitadas por usuários internos
+        if tipo_visualizador == 'gerente':
+            return self.visivel_para_gerentes and self.status in ['enviada_analise', 'rejeitada', 'rejeitada_editada']
+        
+        # Admins podem ver tudo
+        if usuario.is_superuser:
+            return True
+        
+        return False
+
+
+class TipoUsuario(models.Model):
+    """
+    Modelo para definir tipos de usuários e suas permissões no sistema de simulações
+    """
+    TIPOS = [
+        ('externo', 'Usuário Externo'),
+        ('interno', 'Usuário Interno'), 
+        ('gerente', 'Usuário Gerente (SE)'),
+    ]
+    
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tipo_usuario_simulacao')
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='externo', verbose_name="Tipo de Usuário")
+    pode_solicitar = models.BooleanField(default=False, verbose_name="Pode Solicitar Simulações")
+    pode_ver_todas = models.BooleanField(default=False, verbose_name="Pode Ver Todas as Simulações")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+
+    class Meta:
+        verbose_name = "Tipo de Usuário"
+        verbose_name_plural = "Tipos de Usuários"
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.get_tipo_display()}"
+
+
+class SolicitacaoSimulacao(models.Model):
+    """
+    Modelo para solicitações de simulações feitas por gerentes para usuários internos
+    """
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('em_andamento', 'Em Andamento'),
+        ('concluida', 'Concluída'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('normal', 'Normal'),
+        ('alta', 'Alta'),
+        ('urgente', 'Urgente'),
+    ]
+    
+    solicitante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitacoes_feitas', verbose_name="Solicitante (Gerente)")
+    usuario_designado = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitacoes_recebidas', verbose_name="Usuário Designado")
+    titulo = models.CharField(max_length=255, verbose_name="Título da Solicitação")
+    descricao = models.TextField(verbose_name="Descrição Detalhada")
+    unidade_base_sugerida = models.CharField(max_length=100, blank=True, null=True, verbose_name="Unidade Base Sugerida")
+    prazo_estimado = models.DateField(blank=True, null=True, verbose_name="Prazo Estimado")
+    prioridade = models.CharField(max_length=10, choices=PRIORIDADE_CHOICES, default='normal', verbose_name="Prioridade")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pendente', verbose_name="Status")
+    
+    # Resposta do usuário designado
+    aceita_em = models.DateTimeField(blank=True, null=True, verbose_name="Aceita em")
+    simulacao_criada = models.ForeignKey(SimulacaoSalva, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Simulação Criada")
+    observacoes_usuario = models.TextField(blank=True, null=True, verbose_name="Observações do Usuário")
+    
+    criada_em = models.DateTimeField(auto_now_add=True, verbose_name="Criada em")
+    atualizada_em = models.DateTimeField(auto_now=True, verbose_name="Atualizada em")
+
+    class Meta:
+        verbose_name = "Solicitação de Simulação"
+        verbose_name_plural = "Solicitações de Simulações"
+        ordering = ['-criada_em']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.solicitante.username} → {self.usuario_designado.username}"
+
+
+class NotificacaoSimulacao(models.Model):
+    """
+    Modelo para notificações relacionadas a simulações
+    """
+    TIPOS = [
+        ('nova_solicitacao', 'Nova Solicitação'),
+        ('simulacao_enviada', 'Simulação Enviada para Análise'),
+        ('solicitacao_aceita', 'Solicitação Aceita'),
+        ('simulacao_aprovada', 'Simulação Aprovada'),
+        ('simulacao_rejeitada', 'Simulação Rejeitada'),
+    ]
+    
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuário")
+    tipo = models.CharField(max_length=20, choices=TIPOS, verbose_name="Tipo de Notificação")
+    titulo = models.CharField(max_length=255, verbose_name="Título")
+    mensagem = models.TextField(verbose_name="Mensagem")
+    
+    # Referências opcionais
+    solicitacao = models.ForeignKey(SolicitacaoSimulacao, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Solicitação Relacionada")
+    simulacao = models.ForeignKey(SimulacaoSalva, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Simulação Relacionada")
+    
+    lida = models.BooleanField(default=False, verbose_name="Lida")
+    criada_em = models.DateTimeField(auto_now_add=True, verbose_name="Criada em")
+
+    class Meta:
+        verbose_name = "Notificação de Simulação"
+        verbose_name_plural = "Notificações de Simulações"
+        ordering = ['-criada_em']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.usuario.username}"
 
 
 # === NOVOS MODELOS PARA SISTEMA DE RELATÓRIOS ===

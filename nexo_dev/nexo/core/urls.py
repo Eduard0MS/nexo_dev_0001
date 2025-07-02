@@ -49,6 +49,7 @@ urlpatterns = [
     path('api/simulacoes/', views.listar_simulacoes, name='listar_simulacoes'),
     path('api/simulacoes/salvar/', views.salvar_simulacao, name='salvar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/', views.carregar_simulacao, name='carregar_simulacao'),
+    path('api/simulacoes/<int:simulacao_id>/atualizar/', views.atualizar_simulacao, name='atualizar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/deletar/', views.deletar_simulacao, name='deletar_simulacao'),
     
     # URLs para Sistema de Relatórios
@@ -61,4 +62,22 @@ urlpatterns = [
     path('api/solicitacao-realocacao/', views.enviar_solicitacao_realocacao, name='enviar_solicitacao_realocacao'),
     path('api/solicitacao-permuta/', views.enviar_solicitacao_permuta, name='enviar_solicitacao_permuta'),
     path('api/minhas-solicitacoes/', views.api_minhas_solicitacoes, name='api_minhas_solicitacoes'),
+    
+    # URLs para Sistema de Três Níveis de Usuários - Simulações
+    path('api/simulacoes/gerente/', views.listar_simulacoes_gerente, name='listar_simulacoes_gerente'),
+    path('api/simulacoes/enviar-analise/', views.enviar_simulacao_para_analise, name='enviar_simulacao_para_analise'),
+    path('api/simulacoes/avaliar/', views.avaliar_simulacao, name='avaliar_simulacao'),
+    
+    # URLs para Solicitações de Simulação
+    path('api/solicitacoes-simulacao/criar/', views.criar_solicitacao_simulacao, name='criar_solicitacao_simulacao'),
+    path('api/solicitacoes-simulacao/minhas/', views.minhas_solicitacoes_simulacao, name='minhas_solicitacoes_simulacao'),
+    path('api/solicitacoes-simulacao/aceitar/', views.aceitar_solicitacao_simulacao, name='aceitar_solicitacao_simulacao'),
+    path('api/solicitacoes-simulacao/vincular/', views.vincular_simulacao_solicitacao, name='vincular_simulacao_solicitacao'),
+    
+    # URLs para Usuários e Notificações
+    path('api/usuarios-internos/', views.listar_usuarios_internos, name='listar_usuarios_internos'),
+    path('api/notificacoes/', views.minhas_notificacoes, name='minhas_notificacoes'),
+    path('api/notificacoes/marcar-lida/', views.marcar_notificacao_lida, name='marcar_notificacao_lida'),
+    path('api/notificacoes/excluir/', views.excluir_notificacao, name='excluir_notificacao'),
+    path('api/notificacoes/excluir-todas/', views.excluir_todas_notificacoes, name='excluir_todas_notificacoes'),
 ]

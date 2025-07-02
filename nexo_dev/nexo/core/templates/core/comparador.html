@@ -961,6 +961,241 @@
     max-width: 1400px;
     margin: 0 auto;
   }
+  
+  /* Estilos melhorados para o sino de notificações */
+  .notification-bell {
+    border: 2px solid #007bff;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+    transition: all 0.3s ease;
+    min-width: 40px;
+    height: 32px;
+  }
+
+  .notification-bell:hover {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  }
+
+  .notification-bell:hover .fas.fa-bell {
+    animation: bellShake 0.6s ease-in-out;
+  }
+
+  .notification-bell.has-notifications {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+    color: #dc3545;
+  }
+
+  .notification-bell.has-notifications:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
+  .notification-bell .fas.fa-bell {
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+
+  .notification-badge {
+    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    animation: badgePulse 2s infinite;
+    font-weight: bold;
+  }
+
+  @keyframes bellShake {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(-5deg); }
+    20%, 40%, 60%, 80% { transform: rotate(5deg); }
+  }
+
+  @keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Melhorar aparência das notificações no modal */
+  .list-group-item.list-group-item-primary {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid #2196f3;
+    position: relative;
+  }
+
+  .list-group-item.list-group-item-primary::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    width: 8px;
+    height: 8px;
+    background: #2196f3;
+    border-radius: 50%;
+    animation: newNotificationPulse 2s infinite;
+  }
+
+  @keyframes newNotificationPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .list-group-item h6 {
+    color: #1976d2;
+    font-weight: 600;
+  }
+
+  .list-group-item .btn-outline-primary {
+    border-color: #2196f3;
+    color: #2196f3;
+    font-size: 12px;
+    padding: 4px 12px;
+    transition: all 0.3s ease;
+  }
+
+  .list-group-item .btn-outline-primary:hover {
+    background: #2196f3;
+    border-color: #2196f3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  }
+
+  /* Melhorar aparência dos estados de loading */
+  .loading-overlay .loading-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    color: #333;
+  }
+
+  .loading-overlay .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 3px;
+  }
+  
+
+  
+  /* ===== CORREÇÕES DOS PROBLEMAS IDENTIFICADOS ===== */
+  
+  /* 1. Botão reenviar com design anterior em tamanho menor */
+  .reenviar-btn {
+    /* Mantém tamanho pequeno do Bootstrap */
+    padding: 4px 6px !important;
+    font-size: 0.75rem !important;
+    
+    /* Design anterior com gradiente */
+    background: linear-gradient(135deg, #ffc107 0%, #ff8800 50%, #ffb347 100%) !important;
+    border: 2px solid #ff8800 !important;
+    color: #212529 !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 4px rgba(255, 136, 0, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Força os botões de ação a ficarem na mesma linha */
+  #tabelaSimulacoes td:last-child {
+    white-space: nowrap !important;
+    width: 250px !important;
+  }
+  
+  .reenviar-btn:hover {
+    background: linear-gradient(135deg, #ff8800 0%, #ffc107 50%, #ffb347 100%) !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(255, 136, 0, 0.4) !important;
+  }
+  
+  .reenviar-btn:hover i {
+    transform: rotate(360deg) !important;
+    transition: transform 0.6s ease !important;
+  }
+  
+  .reenviar-btn:active {
+    background: linear-gradient(135deg, #e0a800 0%, #d39e00 50%, #ff8800 100%) !important;
+    border-color: #d39e00 !important;
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 4px rgba(255, 136, 0, 0.3) !important;
+  }
+  
+  .reenviar-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+  }
+  
+  .reenviar-btn:hover::before {
+    left: 100%;
+  }
+  
+  /* 2. Correção do botão "Marcar como lida" - melhor contraste no hover */
+  .marcar-lida-btn {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    background-color: transparent !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .marcar-lida-btn:hover {
+    color: #ffffff !important; /* Texto branco no hover */
+    background-color: #0d6efd !important; /* Fundo azul no hover */
+    border-color: #0d6efd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+  }
+  
+  .marcar-lida-btn:focus {
+    color: #ffffff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+  
+  /* 3. Garantir que o botão de edição mantenha consistência visual */
+  .btn-editar-simulacao {
+    padding: 4px 6px !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* 4. Força todos os botões da tabela a serem compactos */
+  #tabelaSimulacoes .btn {
+    margin-right: 3px !important;
+    margin-bottom: 0 !important;
+    display: inline-block !important;
+    float: none !important;
+    padding: 4px 6px !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* 5. Remove qualquer quebra de linha forçada */
+  #tabelaSimulacoes td {
+    vertical-align: middle !important;
+  }
 </style>
 
 <!-- Template HTML para a estrutura da tabela editável -->
@@ -1029,7 +1264,18 @@
                     <li><a class="dropdown-item" href="#" id="carregarSimulacaoBtn"><i class="fas fa-folder-open me-1"></i> Carregar Simulação</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" id="gerenciarSimulacoesBtn"><i class="fas fa-cog me-1"></i> Gerenciar Simulações</a></li>
+                    <li><a class="dropdown-item" href="#" id="solicitacoesSimulacaoBtn"><i class="fas fa-tasks me-1"></i> Solicitações</a></li>
                   </ul>
+                </div>
+                
+                <!-- Botão de Notificações -->
+                <div class="dropdown ms-2">
+                  <button class="btn btn-outline-primary btn-sm position-relative notification-bell" type="button" id="notificacoesBtn" title="Notificações">
+                    <i class="fas fa-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notificacoesBadge" style="display: none;">
+                      0
+                    </span>
+                  </button>
                 </div>
               </div>
               <div class="download-options d-flex align-items-center" style="gap: 5px;">
@@ -1229,11 +1475,12 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Descrição</th>
                 <th>Unidade Base</th>
-                <th>Criado em</th>
+                <th>Status</th>
+                <th>Usuário</th>
+                <th>Tipo</th>
                 <th>Atualizado em</th>
-                <th style="width: 150px;">Ações</th>
+                <th style="width: 250px; white-space: nowrap;">Ações</th>
               </tr>
             </thead>
             <tbody id="tabelaSimulacoes">
@@ -1242,6 +1489,126 @@
           </table>
         </div>
         <div id="alertaGerenciar" class="alert d-none" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Solicitações de Simulação -->
+<div class="modal fade" id="modalSolicitacoes" tabindex="-1" aria-labelledby="modalSolicitacoesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSolicitacoesLabel">Solicitações de Simulação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Navegação por abas -->
+        <ul class="nav nav-tabs" id="solicitacoesTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="recebidas-tab" data-bs-toggle="tab" data-bs-target="#recebidas" type="button" role="tab">
+              <i class="fas fa-inbox"></i> Solicitações Recebidas
+            </button>
+          </li>
+          <li class="nav-item" role="presentation" id="criar-tab-li" style="display: none;">
+            <button class="nav-link" id="criar-tab" data-bs-toggle="tab" data-bs-target="#criar" type="button" role="tab">
+              <i class="fas fa-plus"></i> Criar Solicitação
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content mt-3" id="solicitacoesTabContent">
+          <!-- Aba Solicitações Recebidas -->
+          <div class="tab-pane fade show active" id="recebidas" role="tabpanel">
+            <div id="listaSolicitacoes">
+              <!-- Será preenchido dinamicamente -->
+            </div>
+          </div>
+          
+          <!-- Aba Criar Solicitação (apenas para gerentes) -->
+          <div class="tab-pane fade" id="criar" role="tabpanel">
+            <form id="formCriarSolicitacao">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="usuarioDesignado" class="form-label">Usuário Designado</label>
+                    <select class="form-select" id="usuarioDesignado" required>
+                      <option value="">Selecione um usuário interno</option>
+                      <!-- Será preenchido dinamicamente -->
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="prioridadeSolicitacao" class="form-label">Prioridade</label>
+                    <select class="form-select" id="prioridadeSolicitacao">
+                      <option value="baixa">Baixa</option>
+                      <option value="normal" selected>Normal</option>
+                      <option value="alta">Alta</option>
+                      <option value="urgente">Urgente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="tituloSolicitacao" class="form-label">Título da Solicitação</label>
+                <input type="text" class="form-control" id="tituloSolicitacao" required placeholder="Ex: Simulação de reestruturação da Diretoria X">
+              </div>
+              
+              <div class="mb-3">
+                <label for="descricaoSolicitacao" class="form-label">Descrição Detalhada</label>
+                <textarea class="form-control" id="descricaoSolicitacao" rows="4" required placeholder="Descreva em detalhes o que precisa ser simulado..."></textarea>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="unidadeBaseSugerida" class="form-label">Unidade Base Sugerida (opcional)</label>
+                    <input type="text" class="form-control" id="unidadeBaseSugerida" placeholder="Ex: Ministério do Planejamento">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="prazoEstimado" class="form-label">Prazo Estimado (opcional)</label>
+                    <input type="date" class="form-control" id="prazoEstimado">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-paper-plane"></i> Enviar Solicitação
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Notificações -->
+<div class="modal fade" id="modalNotificacoes" tabindex="-1" aria-labelledby="modalNotificacoesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNotificacoesLabel">
+          <i class="fas fa-bell"></i> Notificações
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="listaNotificacoes" class="list-group">
+          <!-- Será preenchido dinamicamente -->
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>

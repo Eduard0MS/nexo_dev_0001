@@ -1,0 +1,2058 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Views (Gerado Automaticamente) &#8212; Nexo - Documentação</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2bde2ffa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=68842761"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=30646c52"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaedd51"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/auto_views';</script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Pesquisar" href="../search.html" />
+    <link rel="prev" title="Modelos (Gerado Automaticamente)" href="auto_models.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">Sistema de Gestão Organizacional - CGEST/SAGE/MPO</div>
+</aside>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Nexo - Documentação</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Pesquisar</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Primeiros Passos</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Visão Geral do Sistema Nexo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Guia de Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Início Rápido</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Documentação da API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="models.html">Modelos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_models.html">Modelos (Gerado Automaticamente)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Views (Gerado Automaticamente)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Repositório fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/blob/main/nexo_dev_0001/nexo_dev/nexo/docs/api/auto_views.rst?plain=1" target="_blank"
+   class="btn btn-sm btn-source-file-button dropdown-item"
+   title="Show source"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-code"></i>
+  </span>
+<span class="btn__text-container">Show source</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/edit/main/nexo_dev_0001/nexo_dev/nexo/docs/api/auto_views.rst" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/issues/new?title=Issue%20on%20page%20%2Fapi/auto_views.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Abra um problema"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Baixe esta página">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/auto_views.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Baixar arquivo fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Imprimir em PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Modo tela cheia"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Views (Gerado Automaticamente)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Conteúdo </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alterar-senha">alterar_senha</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.alterar_senha"><code class="docutils literal notranslate"><span class="pre">alterar_senha()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-cargos">api_cargos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_cargos"><code class="docutils literal notranslate"><span class="pre">api_cargos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-cargos-diretos">api_cargos_diretos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_cargos_diretos"><code class="docutils literal notranslate"><span class="pre">api_cargos_diretos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-financeira-organograma">api_financeira_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_financeira_organograma"><code class="docutils literal notranslate"><span class="pre">api_financeira_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-historico-decretos">api_historico_decretos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_historico_decretos"><code class="docutils literal notranslate"><span class="pre">api_historico_decretos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-minhas-solicitacoes">api_minhas_solicitacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_minhas_solicitacoes"><code class="docutils literal notranslate"><span class="pre">api_minhas_solicitacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma">api_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma"><code class="docutils literal notranslate"><span class="pre">api_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma-detalhes">api_organograma_detalhes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma_detalhes"><code class="docutils literal notranslate"><span class="pre">api_organograma_detalhes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma-filter">api_organograma_filter</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma_filter"><code class="docutils literal notranslate"><span class="pre">api_organograma_filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-relatorio-dimensionamento">api_relatorio_dimensionamento</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_relatorio_dimensionamento"><code class="docutils literal notranslate"><span class="pre">api_relatorio_dimensionamento()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-relatorio-pontos-gratificacoes">api_relatorio_pontos_gratificacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_relatorio_pontos_gratificacoes"><code class="docutils literal notranslate"><span class="pre">api_relatorio_pontos_gratificacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-siglario">api_siglario</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_siglario"><code class="docutils literal notranslate"><span class="pre">api_siglario()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-unidades-disponiveis">api_unidades_disponiveis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_unidades_disponiveis"><code class="docutils literal notranslate"><span class="pre">api_unidades_disponiveis()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-view">api_view</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_view"><code class="docutils literal notranslate"><span class="pre">api_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#atualizar-organograma-json">atualizar_organograma_json</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.atualizar_organograma_json"><code class="docutils literal notranslate"><span class="pre">atualizar_organograma_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#authenticate">authenticate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.authenticate"><code class="docutils literal notranslate"><span class="pre">authenticate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#carregar-simulacao">carregar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.carregar_simulacao"><code class="docutils literal notranslate"><span class="pre">carregar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparador">comparador</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.comparador"><code class="docutils literal notranslate"><span class="pre">comparador()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#csrf-exempt">csrf_exempt</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.csrf_exempt"><code class="docutils literal notranslate"><span class="pre">csrf_exempt()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#csrf-protect">csrf_protect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.csrf_protect"><code class="docutils literal notranslate"><span class="pre">csrf_protect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dados-financeiros-backup">dados_financeiros_backup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.dados_financeiros_backup"><code class="docutils literal notranslate"><span class="pre">dados_financeiros_backup()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deletar-simulacao">deletar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.deletar_simulacao"><code class="docutils literal notranslate"><span class="pre">deletar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#editar-perfil">editar_perfil</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.editar_perfil"><code class="docutils literal notranslate"><span class="pre">editar_perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enviar-solicitacao-permuta">enviar_solicitacao_permuta</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.enviar_solicitacao_permuta"><code class="docutils literal notranslate"><span class="pre">enviar_solicitacao_permuta()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enviar-solicitacao-realocacao">enviar_solicitacao_realocacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.enviar_solicitacao_realocacao"><code class="docutils literal notranslate"><span class="pre">enviar_solicitacao_realocacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#estrutura-json-organograma">estrutura_json_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.estrutura_json_organograma"><code class="docutils literal notranslate"><span class="pre">estrutura_json_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-csv">exportar_csv</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_csv"><code class="docutils literal notranslate"><span class="pre">exportar_csv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-csv-simples">exportar_csv_simples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_csv_simples"><code class="docutils literal notranslate"><span class="pre">exportar_csv_simples()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-html">exportar_html</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_html"><code class="docutils literal notranslate"><span class="pre">exportar_html()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-html-simples">exportar_html_simples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_html_simples"><code class="docutils literal notranslate"><span class="pre">exportar_html_simples()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-pdf">exportar_pdf</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_pdf"><code class="docutils literal notranslate"><span class="pre">exportar_pdf()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-xlsx">exportar_xlsx</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_xlsx"><code class="docutils literal notranslate"><span class="pre">exportar_xlsx()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira">financeira</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira"><code class="docutils literal notranslate"><span class="pre">financeira()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-data">financeira_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_data"><code class="docutils literal notranslate"><span class="pre">financeira_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-data-real">financeira_data_real</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_data_real"><code class="docutils literal notranslate"><span class="pre">financeira_data_real()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-export">financeira_export</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_export"><code class="docutils literal notranslate"><span class="pre">financeira_export()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-page">financeira_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_page"><code class="docutils literal notranslate"><span class="pre">financeira_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gerar-anexo-simulacao">gerar_anexo_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.gerar_anexo_simulacao"><code class="docutils literal notranslate"><span class="pre">gerar_anexo_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gerar-organograma-json">gerar_organograma_json</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.gerar_organograma_json"><code class="docutils literal notranslate"><span class="pre">gerar_organograma_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-unidade-data">get_unidade_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.get_unidade_data"><code class="docutils literal notranslate"><span class="pre">get_unidade_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#home">home</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.home"><code class="docutils literal notranslate"><span class="pre">home()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#index">index</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.index"><code class="docutils literal notranslate"><span class="pre">index()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#listar-simulacoes">listar_simulacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.listar_simulacoes"><code class="docutils literal notranslate"><span class="pre">listar_simulacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#login">login</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.login"><code class="docutils literal notranslate"><span class="pre">login()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#login-required">login_required</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.login_required"><code class="docutils literal notranslate"><span class="pre">login_required()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-decorator">method_decorator</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.method_decorator"><code class="docutils literal notranslate"><span class="pre">method_decorator()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma">organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma"><code class="docutils literal notranslate"><span class="pre">organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-data">organograma_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_data"><code class="docutils literal notranslate"><span class="pre">organograma_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-ondemand">organograma_ondemand</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_ondemand"><code class="docutils literal notranslate"><span class="pre">organograma_ondemand()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-page">organograma_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_page"><code class="docutils literal notranslate"><span class="pre">organograma_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-redirect">organograma_redirect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_redirect"><code class="docutils literal notranslate"><span class="pre">organograma_redirect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-view">organograma_view</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_view"><code class="docutils literal notranslate"><span class="pre">organograma_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#perfil">perfil</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.perfil"><code class="docutils literal notranslate"><span class="pre">perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-json-organograma">processa_json_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_json_organograma"><code class="docutils literal notranslate"><span class="pre">processa_json_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-organograma">processa_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_organograma"><code class="docutils literal notranslate"><span class="pre">processa_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-planilhas">processa_planilhas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_planilhas"><code class="docutils literal notranslate"><span class="pre">processa_planilhas()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redirect">redirect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.redirect"><code class="docutils literal notranslate"><span class="pre">redirect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#register">register</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relatorios">relatorios</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.relatorios"><code class="docutils literal notranslate"><span class="pre">relatorios()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#render">render</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#render-to-string">render_to_string</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.render_to_string"><code class="docutils literal notranslate"><span class="pre">render_to_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#require-http-methods">require_http_methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.require_http_methods"><code class="docutils literal notranslate"><span class="pre">require_http_methods()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reverse-lazy">reverse_lazy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.reverse_lazy"><code class="docutils literal notranslate"><span class="pre">reverse_lazy()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#salvar-simulacao">salvar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.salvar_simulacao"><code class="docutils literal notranslate"><span class="pre">salvar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulacao-page">simulacao_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.simulacao_page"><code class="docutils literal notranslate"><span class="pre">simulacao_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simular-troca-cargo">simular_troca_cargo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.simular_troca_cargo"><code class="docutils literal notranslate"><span class="pre">simular_troca_cargo()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#strip-tags">strip_tags</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.strip_tags"><code class="docutils literal notranslate"><span class="pre">strip_tags()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#teste-api-organograma">teste_api_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.teste_api_organograma"><code class="docutils literal notranslate"><span class="pre">teste_api_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#update-session-auth-hash">update_session_auth_hash</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.update_session_auth_hash"><code class="docutils literal notranslate"><span class="pre">update_session_auth_hash()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#view-organograma">view_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.view_organograma"><code class="docutils literal notranslate"><span class="pre">view_organograma()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="views-gerado-automaticamente">
+<h1>Views (Gerado Automaticamente)<a class="headerlink" href="#views-gerado-automaticamente" title="Link to this heading">#</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>Esta documentação foi gerada automaticamente.</p>
+</div>
+<section id="alterar-senha">
+<h2>alterar_senha<a class="headerlink" href="#alterar-senha" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.alterar_senha">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">alterar_senha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#alterar_senha"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.alterar_senha" title="Link to this definition">#</a></dt>
+<dd><p>Permite ao usuário alterar sua senha.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Permite ao usuário alterar sua senha.</p>
+<p>—</p>
+</section>
+<section id="api-cargos">
+<h2>api_cargos<a class="headerlink" href="#api-cargos" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_cargos">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_cargos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_cargos"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_cargos" title="Link to this definition">#</a></dt>
+<dd><p>API endpoint para buscar dados de cargos de forma específica (para a tabela)</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API endpoint para buscar dados de cargos de forma específica (para a tabela)</p>
+<p>—</p>
+</section>
+<section id="api-cargos-diretos">
+<h2>api_cargos_diretos<a class="headerlink" href="#api-cargos-diretos" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_cargos_diretos">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_cargos_diretos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_cargos_diretos"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_cargos_diretos" title="Link to this definition">#</a></dt>
+<dd><p>API endpoint para buscar dados de cargos diretamente do banco de dados com paginação</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API endpoint para buscar dados de cargos diretamente do banco de dados com paginação</p>
+<p>—</p>
+</section>
+<section id="api-financeira-organograma">
+<h2>api_financeira_organograma<a class="headerlink" href="#api-financeira-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_financeira_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_financeira_organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_financeira_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_financeira_organograma" title="Link to this definition">#</a></dt>
+<dd><p>API específica para a tela Financeira que devolve o mesmo JSON do organograma,
+mas em endpoint independente, evitando interferência entre páginas.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API específica para a tela Financeira que devolve o mesmo JSON do organograma,
+mas em endpoint independente, evitando interferência entre páginas.</p>
+<p>—</p>
+</section>
+<section id="api-historico-decretos">
+<h2>api_historico_decretos<a class="headerlink" href="#api-historico-decretos" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_historico_decretos">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_historico_decretos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_historico_decretos"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_historico_decretos" title="Link to this definition">#</a></dt>
+<dd><p>API para histórico de decretos.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para histórico de decretos.</p>
+<p>—</p>
+</section>
+<section id="api-minhas-solicitacoes">
+<h2>api_minhas_solicitacoes<a class="headerlink" href="#api-minhas-solicitacoes" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_minhas_solicitacoes">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_minhas_solicitacoes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_minhas_solicitacoes"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_minhas_solicitacoes" title="Link to this definition">#</a></dt>
+<dd><p>API para listar solicitações do usuário atual.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para listar solicitações do usuário atual.</p>
+<p>—</p>
+</section>
+<section id="api-organograma">
+<h2>api_organograma<a class="headerlink" href="#api-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_organograma" title="Link to this definition">#</a></dt>
+<dd><p>API endpoint para fornecer os dados do organograma diretamente do banco de dados</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API endpoint para fornecer os dados do organograma diretamente do banco de dados</p>
+<p>—</p>
+</section>
+<section id="api-organograma-detalhes">
+<h2>api_organograma_detalhes<a class="headerlink" href="#api-organograma-detalhes" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_organograma_detalhes">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_organograma_detalhes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_organograma_detalhes"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_organograma_detalhes" title="Link to this definition">#</a></dt>
+<dd><p>API para obter detalhes específicos de uma unidade pelo código.
+Esta API é usada para carregar detalhes sob demanda no organograma.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">*args,</span> <span class="pre">**kwargs)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para obter detalhes específicos de uma unidade pelo código.
+Esta API é usada para carregar detalhes sob demanda no organograma.</p>
+<p>—</p>
+</section>
+<section id="api-organograma-filter">
+<h2>api_organograma_filter<a class="headerlink" href="#api-organograma-filter" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_organograma_filter">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_organograma_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_organograma_filter"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_organograma_filter" title="Link to this definition">#</a></dt>
+<dd><p>API endpoint para filtrar dados do organograma de forma otimizada preservando estrutura hierárquica</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API endpoint para filtrar dados do organograma de forma otimizada preservando estrutura hierárquica</p>
+<p>—</p>
+</section>
+<section id="api-relatorio-dimensionamento">
+<h2>api_relatorio_dimensionamento<a class="headerlink" href="#api-relatorio-dimensionamento" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_relatorio_dimensionamento">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_relatorio_dimensionamento</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_relatorio_dimensionamento"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_relatorio_dimensionamento" title="Link to this definition">#</a></dt>
+<dd><p>API para dados do dimensionamento usando a API do organograma.
+Segunda tabela: Unidade, Pontos da área, Colaboradores (quantidade), IEE</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para dados do dimensionamento usando a API do organograma.
+Segunda tabela: Unidade, Pontos da área, Colaboradores (quantidade), IEE</p>
+<p>—</p>
+</section>
+<section id="api-relatorio-pontos-gratificacoes">
+<h2>api_relatorio_pontos_gratificacoes<a class="headerlink" href="#api-relatorio-pontos-gratificacoes" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_relatorio_pontos_gratificacoes">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_relatorio_pontos_gratificacoes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_relatorio_pontos_gratificacoes"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_relatorio_pontos_gratificacoes" title="Link to this definition">#</a></dt>
+<dd><p>API para dados do relatório usando a API do organograma.
+Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para dados do relatório usando a API do organograma.
+Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)</p>
+<p>—</p>
+</section>
+<section id="api-siglario">
+<h2>api_siglario<a class="headerlink" href="#api-siglario" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_siglario">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_siglario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_siglario"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_siglario" title="Link to this definition">#</a></dt>
+<dd><p>API para o siglário institucional.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para o siglário institucional.</p>
+<p>—</p>
+</section>
+<section id="api-unidades-disponiveis">
+<h2>api_unidades_disponiveis<a class="headerlink" href="#api-unidades-disponiveis" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_unidades_disponiveis">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_unidades_disponiveis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#api_unidades_disponiveis"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_unidades_disponiveis" title="Link to this definition">#</a></dt>
+<dd><p>API para buscar unidades disponíveis para formulários.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API para buscar unidades disponíveis para formulários.</p>
+<p>—</p>
+</section>
+<section id="api-view">
+<h2>api_view<a class="headerlink" href="#api-view" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.api_view">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">api_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">http_method_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/rest_framework/decorators.html#api_view"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.api_view" title="Link to this definition">#</a></dt>
+<dd><p>Decorator that converts a function-based view into an APIView subclass.
+Takes a list of allowed methods for the view as an argument.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(http_method_names=None)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Decorator that converts a function-based view into an APIView subclass.
+Takes a list of allowed methods for the view as an argument.</p>
+<p>—</p>
+</section>
+<section id="atualizar-organograma-json">
+<h2>atualizar_organograma_json<a class="headerlink" href="#atualizar-organograma-json" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.atualizar_organograma_json">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">atualizar_organograma_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#atualizar_organograma_json"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.atualizar_organograma_json" title="Link to this definition">#</a></dt>
+<dd><p>View para forçar atualização do arquivo organograma.json via AJAX</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View para forçar atualização do arquivo organograma.json via AJAX</p>
+<p>—</p>
+</section>
+<section id="authenticate">
+<h2>authenticate<a class="headerlink" href="#authenticate" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.authenticate">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">credentials</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/contrib/auth.html#authenticate"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.authenticate" title="Link to this definition">#</a></dt>
+<dd><p>If the given credentials are valid, return a User object.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request=None,</span> <span class="pre">**credentials)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>If the given credentials are valid, return a User object.</p>
+<p>—</p>
+</section>
+<section id="carregar-simulacao">
+<h2>carregar_simulacao<a class="headerlink" href="#carregar-simulacao" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.carregar_simulacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">carregar_simulacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simulacao_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#carregar_simulacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.carregar_simulacao" title="Link to this definition">#</a></dt>
+<dd><p>Carrega os dados de uma simulação específica</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">simulacao_id)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Carrega os dados de uma simulação específica</p>
+<p>—</p>
+</section>
+<section id="comparador">
+<h2>comparador<a class="headerlink" href="#comparador" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.comparador">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">comparador</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#comparador"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.comparador" title="Link to this definition">#</a></dt>
+<dd><p>Renderiza a página do comparador de organogramas.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Renderiza a página do comparador de organogramas.</p>
+<p>—</p>
+</section>
+<section id="csrf-exempt">
+<h2>csrf_exempt<a class="headerlink" href="#csrf-exempt" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.csrf_exempt">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">csrf_exempt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/views/decorators/csrf.html#csrf_exempt"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.csrf_exempt" title="Link to this definition">#</a></dt>
+<dd><p>Mark a view function as being exempt from the CSRF view protection.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(view_func)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Mark a view function as being exempt from the CSRF view protection.</p>
+<p>—</p>
+</section>
+<section id="csrf-protect">
+<h2>csrf_protect<a class="headerlink" href="#csrf-protect" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.csrf_protect">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">csrf_protect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view_func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#core.views.csrf_protect" title="Link to this definition">#</a></dt>
+<dd><p>This decorator adds CSRF protection in exactly the same way as
+CsrfViewMiddleware, but it can be used on a per view basis.  Using both, or
+using the decorator multiple times, is harmless and efficient.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(view_func)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>This decorator adds CSRF protection in exactly the same way as
+CsrfViewMiddleware, but it can be used on a per view basis.  Using both, or
+using the decorator multiple times, is harmless and efficient.</p>
+<p>—</p>
+</section>
+<section id="dados-financeiros-backup">
+<h2>dados_financeiros_backup<a class="headerlink" href="#dados-financeiros-backup" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.dados_financeiros_backup">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">dados_financeiros_backup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/financeira_export.html#dados_financeiros_backup"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.dados_financeiros_backup" title="Link to this definition">#</a></dt>
+<dd><p>Retorna dados financeiros de backup para quando a API falhar</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">()</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Retorna dados financeiros de backup para quando a API falhar</p>
+<p>—</p>
+</section>
+<section id="deletar-simulacao">
+<h2>deletar_simulacao<a class="headerlink" href="#deletar-simulacao" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.deletar_simulacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">deletar_simulacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simulacao_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#deletar_simulacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.deletar_simulacao" title="Link to this definition">#</a></dt>
+<dd><p>Deleta uma simulação do usuário</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">simulacao_id)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Deleta uma simulação do usuário</p>
+<p>—</p>
+</section>
+<section id="editar-perfil">
+<h2>editar_perfil<a class="headerlink" href="#editar-perfil" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.editar_perfil">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">editar_perfil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#editar_perfil"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.editar_perfil" title="Link to this definition">#</a></dt>
+<dd><p>Permite ao usuário editar suas informações de perfil.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Permite ao usuário editar suas informações de perfil.</p>
+<p>—</p>
+</section>
+<section id="enviar-solicitacao-permuta">
+<h2>enviar_solicitacao_permuta<a class="headerlink" href="#enviar-solicitacao-permuta" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.enviar_solicitacao_permuta">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">enviar_solicitacao_permuta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#enviar_solicitacao_permuta"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.enviar_solicitacao_permuta" title="Link to this definition">#</a></dt>
+<dd><p>Processa o envio de solicitação de permuta.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Processa o envio de solicitação de permuta.</p>
+<p>—</p>
+</section>
+<section id="enviar-solicitacao-realocacao">
+<h2>enviar_solicitacao_realocacao<a class="headerlink" href="#enviar-solicitacao-realocacao" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.enviar_solicitacao_realocacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">enviar_solicitacao_realocacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#enviar_solicitacao_realocacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.enviar_solicitacao_realocacao" title="Link to this definition">#</a></dt>
+<dd><p>Processa o envio de solicitação de realocação.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Processa o envio de solicitação de realocação.</p>
+<p>—</p>
+</section>
+<section id="estrutura-json-organograma">
+<h2>estrutura_json_organograma<a class="headerlink" href="#estrutura-json-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.estrutura_json_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">estrutura_json_organograma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/utils.html#estrutura_json_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.estrutura_json_organograma" title="Link to this definition">#</a></dt>
+<dd><p>Estrutura os dados das unidades e cargos em um formato JSON hierárquico.
+Retorna uma lista de unidades com seus cargos e valores.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">()</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Estrutura os dados das unidades e cargos em um formato JSON hierárquico.
+Retorna uma lista de unidades com seus cargos e valores.</p>
+<p>—</p>
+</section>
+<section id="exportar-csv">
+<h2>exportar_csv<a class="headerlink" href="#exportar-csv" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_csv">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#exportar_csv"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_csv" title="Link to this definition">#</a></dt>
+<dd><p>Exportar dados para CSV</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exportar dados para CSV</p>
+<p>—</p>
+</section>
+<section id="exportar-csv-simples">
+<h2>exportar_csv_simples<a class="headerlink" href="#exportar-csv-simples" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_csv_simples">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_csv_simples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'completo'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/financeira_export.html#exportar_csv_simples"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_csv_simples" title="Link to this definition">#</a></dt>
+<dd><p>Função simplificada para exportar CSV quando a função principal falhar.
+Usa a biblioteca padrão csv para maior confiabilidade.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente='completo')</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Função simplificada para exportar CSV quando a função principal falhar.
+Usa a biblioteca padrão csv para maior confiabilidade.</p>
+<p>—</p>
+</section>
+<section id="exportar-html">
+<h2>exportar_html<a class="headerlink" href="#exportar-html" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_html">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">para_pdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#exportar_html"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_html" title="Link to this definition">#</a></dt>
+<dd><p>Exportar dados para HTML</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente,</span> <span class="pre">para_pdf=False)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exportar dados para HTML</p>
+<p>—</p>
+</section>
+<section id="exportar-html-simples">
+<h2>exportar_html_simples<a class="headerlink" href="#exportar-html-simples" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_html_simples">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_html_simples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'completo'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/financeira_export.html#exportar_html_simples"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_html_simples" title="Link to this definition">#</a></dt>
+<dd><p>Função simplificada para exportar HTML quando a função principal falhar.
+Gera HTML básico sem depender de templates do Django.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente='completo')</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Função simplificada para exportar HTML quando a função principal falhar.
+Gera HTML básico sem depender de templates do Django.</p>
+<p>—</p>
+</section>
+<section id="exportar-pdf">
+<h2>exportar_pdf<a class="headerlink" href="#exportar-pdf" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_pdf">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#exportar_pdf"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_pdf" title="Link to this definition">#</a></dt>
+<dd><p>Exportar dados para PDF</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exportar dados para PDF</p>
+<p>—</p>
+</section>
+<section id="exportar-xlsx">
+<h2>exportar_xlsx<a class="headerlink" href="#exportar-xlsx" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.exportar_xlsx">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">exportar_xlsx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">componente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#exportar_xlsx"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.exportar_xlsx" title="Link to this definition">#</a></dt>
+<dd><p>Exportar dados para XLSX</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(dados,</span> <span class="pre">componente)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exportar dados para XLSX</p>
+<p>—</p>
+</section>
+<section id="financeira">
+<h2>financeira<a class="headerlink" href="#financeira" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.financeira">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">financeira</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#financeira"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.financeira" title="Link to this definition">#</a></dt>
+<dd><p>View para renderizar a página de monitoramento financeiro.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View para renderizar a página de monitoramento financeiro.</p>
+<p>—</p>
+</section>
+<section id="financeira-data">
+<h2>financeira_data<a class="headerlink" href="#financeira-data" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.financeira_data">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">financeira_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#financeira_data"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.financeira_data" title="Link to this definition">#</a></dt>
+<dd><p>Retorna dados financeiros em formato JSON reutilizando a mesma
+lógica empregada pela API de Organograma. Toda a computação é
+delegada à função <cite>financeira_data_real</cite>, garantindo consistência
+e eliminando a antiga API simulada.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Retorna dados financeiros em formato JSON reutilizando a mesma
+lógica empregada pela API de Organograma. Toda a computação é
+delegada à função <cite>financeira_data_real</cite>, garantindo consistência
+e eliminando a antiga API simulada.</p>
+<p>—</p>
+</section>
+<section id="financeira-data-real">
+<h2>financeira_data_real<a class="headerlink" href="#financeira-data-real" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.financeira_data_real">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">financeira_data_real</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#financeira_data_real"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.financeira_data_real" title="Link to this definition">#</a></dt>
+<dd><p>Retorna dados financeiros REAIS do banco de dados em formato JSON.
+Utiliza os mesmos dados do organograma.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Retorna dados financeiros REAIS do banco de dados em formato JSON.
+Utiliza os mesmos dados do organograma.</p>
+<p>—</p>
+</section>
+<section id="financeira-export">
+<h2>financeira_export<a class="headerlink" href="#financeira-export" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.financeira_export">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">financeira_export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#financeira_export"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.financeira_export" title="Link to this definition">#</a></dt>
+<dd><p>Exporta dados financeiros em diferentes formatos: PDF, CSV, XLSX, HTML</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exporta dados financeiros em diferentes formatos: PDF, CSV, XLSX, HTML</p>
+<p>—</p>
+</section>
+<section id="financeira-page">
+<h2>financeira_page<a class="headerlink" href="#financeira-page" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.financeira_page">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">financeira_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#financeira_page"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.financeira_page" title="Link to this definition">#</a></dt>
+<dd><p>View que renderiza a página financeira com integração
+direta com o organograma e simulação.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View que renderiza a página financeira com integração
+direta com o organograma e simulação.</p>
+<p>—</p>
+</section>
+<section id="gerar-anexo-simulacao">
+<h2>gerar_anexo_simulacao<a class="headerlink" href="#gerar-anexo-simulacao" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.gerar_anexo_simulacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">gerar_anexo_simulacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_atual</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_nova</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/utils.html#gerar_anexo_simulacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.gerar_anexo_simulacao" title="Link to this definition">#</a></dt>
+<dd><p>Generates an Excel anexo with simulation data.
+Clears rows 5-327 in “ComparativoEstruturas” sheet,
+and populates data from row 8.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(data_atual,</span> <span class="pre">data_nova)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Generates an Excel anexo with simulation data.
+Clears rows 5-327 in “ComparativoEstruturas” sheet,
+and populates data from row 8.</p>
+<p>—</p>
+</section>
+<section id="gerar-organograma-json">
+<h2>gerar_organograma_json<a class="headerlink" href="#gerar-organograma-json" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.gerar_organograma_json">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">gerar_organograma_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/dados_json_update.html#gerar_organograma_json"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.gerar_organograma_json" title="Link to this definition">#</a></dt>
+<dd><p>Gera um arquivo JSON com dados das tabelas UnidadeCargo e CargoSIORG.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">()</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Gera um arquivo JSON com dados das tabelas UnidadeCargo e CargoSIORG.</p>
+<p>—</p>
+</section>
+<section id="get-unidade-data">
+<h2>get_unidade_data<a class="headerlink" href="#get-unidade-data" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.get_unidade_data">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">get_unidade_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">codigo_unidade</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#get_unidade_data"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.get_unidade_data" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">codigo_unidade)</span></code></p>
+<p>—</p>
+</section>
+<section id="home">
+<h2>home<a class="headerlink" href="#home" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.home">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">home</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#home"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.home" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">form=None)</span></code></p>
+<p>—</p>
+</section>
+<section id="index">
+<h2>index<a class="headerlink" href="#index" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.index">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#index"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.index" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p>—</p>
+</section>
+<section id="listar-simulacoes">
+<h2>listar_simulacoes<a class="headerlink" href="#listar-simulacoes" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.listar_simulacoes">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">listar_simulacoes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#listar_simulacoes"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.listar_simulacoes" title="Link to this definition">#</a></dt>
+<dd><p>Lista todas as simulações salvas do usuário atual</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Lista todas as simulações salvas do usuário atual</p>
+<p>—</p>
+</section>
+<section id="login">
+<h2>login<a class="headerlink" href="#login" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.login">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/contrib/auth.html#login"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.login" title="Link to this definition">#</a></dt>
+<dd><p>Persist a user id and a backend in the request. This way a user doesn’t
+have to reauthenticate on every request. Note that data set during
+the anonymous session is retained when the user logs in.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">user,</span> <span class="pre">backend=None)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Persist a user id and a backend in the request. This way a user doesn’t
+have to reauthenticate on every request. Note that data set during
+the anonymous session is retained when the user logs in.</p>
+<p>—</p>
+</section>
+<section id="login-required">
+<h2>login_required<a class="headerlink" href="#login-required" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.login_required">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">login_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirect_field_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">REDIRECT_FIELD_NAME</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">login_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/contrib/auth/decorators.html#login_required"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.login_required" title="Link to this definition">#</a></dt>
+<dd><p>Decorator for views that checks that the user is logged in, redirecting
+to the log-in page if necessary.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(function=None,</span> <span class="pre">redirect_field_name='next',</span> <span class="pre">login_url=None)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Decorator for views that checks that the user is logged in, redirecting
+to the log-in page if necessary.</p>
+<p>—</p>
+</section>
+<section id="method-decorator">
+<h2>method_decorator<a class="headerlink" href="#method-decorator" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.method_decorator">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">method_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decorator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/utils/decorators.html#method_decorator"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.method_decorator" title="Link to this definition">#</a></dt>
+<dd><p>Convert a function decorator into a method decorator</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(decorator,</span> <span class="pre">name='')</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Convert a function decorator into a method decorator</p>
+<p>—</p>
+</section>
+<section id="organograma">
+<h2>organograma<a class="headerlink" href="#organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma" title="Link to this definition">#</a></dt>
+<dd><p>Renderiza a página do organograma.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Renderiza a página do organograma.</p>
+<p>—</p>
+</section>
+<section id="organograma-data">
+<h2>organograma_data<a class="headerlink" href="#organograma-data" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_data">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_data"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_data" title="Link to this definition">#</a></dt>
+<dd><p>Endpoint que retorna os dados do organograma em formato JSON.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Endpoint que retorna os dados do organograma em formato JSON.</p>
+<p>—</p>
+</section>
+<section id="organograma-ondemand">
+<h2>organograma_ondemand<a class="headerlink" href="#organograma-ondemand" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_ondemand">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_ondemand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_ondemand"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_ondemand" title="Link to this definition">#</a></dt>
+<dd><p>Visualização do organograma com carregamento sob demanda.
+Esta versão carrega os dados de forma incremental para evitar
+travamentos no navegador.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Visualização do organograma com carregamento sob demanda.
+Esta versão carrega os dados de forma incremental para evitar
+travamentos no navegador.</p>
+<p>—</p>
+</section>
+<section id="organograma-page">
+<h2>organograma_page<a class="headerlink" href="#organograma-page" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_page">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_page"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_page" title="Link to this definition">#</a></dt>
+<dd><p>Renderiza a página do organograma.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Renderiza a página do organograma.</p>
+<p>—</p>
+</section>
+<section id="organograma-redirect">
+<h2>organograma_redirect<a class="headerlink" href="#organograma-redirect" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_redirect">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_redirect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_redirect"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_redirect" title="Link to this definition">#</a></dt>
+<dd><p>View para redirecionar da URL original do organograma para a nova visualização</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View para redirecionar da URL original do organograma para a nova visualização</p>
+<p>—</p>
+</section>
+<section id="organograma-view">
+<h2>organograma_view<a class="headerlink" href="#organograma-view" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_view">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_view"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_view" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p>—</p>
+</section>
+<section id="perfil">
+<h2>perfil<a class="headerlink" href="#perfil" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.perfil">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">perfil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#perfil"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.perfil" title="Link to this definition">#</a></dt>
+<dd><p>Exibe a página de perfil do usuário.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Exibe a página de perfil do usuário.</p>
+<p>—</p>
+</section>
+<section id="processa-json-organograma">
+<h2>processa_json_organograma<a class="headerlink" href="#processa-json-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.processa_json_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">processa_json_organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/utils.html#processa_json_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.processa_json_organograma" title="Link to this definition">#</a></dt>
+<dd><p>Processa os dados do arquivo JSON do organograma e combina com os dados do SIORG.
+Retorna uma estrutura hierárquica com informações detalhadas de cada unidade.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(json_data)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Processa os dados do arquivo JSON do organograma e combina com os dados do SIORG.
+Retorna uma estrutura hierárquica com informações detalhadas de cada unidade.</p>
+<p>—</p>
+</section>
+<section id="processa-organograma">
+<h2>processa_organograma<a class="headerlink" href="#processa-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.processa_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">processa_organograma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/utils.html#processa_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.processa_organograma" title="Link to this definition">#</a></dt>
+<dd><p>Processa os dados das unidades e cargos em uma estrutura de grafo organizacional.
+Retorna um dicionário com a estrutura hierárquica e informações financeiras.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">()</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Processa os dados das unidades e cargos em uma estrutura de grafo organizacional.
+Retorna um dicionário com a estrutura hierárquica e informações financeiras.</p>
+<p>—</p>
+</section>
+<section id="processa-planilhas">
+<h2>processa_planilhas<a class="headerlink" href="#processa-planilhas" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.processa_planilhas">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">processa_planilhas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_hierarquia</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_estrutura_viva</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/utils.html#processa_planilhas"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.processa_planilhas" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(file_hierarquia,</span> <span class="pre">file_estrutura_viva)</span></code></p>
+<p>—</p>
+</section>
+<section id="redirect">
+<h2>redirect<a class="headerlink" href="#redirect" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.redirect">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">redirect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permanent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/shortcuts.html#redirect"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.redirect" title="Link to this definition">#</a></dt>
+<dd><p>Return an HttpResponseRedirect to the appropriate URL for the arguments
+passed.</p>
+<p>The arguments could be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A model: the model’s <cite>get_absolute_url()</cite> function will be called.</p></li>
+<li><p>A view name, possibly with arguments: <cite>urls.reverse()</cite> will be used
+to reverse-resolve the name.</p></li>
+<li><p>A URL, which will be used as-is for the redirect location.</p></li>
+</ul>
+</div></blockquote>
+<p>Issues a temporary redirect by default; pass permanent=True to issue a
+permanent redirect.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(to,</span> <span class="pre">*args,</span> <span class="pre">permanent=False,</span> <span class="pre">**kwargs)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Return an HttpResponseRedirect to the appropriate URL for the arguments
+passed.</p>
+<p>The arguments could be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A model: the model’s <cite>get_absolute_url()</cite> function will be called.</p></li>
+<li><p>A view name, possibly with arguments: <cite>urls.reverse()</cite> will be used
+to reverse-resolve the name.</p></li>
+<li><p>A URL, which will be used as-is for the redirect location.</p></li>
+</ul>
+</div></blockquote>
+<p>Issues a temporary redirect by default; pass permanent=True to issue a
+permanent redirect.</p>
+<p>—</p>
+</section>
+<section id="register">
+<h2>register<a class="headerlink" href="#register" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.register">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#register"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.register" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p>—</p>
+</section>
+<section id="relatorios">
+<h2>relatorios<a class="headerlink" href="#relatorios" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.relatorios">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">relatorios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#relatorios"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.relatorios" title="Link to this definition">#</a></dt>
+<dd><p>Página principal do sistema de relatórios.
+Inclui todas as funcionalidades solicitadas.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Página principal do sistema de relatórios.
+Inclui todas as funcionalidades solicitadas.</p>
+<p>—</p>
+</section>
+<section id="render">
+<h2>render<a class="headerlink" href="#render" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.render">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">using</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/shortcuts.html#render"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.render" title="Link to this definition">#</a></dt>
+<dd><p>Return an HttpResponse whose content is filled with the result of calling
+django.template.loader.render_to_string() with the passed arguments.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">template_name,</span> <span class="pre">context=None,</span> <span class="pre">content_type=None,</span> <span class="pre">status=None,</span> <span class="pre">using=None)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Return an HttpResponse whose content is filled with the result of calling
+django.template.loader.render_to_string() with the passed arguments.</p>
+<p>—</p>
+</section>
+<section id="render-to-string">
+<h2>render_to_string<a class="headerlink" href="#render-to-string" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.render_to_string">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">render_to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">using</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/template/loader.html#render_to_string"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.render_to_string" title="Link to this definition">#</a></dt>
+<dd><p>Load a template and render it with a context. Return a string.</p>
+<p>template_name may be a string or a list of strings.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(template_name,</span> <span class="pre">context=None,</span> <span class="pre">request=None,</span> <span class="pre">using=None)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Load a template and render it with a context. Return a string.</p>
+<p>template_name may be a string or a list of strings.</p>
+<p>—</p>
+</section>
+<section id="require-http-methods">
+<h2>require_http_methods<a class="headerlink" href="#require-http-methods" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.require_http_methods">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">require_http_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request_method_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/views/decorators/http.html#require_http_methods"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.require_http_methods" title="Link to this definition">#</a></dt>
+<dd><p>Decorator to make a view only accept particular request methods.  Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@require_http_methods</span><span class="p">([</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># I can assume now that only GET or POST requests make it this far</span>
+    <span class="c1"># ...</span>
+</pre></div>
+</div>
+<p>Note that request methods should be in uppercase.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request_method_list)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Decorator to make a view only accept particular request methods.  Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@require_http_methods</span><span class="p">([</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c1"># I can assume now that only GET or POST requests make it this far</span>
+    <span class="c1"># ...</span>
+</pre></div>
+</div>
+<p>Note that request methods should be in uppercase.</p>
+<p>—</p>
+</section>
+<section id="reverse-lazy">
+<h2>reverse_lazy<a class="headerlink" href="#reverse-lazy" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.reverse_lazy">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">reverse_lazy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urlconf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#core.views.reverse_lazy" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(viewname,</span> <span class="pre">urlconf=None,</span> <span class="pre">args=None,</span> <span class="pre">kwargs=None,</span> <span class="pre">current_app=None)</span></code></p>
+<p>—</p>
+</section>
+<section id="salvar-simulacao">
+<h2>salvar_simulacao<a class="headerlink" href="#salvar-simulacao" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.salvar_simulacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">salvar_simulacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#salvar_simulacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.salvar_simulacao" title="Link to this definition">#</a></dt>
+<dd><p>Salva uma nova simulação ou atualiza uma existente</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Salva uma nova simulação ou atualiza uma existente</p>
+<p>—</p>
+</section>
+<section id="simulacao-page">
+<h2>simulacao_page<a class="headerlink" href="#simulacao-page" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.simulacao_page">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">simulacao_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#simulacao_page"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.simulacao_page" title="Link to this definition">#</a></dt>
+<dd><p>View que renderiza a página de simulação do organograma
+onde o usuário pode adicionar nomes e criar conexões manualmente.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View que renderiza a página de simulação do organograma
+onde o usuário pode adicionar nomes e criar conexões manualmente.</p>
+<p>—</p>
+</section>
+<section id="simular-troca-cargo">
+<h2>simular_troca_cargo<a class="headerlink" href="#simular-troca-cargo" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.simular_troca_cargo">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">simular_troca_cargo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#simular_troca_cargo"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.simular_troca_cargo" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p>—</p>
+</section>
+<section id="strip-tags">
+<h2>strip_tags<a class="headerlink" href="#strip-tags" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.strip_tags">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">strip_tags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/utils/html.html#strip_tags"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.strip_tags" title="Link to this definition">#</a></dt>
+<dd><p>Return the given HTML with all tags stripped.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(value)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Return the given HTML with all tags stripped.</p>
+<p>—</p>
+</section>
+<section id="teste-api-organograma">
+<h2>teste_api_organograma<a class="headerlink" href="#teste-api-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.teste_api_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">teste_api_organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#teste_api_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.teste_api_organograma" title="Link to this definition">#</a></dt>
+<dd><p>API endpoint para fornecer os dados do organograma diretamente do banco de dados (para teste)</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>API endpoint para fornecer os dados do organograma diretamente do banco de dados (para teste)</p>
+<p>—</p>
+</section>
+<section id="update-session-auth-hash">
+<h2>update_session_auth_hash<a class="headerlink" href="#update-session-auth-hash" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.update_session_auth_hash">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">update_session_auth_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/django/contrib/auth.html#update_session_auth_hash"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.update_session_auth_hash" title="Link to this definition">#</a></dt>
+<dd><p>Updating a user’s password logs out all sessions for the user.</p>
+<p>Take the current request and the updated user object from which the new
+session hash will be derived and update the session hash appropriately to
+prevent a password change from logging out the session from which the
+password was changed.</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request,</span> <span class="pre">user)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>Updating a user’s password logs out all sessions for the user.</p>
+<p>Take the current request and the updated user object from which the new
+session hash will be derived and update the session hash appropriately to
+prevent a password change from logging out the session from which the
+password was changed.</p>
+<p>—</p>
+</section>
+<section id="view-organograma">
+<h2>view_organograma<a class="headerlink" href="#view-organograma" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.view_organograma">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">view_organograma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#view_organograma"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.view_organograma" title="Link to this definition">#</a></dt>
+<dd><p>View para exibir o organograma visual com D3.js</p>
+</dd></dl>
+
+<p><strong>Assinatura:</strong> <code class="docutils literal notranslate"><span class="pre">(request)</span></code></p>
+<p><strong>Descrição:</strong></p>
+<p>View para exibir o organograma visual com D3.js</p>
+<p>—</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="auto_models.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">Modelos (Gerado Automaticamente)</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Conteúdo
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alterar-senha">alterar_senha</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.alterar_senha"><code class="docutils literal notranslate"><span class="pre">alterar_senha()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-cargos">api_cargos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_cargos"><code class="docutils literal notranslate"><span class="pre">api_cargos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-cargos-diretos">api_cargos_diretos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_cargos_diretos"><code class="docutils literal notranslate"><span class="pre">api_cargos_diretos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-financeira-organograma">api_financeira_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_financeira_organograma"><code class="docutils literal notranslate"><span class="pre">api_financeira_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-historico-decretos">api_historico_decretos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_historico_decretos"><code class="docutils literal notranslate"><span class="pre">api_historico_decretos()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-minhas-solicitacoes">api_minhas_solicitacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_minhas_solicitacoes"><code class="docutils literal notranslate"><span class="pre">api_minhas_solicitacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma">api_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma"><code class="docutils literal notranslate"><span class="pre">api_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma-detalhes">api_organograma_detalhes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma_detalhes"><code class="docutils literal notranslate"><span class="pre">api_organograma_detalhes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-organograma-filter">api_organograma_filter</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_organograma_filter"><code class="docutils literal notranslate"><span class="pre">api_organograma_filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-relatorio-dimensionamento">api_relatorio_dimensionamento</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_relatorio_dimensionamento"><code class="docutils literal notranslate"><span class="pre">api_relatorio_dimensionamento()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-relatorio-pontos-gratificacoes">api_relatorio_pontos_gratificacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_relatorio_pontos_gratificacoes"><code class="docutils literal notranslate"><span class="pre">api_relatorio_pontos_gratificacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-siglario">api_siglario</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_siglario"><code class="docutils literal notranslate"><span class="pre">api_siglario()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-unidades-disponiveis">api_unidades_disponiveis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_unidades_disponiveis"><code class="docutils literal notranslate"><span class="pre">api_unidades_disponiveis()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-view">api_view</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.api_view"><code class="docutils literal notranslate"><span class="pre">api_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#atualizar-organograma-json">atualizar_organograma_json</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.atualizar_organograma_json"><code class="docutils literal notranslate"><span class="pre">atualizar_organograma_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#authenticate">authenticate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.authenticate"><code class="docutils literal notranslate"><span class="pre">authenticate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#carregar-simulacao">carregar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.carregar_simulacao"><code class="docutils literal notranslate"><span class="pre">carregar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparador">comparador</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.comparador"><code class="docutils literal notranslate"><span class="pre">comparador()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#csrf-exempt">csrf_exempt</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.csrf_exempt"><code class="docutils literal notranslate"><span class="pre">csrf_exempt()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#csrf-protect">csrf_protect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.csrf_protect"><code class="docutils literal notranslate"><span class="pre">csrf_protect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dados-financeiros-backup">dados_financeiros_backup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.dados_financeiros_backup"><code class="docutils literal notranslate"><span class="pre">dados_financeiros_backup()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deletar-simulacao">deletar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.deletar_simulacao"><code class="docutils literal notranslate"><span class="pre">deletar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#editar-perfil">editar_perfil</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.editar_perfil"><code class="docutils literal notranslate"><span class="pre">editar_perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enviar-solicitacao-permuta">enviar_solicitacao_permuta</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.enviar_solicitacao_permuta"><code class="docutils literal notranslate"><span class="pre">enviar_solicitacao_permuta()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enviar-solicitacao-realocacao">enviar_solicitacao_realocacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.enviar_solicitacao_realocacao"><code class="docutils literal notranslate"><span class="pre">enviar_solicitacao_realocacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#estrutura-json-organograma">estrutura_json_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.estrutura_json_organograma"><code class="docutils literal notranslate"><span class="pre">estrutura_json_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-csv">exportar_csv</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_csv"><code class="docutils literal notranslate"><span class="pre">exportar_csv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-csv-simples">exportar_csv_simples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_csv_simples"><code class="docutils literal notranslate"><span class="pre">exportar_csv_simples()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-html">exportar_html</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_html"><code class="docutils literal notranslate"><span class="pre">exportar_html()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-html-simples">exportar_html_simples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_html_simples"><code class="docutils literal notranslate"><span class="pre">exportar_html_simples()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-pdf">exportar_pdf</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_pdf"><code class="docutils literal notranslate"><span class="pre">exportar_pdf()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exportar-xlsx">exportar_xlsx</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.exportar_xlsx"><code class="docutils literal notranslate"><span class="pre">exportar_xlsx()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira">financeira</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira"><code class="docutils literal notranslate"><span class="pre">financeira()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-data">financeira_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_data"><code class="docutils literal notranslate"><span class="pre">financeira_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-data-real">financeira_data_real</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_data_real"><code class="docutils literal notranslate"><span class="pre">financeira_data_real()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-export">financeira_export</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_export"><code class="docutils literal notranslate"><span class="pre">financeira_export()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#financeira-page">financeira_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.financeira_page"><code class="docutils literal notranslate"><span class="pre">financeira_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gerar-anexo-simulacao">gerar_anexo_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.gerar_anexo_simulacao"><code class="docutils literal notranslate"><span class="pre">gerar_anexo_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gerar-organograma-json">gerar_organograma_json</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.gerar_organograma_json"><code class="docutils literal notranslate"><span class="pre">gerar_organograma_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-unidade-data">get_unidade_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.get_unidade_data"><code class="docutils literal notranslate"><span class="pre">get_unidade_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#home">home</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.home"><code class="docutils literal notranslate"><span class="pre">home()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#index">index</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.index"><code class="docutils literal notranslate"><span class="pre">index()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#listar-simulacoes">listar_simulacoes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.listar_simulacoes"><code class="docutils literal notranslate"><span class="pre">listar_simulacoes()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#login">login</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.login"><code class="docutils literal notranslate"><span class="pre">login()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#login-required">login_required</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.login_required"><code class="docutils literal notranslate"><span class="pre">login_required()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-decorator">method_decorator</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.method_decorator"><code class="docutils literal notranslate"><span class="pre">method_decorator()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma">organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma"><code class="docutils literal notranslate"><span class="pre">organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-data">organograma_data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_data"><code class="docutils literal notranslate"><span class="pre">organograma_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-ondemand">organograma_ondemand</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_ondemand"><code class="docutils literal notranslate"><span class="pre">organograma_ondemand()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-page">organograma_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_page"><code class="docutils literal notranslate"><span class="pre">organograma_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-redirect">organograma_redirect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_redirect"><code class="docutils literal notranslate"><span class="pre">organograma_redirect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma-view">organograma_view</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_view"><code class="docutils literal notranslate"><span class="pre">organograma_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#perfil">perfil</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.perfil"><code class="docutils literal notranslate"><span class="pre">perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-json-organograma">processa_json_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_json_organograma"><code class="docutils literal notranslate"><span class="pre">processa_json_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-organograma">processa_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_organograma"><code class="docutils literal notranslate"><span class="pre">processa_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processa-planilhas">processa_planilhas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.processa_planilhas"><code class="docutils literal notranslate"><span class="pre">processa_planilhas()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redirect">redirect</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.redirect"><code class="docutils literal notranslate"><span class="pre">redirect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#register">register</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relatorios">relatorios</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.relatorios"><code class="docutils literal notranslate"><span class="pre">relatorios()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#render">render</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#render-to-string">render_to_string</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.render_to_string"><code class="docutils literal notranslate"><span class="pre">render_to_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#require-http-methods">require_http_methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.require_http_methods"><code class="docutils literal notranslate"><span class="pre">require_http_methods()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reverse-lazy">reverse_lazy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.reverse_lazy"><code class="docutils literal notranslate"><span class="pre">reverse_lazy()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#salvar-simulacao">salvar_simulacao</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.salvar_simulacao"><code class="docutils literal notranslate"><span class="pre">salvar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulacao-page">simulacao_page</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.simulacao_page"><code class="docutils literal notranslate"><span class="pre">simulacao_page()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simular-troca-cargo">simular_troca_cargo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.simular_troca_cargo"><code class="docutils literal notranslate"><span class="pre">simular_troca_cargo()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#strip-tags">strip_tags</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.strip_tags"><code class="docutils literal notranslate"><span class="pre">strip_tags()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#teste-api-organograma">teste_api_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.teste_api_organograma"><code class="docutils literal notranslate"><span class="pre">teste_api_organograma()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#update-session-auth-hash">update_session_auth_hash</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.update_session_auth_hash"><code class="docutils literal notranslate"><span class="pre">update_session_auth_hash()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#view-organograma">view_organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.view_organograma"><code class="docutils literal notranslate"><span class="pre">view_organograma()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+De Eduardo Moura da Silva
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Eduardo Moura da Silva - CGEST/SAGE/MPO.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

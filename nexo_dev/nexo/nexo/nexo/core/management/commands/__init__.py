@@ -1,1 +1,1 @@
-ÿş
+# Management commands package 

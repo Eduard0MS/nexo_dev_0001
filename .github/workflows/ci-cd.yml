@@ -91,7 +91,7 @@ jobs:
         coverage xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./nexo_dev/nexo/coverage.xml
         flags: unittests
@@ -175,7 +175,7 @@ jobs:
         # Aqui você adicionaria o script de deploy para produção
 
     - name: Upload deployment artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nexo-deployment
         path: nexo-deployment.tar.gz

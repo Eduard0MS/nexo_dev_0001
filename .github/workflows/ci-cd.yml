@@ -184,7 +184,7 @@ jobs:
           set -e  # Parar em caso de erro
           
           echo "📁 Navegando para diretório do projeto..."
-          cd ${{ secrets.PRODUCTION_PROJECT_PATH }}
+          cd /home/eduardo/Documentos/nexo/nexo_dev_0001/nexo_dev/nexo
           
           echo "📥 Fazendo backup da versão atual..."
           cp -r . ../backup_$(date +%Y%m%d_%H%M%S) || true
@@ -194,7 +194,7 @@ jobs:
           git reset --hard origin/main
           
           echo "📦 Ativando ambiente virtual..."
-          source ${{ secrets.PRODUCTION_VENV_PATH }}/bin/activate || source venv/bin/activate || true
+          source /home/eduardo/Documentos/nexo/venv/bin/activate
           
           echo "⬇️ Instalando/atualizando dependências..."
           pip install -r requirements.txt

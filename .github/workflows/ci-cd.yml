@@ -179,52 +179,120 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
         
+        # Testar conexão SSH primeiro
+        echo "🔍 Testando conexão SSH..."
+        ssh -i ~/.ssh/id_rsa -o ConnectTimeout=10 ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} "echo 'SSH conectado com sucesso!'"
+        
         # Executar deploy via SSH
         ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOL'
-          set -e  # Parar em caso de erro
+          # Função para log com timestamp
+          log() {
+            echo "$(date '+%H:%M:%S') - $1"
+          }
           
-          echo "📁 Navegando para diretório do repositório Git..."
+          # Parar em caso de erro mas com logs
+          set -e
+          trap 'log "❌ ERRO na linha $LINENO"' ERR
+          
+          log "🚀 Iniciando deploy automático..."
+          
+          # Verificar se diretório existe
+          log "📁 Verificando diretório do repositório..."
+          if [ ! -d "/home/eduardo/Documentos/nexo/nexo_dev_0001" ]; then
+            log "❌ Diretório do repositório não encontrado!"
+            exit 1
+          fi
+          
           cd /home/eduardo/Documentos/nexo/nexo_dev_0001
+          log "✅ Navegado para: $(pwd)"
           
-          echo "📥 Fazendo backup da versão atual..."
-          cp -r nexo_dev/nexo ../backup_$(date +%Y%m%d_%H%M%S) || true
+          # Verificar se é repositório git
+          if [ ! -d ".git" ]; then
+            log "❌ Não é um repositório Git!"
+            exit 1
+          fi
           
-          echo "🔄 Atualizando código do GitHub..."
-          git fetch origin
-          git reset --hard origin/main
+          log "📥 Fazendo backup da versão atual..."
+          cp -r nexo_dev/nexo ../backup_$(date +%Y%m%d_%H%M%S) || log "⚠️ Backup falhou, continuando..."
           
-          echo "📁 Navegando para diretório Django..."
+          log "🔄 Atualizando código do GitHub..."
+          git fetch origin || { log "❌ git fetch falhou"; exit 1; }
+          git reset --hard origin/main || { log "❌ git reset falhou"; exit 1; }
+          log "✅ Código atualizado com sucesso"
+          
+          # Verificar se diretório Django existe
+          log "📁 Verificando diretório Django..."
+          if [ ! -d "nexo_dev/nexo" ]; then
+            log "❌ Diretório Django não encontrado!"
+            exit 1
+          fi
+          
           cd nexo_dev/nexo
+          log "✅ Navegado para Django: $(pwd)"
           
-          echo "📦 Ativando ambiente virtual..."
+          # Verificar se manage.py existe
+          if [ ! -f "manage.py" ]; then
+            log "❌ manage.py não encontrado!"
+            exit 1
+          fi
+          
+          # Verificar se venv existe
+          log "📦 Verificando ambiente virtual..."
+          if [ ! -f "/home/eduardo/Documentos/nexo/venv/bin/activate" ]; then
+            log "❌ Ambiente virtual não encontrado!"
+            exit 1
+          fi
+          
           source /home/eduardo/Documentos/nexo/venv/bin/activate
+          log "✅ Ambiente virtual ativado"
           
-          echo "⬇️ Instalando/atualizando dependências..."
-          pip install -r requirements.txt
+          # Verificar requirements.txt
+          if [ ! -f "requirements.txt" ]; then
+            log "❌ requirements.txt não encontrado!"
+            exit 1
+          fi
           
-          echo "🗃️ Executando migrações do banco..."
-          python manage.py migrate --noinput
+          log "⬇️ Instalando/atualizando dependências..."
+          pip install -r requirements.txt || { log "❌ pip install falhou"; exit 1; }
+          log "✅ Dependências instaladas"
           
-          echo "📋 Coletando arquivos estáticos..."
-          python manage.py collectstatic --noinput
+          log "🗃️ Executando migrações do banco..."
+          python manage.py migrate --noinput || { log "❌ migrate falhou"; exit 1; }
+          log "✅ Migrações executadas"
           
-          echo "🔄 Reiniciando serviços..."
-          sudo systemctl restart gunicorn_nexo
+          log "📋 Coletando arquivos estáticos..."
+          python manage.py collectstatic --noinput || { log "❌ collectstatic falhou"; exit 1; }
+          log "✅ Arquivos estáticos coletados"
           
-          echo "✅ Verificando status do serviço..."
-          sudo systemctl is-active gunicorn_nexo
+          log "🔄 Reiniciando serviços..."
+          sudo systemctl restart gunicorn_nexo || { log "❌ restart gunicorn falhou"; exit 1; }
+          log "✅ Gunicorn reiniciado"
           
-          echo "🏥 Verificando saúde da aplicação..."
-          # Aguardar alguns segundos para o serviço inicializar
+          log "⏱️ Aguardando serviço inicializar..."
           sleep 5
           
-          # Verificar se a aplicação responde (ajuste a URL conforme necessário)
-          curl -f http://localhost:8000 || curl -f http://127.0.0.1:8000 || echo "⚠️ Aplicação pode estar inicializando..."
+          log "✅ Verificando status do serviço..."
+          if sudo systemctl is-active gunicorn_nexo > /dev/null; then
+            log "✅ Gunicorn está ativo"
+          else
+            log "❌ Gunicorn não está ativo!"
+            sudo systemctl status gunicorn_nexo --no-pager -l
+            exit 1
+          fi
           
-          echo "📊 Status final dos serviços..."
+          log "🏥 Verificando saúde da aplicação..."
+          if curl -f http://localhost:8000 >/dev/null 2>&1; then
+            log "✅ Aplicação respondendo em localhost:8000"
+          elif curl -f http://127.0.0.1:8000 >/dev/null 2>&1; then
+            log "✅ Aplicação respondendo em 127.0.0.1:8000"
+          else
+            log "⚠️ Aplicação não responde, mas pode estar inicializando..."
+          fi
+          
+          log "📊 Status final dos serviços..."
           sudo systemctl status gunicorn_nexo --no-pager -l
           
-          echo "🎉 Deploy concluído com sucesso!"
+          log "🎉 Deploy concluído com sucesso!"
         EOL
 
     - name: Upload deployment artifact

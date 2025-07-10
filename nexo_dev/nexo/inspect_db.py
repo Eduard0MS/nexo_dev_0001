@@ -1,6 +1,7 @@
 import os
 import django
 import sqlite3
+import re
 import dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
@@ -13,6 +14,12 @@ from django.conf import settings
 from django.db import connection
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
+
+# Função para validar nome de tabela de forma segura
+def is_safe_table_name(table_name):
+    """Valida se o nome da tabela contém apenas caracteres seguros."""
+    # Permite apenas letras, números, underscore - padrão SQLite
+    return bool(re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table_name))
 
 # Inspecionar aplicativos sociais com ORM
 print("=== DETALHES DOS APLICATIVOS SOCIAIS VIA ORM ===")
@@ -44,9 +51,13 @@ cursor.execute(
 tables = cursor.fetchall()
 for table in tables:
     table_name = table[0]
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    count = cursor.fetchone()[0]
-    print(f"  {table_name}: {count} registros")
+    # SEGURANÇA: Validação rigorosa do nome da tabela
+    if is_safe_table_name(table_name) and len(table_name) <= 100:
+        cursor.execute(f"SELECT COUNT(*) FROM `{table_name}`")
+        count = cursor.fetchone()[0]
+        print(f"  {table_name}: {count} registros")
+    else:
+        print(f"  {table_name}: ERRO - Nome de tabela não seguro")
 
 # Examinar a tabela socialaccount_socialapp diretamente
 print("\nExaminando socialaccount_socialapp diretamente:")

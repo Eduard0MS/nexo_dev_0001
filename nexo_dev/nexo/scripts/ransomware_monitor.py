@@ -98,7 +98,8 @@ def get_file_signature(file_path):
     try:
         with open(file_path, "rb") as f:
             content = f.read(8192)  # Lê apenas os primeiros 8KB para performance
-            return hashlib.md5(content).hexdigest()
+            # SEGURANÇA: MD5 usado apenas para verificação de integridade, não segurança
+            return hashlib.md5(content, usedforsecurity=False).hexdigest()
     except Exception as e:
         logger.error(f"Erro ao gerar assinatura para {file_path}: {str(e)}")
         return None

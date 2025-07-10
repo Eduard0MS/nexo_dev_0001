@@ -196,29 +196,19 @@ TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-# Configurações de arquivos estáticos
-STATIC_URL = "static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
-# Configurações de mídia
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-# Configurações do allauth
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_UNIQUE_EMAIL = True
-# ╭────────── Estáticos & mídia ──────────╮
+# ─────── Arquivos estáticos e mídia ───────
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = "/var/www/nexo_static"
+
+# Configurar STATIC_ROOT baseado no ambiente
+if IS_PRODUCTION:
+    STATIC_ROOT = "/var/www/nexo_static"
+else:
+    # Para desenvolvimento e CI/CD usar diretório local
+    STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-# ╰───────────────────────────────────────╯
 
 # ─────── allauth ───────
 ACCOUNT_EMAIL_REQUIRED = True

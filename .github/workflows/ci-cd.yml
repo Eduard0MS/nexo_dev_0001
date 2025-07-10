@@ -1,0 +1,199 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  DJANGO_SETTINGS_MODULE: 'Nexus.settings'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: nexo_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r nexo_dev/nexo/requirements.txt
+        pip install pytest pytest-django coverage flake8 black
+
+    - name: Create .env file for testing
+      run: |
+        cd nexo_dev/nexo
+        cat > .env << EOF
+        DEBUG=True
+        SECRET_KEY=test-secret-key-for-ci
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nexo_test
+        ALLOWED_HOSTS=localhost,127.0.0.1
+        EOF
+
+    - name: Run linting with flake8
+      run: |
+        cd nexo_dev/nexo
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check code formatting with Black
+      run: |
+        cd nexo_dev/nexo
+        black --check --diff .
+
+    - name: Run Django migrations
+      run: |
+        cd nexo_dev/nexo
+        python manage.py migrate --noinput
+
+    - name: Collect static files
+      run: |
+        cd nexo_dev/nexo
+        python manage.py collectstatic --noinput
+
+    - name: Run Django tests with coverage
+      run: |
+        cd nexo_dev/nexo
+        coverage run --source='.' manage.py test
+        coverage report
+        coverage xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./nexo_dev/nexo/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+
+    - name: Run Bandit security linter
+      run: |
+        cd nexo_dev/nexo
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . --severity-level medium
+
+    - name: Check for known security vulnerabilities
+      run: |
+        cd nexo_dev/nexo
+        safety check --json --output safety-report.json || true
+        safety check
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r nexo_dev/nexo/requirements.txt
+
+    - name: Create deployment package
+      run: |
+        cd nexo_dev/nexo
+        # Criar .env de produção (sem valores sensíveis)
+        cat > .env.production << EOF
+        DEBUG=False
+        SECRET_KEY=\${{ secrets.SECRET_KEY }}
+        DATABASE_URL=\${{ secrets.DATABASE_URL }}
+        ALLOWED_HOSTS=\${{ secrets.ALLOWED_HOSTS }}
+        EOF
+        
+        # Coletar arquivos estáticos
+        python manage.py collectstatic --noinput
+        
+        # Criar pacote de deployment
+        tar -czf ../../nexo-deployment.tar.gz .
+
+    - name: Deploy to staging
+      if: github.ref == 'refs/heads/develop'
+      run: |
+        echo "Deploying to staging environment..."
+        # Aqui você adicionaria o script de deploy para staging
+
+    - name: Deploy to production
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "Deploying to production environment..."
+        # Aqui você adicionaria o script de deploy para produção
+
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: nexo-deployment
+        path: nexo-deployment.tar.gz
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, security, build-and-deploy]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.build-and-deploy.result == 'success'
+      run: |
+        echo "✅ Deployment successful!"
+        # Aqui você pode adicionar notificações (Slack, email, etc.)
+
+    - name: Notify on failure
+      if: needs.test.result == 'failure' || needs.security.result == 'failure' || needs.build-and-deploy.result == 'failure'
+      run: |
+        echo "❌ Pipeline failed!"
+        # Aqui você pode adicionar notificações de falha 

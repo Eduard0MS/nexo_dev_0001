@@ -481,7 +481,15 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     zoomOutBtn.append('i').attr('class', 'fas fa-search-minus');
 
-    tooltip = container.append('div').attr('class', 'organograma-tooltip').style('opacity', 0);
+    // Criar o tooltip ANTES de tudo
+    tooltip = container.append('div')
+        .attr('class', 'organograma-tooltip')
+        .style('opacity', 0)
+        .style('position', 'fixed')
+        .style('pointer-events', 'none')
+        .style('z-index', 1000);
+    
+    console.log("Tooltip criado:", tooltip.node()); // Log para debug
     
     svg = container.append('svg')
       .attr('width', '100%')
@@ -527,6 +535,36 @@ function update(source) {
     d.x = oldY; d.y = oldX;
   });
   
+  // CRIAR LINKS PRIMEIRO (para ficarem por baixo dos nós)
+  const links = g.selectAll('path.link')
+      .data(root.links(), d => d.target.id);
+  
+  const linkEnter = links.enter().append('path')
+      .attr('class', 'link')
+      .attr('d', d => {
+          const o = { x: source.x0, y: source.y0 };
+          return diagonal({ source: o, target: o });
+      })
+      .attr('fill', 'none')
+      .attr('stroke', colors.link)
+      .attr('stroke-width', 1.5)
+      .style('opacity', 0);
+  
+  linkEnter.merge(links)
+      .transition().duration(duration)
+      .attr('d', diagonal)
+      .style('opacity', 1);
+  
+  links.exit()
+      .transition().duration(duration)
+      .attr('d', d => {
+          const o = { x: source.x, y: source.y };
+          return diagonal({ source: o, target: o });
+      })
+      .style('opacity', 0)
+      .remove();
+  
+  // AGORA CRIAR NÓS (por cima das linhas)
   const nodes = g.selectAll('g.node').data(root.descendants(), d => d.id || (d.id = ++i));
   
   const nodeEnter = nodes.enter().append('g')
@@ -541,13 +579,12 @@ function update(source) {
     .style('opacity', 0)
     .on('click', (event, d) => { event.stopPropagation(); toggleChildren(d); update(d); })
     .on('mouseover', (event, d) => {
+      console.log("Mouseover detectado no nó:", d.data.secretaria); // Log para debug
+      
       const nodeElement = event.currentTarget;
       const { x, y, position } = calcularPosicaoTooltip(event, nodeElement);
-      tooltip.attr('class', `organograma-tooltip ${position}`)
-             .transition().duration(150)
-             .style('opacity', 1)
-             .style('left', x + 'px')
-             .style('top', y + 'px');
+      
+      console.log("Posição calculada:", { x, y, position }); // Log para debug
       
       // Buscar valores do cache ORIGINAL ou usar zeros como fallback
       let totaisCalculados = originalValoresCache[d.data.codigo];
@@ -557,11 +594,64 @@ function update(source) {
       }
       console.debug(`Exibindo valores para nó ${d.data.codigo}:`, totaisCalculados);
 
+      // Calcular porcentagem em relação ao pai para mostrar junto das unidades vinculadas
+      let porcentagemTexto = '';
+      if (d.parent && d.parent.data && d.parent.data.codigo) {
+        const totaisPai = originalValoresCache[d.parent.data.codigo];
+        if (totaisPai && totaisPai.pontosTotal > 0) {
+          // Calcular pontos totais de todos os irmãos (filhos do mesmo pai)
+          let pontosFilhos = 0;
+          if (d.parent.children) {
+            d.parent.children.forEach(irmao => {
+              const totaisIrmao = originalValoresCache[irmao.data.codigo];
+              if (totaisIrmao) {
+                pontosFilhos += totaisIrmao.pontosTotal;
+              }
+            });
+          } else if (d.parent._children) {
+            d.parent._children.forEach(irmao => {
+              const totaisIrmao = originalValoresCache[irmao.data.codigo];
+              if (totaisIrmao) {
+                pontosFilhos += totaisIrmao.pontosTotal;
+              }
+            });
+          }
+          
+          // Se temos pontos dos filhos, calcular porcentagem em relação aos filhos
+          if (pontosFilhos > 0) {
+            const percentual = ((totaisCalculados.pontosTotal / pontosFilhos) * 100).toFixed(1);
+            porcentagemTexto = ` (${percentual}%)`;
+          }
+        }
+      }
+
+      // Gerar a seção de cargos e servidores
+      let cargosHtml = '';
+      let totalServidores = 0;
+      
+      if (d.data.cargos_detalhes && d.data.cargos_detalhes.length > 0) {
+        // Calcular total de servidores
+        totalServidores = d.data.cargos_detalhes.reduce((total, cargo) => total + cargo.quantidade, 0);
+        
+        // Gerar HTML para cada cargo
+        const cargosListaHtml = d.data.cargos_detalhes
+          .map(cargo => `<div class="cargo-item">${cargo.cargo}: ${cargo.quantidade} servidor${cargo.quantidade !== 1 ? 'es' : ''}</div>`)
+          .join('');
+        
+        cargosHtml = `
+          <div class="tooltip-subtitle">Servidores (${totalServidores} total)</div>
+          <div class="cargos-lista">
+            ${cargosListaHtml}
+          </div>
+        `;
+      }
+
       const formatMoeda = valor => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
       const formatPontos = valor => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(valor);
       
+      // Primeiro definir o conteúdo do tooltip
       tooltip.html(`
-        <div class="tooltip-title">${d.data.nome} ${ (d.children || d._children) ? `<span class="badge">${(d.children ? d.children.length : d._children.length)} unidade(s) vinculada(s)</span>` : '' }</div>
+        <div class="tooltip-title">${d.data.nome} ${ (d.children || d._children) ? `<span class="badge">${(d.children ? d.children.length : d._children.length)} unidade(s) vinculada(s)${porcentagemTexto}</span>` : '' }</div>
         <div class="tooltip-subtitle">Informações da Estrutura</div>
         <div class="tooltip-field">
           <span class="tooltip-label">Sigla:</span>
@@ -579,20 +669,46 @@ function update(source) {
           <span class="tooltip-label">Código:</span>
           <span class="tooltip-value">${d.data.codigo || ''}</span>
         </div>
+        ${cargosHtml}
       `);
+      
+      console.log("Tooltip HTML definido, aplicando posição..."); // Log para debug
+      
+      // Depois posicionar e mostrar o tooltip
+      tooltip.attr('class', `organograma-tooltip ${position}`)
+             .style('left', x + 'px')
+             .style('top', y + 'px')
+             .style('opacity', 0)
+             .style('transform', 'translateX(0)')
+             .transition()
+             .duration(200)
+             .style('opacity', 1);
+      
+      console.log("Tooltip exibido"); // Log para debug
       
       d3.select(event.currentTarget).select('circle')
         .transition().duration(200).attr('r', d => d.depth === 0 ? 18 : 14);
     })
     .on('mouseout', (event, d) => {
-      tooltip.transition().duration(500).style('opacity', 0);
+      console.log("Mouseout detectado no nó:", d.data.secretaria); // Log para debug
+      
+      tooltip.transition()
+             .duration(150)
+             .style('opacity', 0);
+             
       d3.select(event.currentTarget).select('circle')
         .transition().duration(200).attr('r', d => d.depth === 0 ? 14 : 10);
     });
   
   nodeEnter.append('circle')
     .attr('r', 0)
-    .attr('fill', '#ffffff')
+    .attr('fill', d => {
+      // Forçar cor azul céu para nós pais
+      if (d.children || d._children) {
+        return '#87ceeb'; // Azul céu para pais
+      }
+      return '#ffffff'; // Branco para folhas
+    })
     .attr('stroke', '#2c5282')
     .attr('stroke-width', d => d.depth === 0 ? 2 : 1.5)
     .attr('stroke-dasharray', 'none');
@@ -622,7 +738,13 @@ function update(source) {
   
   nodeUpdate.select('circle')
       .attr('r', d => d.depth === 0 ? 14 : 10)
-      .attr('fill', '#ffffff')
+      .attr('fill', d => {
+        // Forçar cor azul céu para nós pais sempre
+        if (d.children || d._children) {
+          return '#87ceeb'; // Azul céu para pais
+        }
+        return '#ffffff'; // Branco para folhas
+      })
       .attr('stroke', '#2c5282')
       .attr('stroke-width', d => d.depth === 0 ? 2 : 1.5)
       .attr('stroke-dasharray', 'none');
@@ -637,34 +759,6 @@ function update(source) {
   
   nodeExit.select('circle').attr('r', 0);
   nodeExit.select('text').style('fill-opacity', 0);
-  
-  const links = g.selectAll('path.link')
-      .data(root.links(), d => d.target.id);
-  
-  const linkEnter = links.enter().append('path')
-      .attr('class', 'link')
-      .attr('d', d => {
-          const o = { x: source.x0, y: source.y0 };
-          return diagonal({ source: o, target: o });
-      })
-      .attr('fill', 'none')
-      .attr('stroke', colors.link)
-      .attr('stroke-width', 1.5)
-      .style('opacity', 0);
-  
-  linkEnter.merge(links)
-      .transition().duration(duration)
-      .attr('d', diagonal)
-      .style('opacity', 1);
-  
-  links.exit()
-      .transition().duration(duration)
-      .attr('d', d => {
-          const o = { x: source.x, y: source.y };
-          return diagonal({ source: o, target: o });
-      })
-      .style('opacity', 0)
-      .remove();
   
   root.eachBefore(d => { d.x0 = d.x; d.y0 = d.y; });
   
@@ -688,35 +782,72 @@ function calcularPosicaoTooltip(event, nodeElement) {
   const nodeRect = nodeElement.getBoundingClientRect();
   const tooltipWidth = 320;
   const tooltipHeight = 280;
-  const spacing = 5;
+  const spacing = 15; // Aumentar um pouco o espaçamento
   const container = document.getElementById('organogramaContainer');
   const containerRect = container.getBoundingClientRect();
   const nodeCenterX = nodeRect.left + (nodeRect.width / 2);
   const nodeCenterY = nodeRect.top + (nodeRect.height / 2);
   
   let tooltipX, tooltipY, position = 'right';
-  if (nodeCenterX + spacing + tooltipWidth <= containerRect.right) {
-      tooltipX = nodeRect.right + spacing;
-      tooltipY = nodeCenterY - (tooltipHeight / 2);
-  } else if (nodeCenterX - spacing - tooltipWidth >= containerRect.left) {
-      tooltipX = nodeRect.left - tooltipWidth - spacing;
+  
+  // PRIORIDADE 1: Tentar sempre à direita primeiro
+  const rightX = nodeRect.right + spacing;
+  const rightY = nodeCenterY - (tooltipHeight / 2);
+  
+  // Verificar se cabe à direita (com mais tolerância)
+  if (rightX + tooltipWidth <= window.innerWidth - 20) { // 20px de margem da janela
+    tooltipX = rightX;
+    tooltipY = rightY;
+    position = 'right';
+    
+    // Ajustar Y para não sair da tela
+    if (tooltipY < 10) {
+      tooltipY = 10;
+    } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
+      tooltipY = window.innerHeight - tooltipHeight - 10;
+    }
+  }
+  // PRIORIDADE 2: Se não couber à direita, tentar à esquerda
+  else {
+    const leftX = nodeRect.left - tooltipWidth - spacing;
+    
+    if (leftX >= 20) { // 20px de margem da janela
+      tooltipX = leftX;
       tooltipY = nodeCenterY - (tooltipHeight / 2);
       position = 'left';
-  } else {
-      tooltipX = nodeCenterX - (tooltipWidth / 2);
-      if (nodeCenterY - tooltipHeight - spacing >= containerRect.top) {
-          tooltipY = nodeRect.top - tooltipHeight - spacing;
-          position = 'top';
-      } else {
-          tooltipY = nodeRect.bottom + spacing;
-          position = 'bottom';
+      
+      // Ajustar Y para não sair da tela
+      if (tooltipY < 10) {
+        tooltipY = 10;
+      } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
+        tooltipY = window.innerHeight - tooltipHeight - 10;
       }
+    }
+    // PRIORIDADE 3: Como último recurso, posicionar acima ou abaixo
+    else {
+      tooltipX = Math.max(20, Math.min(nodeCenterX - (tooltipWidth / 2), window.innerWidth - tooltipWidth - 20));
+      
+      // Tentar posicionar acima
+      if (nodeRect.top - tooltipHeight - spacing >= 10) {
+        tooltipY = nodeRect.top - tooltipHeight - spacing;
+        position = 'top';
+      }
+      // Caso contrário, posicionar abaixo
+      else {
+        tooltipY = nodeRect.bottom + spacing;
+        position = 'bottom';
+        
+        // Se não couber abaixo, forçar para caber na tela
+        if (tooltipY + tooltipHeight > window.innerHeight - 10) {
+          tooltipY = window.innerHeight - tooltipHeight - 10;
+        }
+      }
+    }
   }
   
-  if (tooltipY < containerRect.top) tooltipY = containerRect.top + spacing;
-  else if (tooltipY + tooltipHeight > containerRect.bottom) tooltipY = containerRect.bottom - tooltipHeight - spacing;
-  if (tooltipX < containerRect.left) tooltipX = containerRect.left + spacing;
-  else if (tooltipX + tooltipWidth > containerRect.right) tooltipX = containerRect.right - tooltipWidth - spacing;
+  // Garantir que o tooltip nunca saia completamente da tela
+  tooltipX = Math.max(10, Math.min(tooltipX, window.innerWidth - tooltipWidth - 10));
+  tooltipY = Math.max(10, Math.min(tooltipY, window.innerHeight - tooltipHeight - 10));
   
   return { x: tooltipX, y: tooltipY, position };
 }
@@ -1108,35 +1239,101 @@ style.textContent = `
     padding: 12px;
     font-size: 12px;
     width: 320px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
     border: 1px solid rgba(0,0,0,0.1);
     pointer-events: none;
-    transition: all 0.15s ease;
     z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
   }
+  
+  /* Setinhas do tooltip */
   .organograma-tooltip::after {
     content: '';
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     background: white;
     transform: rotate(45deg);
     border: 1px solid rgba(0,0,0,0.1);
   }
-  .organograma-tooltip.right::after { left: -4px; top: 50%; margin-top: -4px; border-right: none; border-top: none; }
-  .organograma-tooltip.left::after { right: -4px; top: 50%; margin-top: -4px; border-left: none; border-bottom: none; }
-  .organograma-tooltip.top::after { bottom: -4px; left: 50%; margin-left: -4px; border-top: none; border-left: none; }
-  .organograma-tooltip.bottom::after { top: -4px; left: 50%; margin-left: -4px; border-bottom: none; border-right: none; }
-  .tooltip-title { font-size: 14px; font-weight: 600; color: #2c5282; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+  
+  /* Posição direita (padrão) - setinha à esquerda do tooltip */
+  .organograma-tooltip.right::after { 
+    left: -5px; 
+    top: 50%; 
+    margin-top: -5px; 
+    border-right: none; 
+    border-bottom: none; 
+  }
+  
+  /* Posição esquerda - setinha à direita do tooltip */
+  .organograma-tooltip.left::after { 
+    right: -5px; 
+    top: 50%; 
+    margin-top: -5px; 
+    border-left: none; 
+    border-top: none; 
+  }
+  
+  /* Posição superior - setinha embaixo do tooltip */
+  .organograma-tooltip.top::after { 
+    bottom: -5px; 
+    left: 50%; 
+    margin-left: -5px; 
+    border-top: none; 
+    border-right: none; 
+  }
+  
+  /* Posição inferior - setinha em cima do tooltip */
+  .organograma-tooltip.bottom::after { 
+    top: -5px; 
+    left: 50%; 
+    margin-left: -5px; 
+    border-bottom: none; 
+    border-left: none; 
+  }
+  
+  .tooltip-title { 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: #2c5282; 
+    margin-bottom: 8px; 
+    border-bottom: 1px solid #e2e8f0; 
+    padding-bottom: 8px; 
+    line-height: 1.3;
+  }
+  
   .tooltip-cargo { font-size: 12px; color: #4a5568; margin-bottom: 8px; }
   .tooltip-field { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: flex-start; }
   .tooltip-label { color: #718096; font-weight: 500; }
-  .tooltip-value { color: #2d3748; font-weight: 400; text-align: right; }
+  .tooltip-value { color: #0ea5e9; font-weight: 500; text-align: right; }
+  .tooltip-percentage { color: #dc2626; font-weight: bold; background-color: #fef2f2; padding: 2px 6px; border-radius: 4px; }
   .cargos-detalhes { border-top: 1px dashed #e2e8f0; padding-top: 6px; margin-top: 6px; }
   .detalhes-lista { display: flex; flex-direction: column; align-items: flex-end; }
   .detalhe-item { margin-bottom: 2px; white-space: nowrap; }
   .tooltip-subtitle { font-size: 13px; font-weight: 600; color: #4a5568; margin: 8px 0; }
-  .badge { font-size: 11px; padding: 2px 6px; border-radius: 12px; background: #ebf4ff; color: #4299e1; font-weight: 500; margin-left: 8px; }
+  .badge { 
+    font-size: 11px; 
+    padding: 3px 8px; 
+    border-radius: 12px; 
+    background: #0ea5e9; 
+    color: white; 
+    font-weight: 500; 
+    margin-left: 8px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  
+  /* Forçar cores dos nós */
+  .node--internal circle,
+  .node.collapsed circle {
+    fill: #87ceeb !important; /* Azul céu para nós pais */
+  }
+  
+  .node--leaf circle {
+    fill: #ffffff !important; /* Branco para nós folhas */
+  }
 `;
 document.head.appendChild(style);
 
@@ -1229,5 +1426,15 @@ function initializeUnits() {
                 }
             });
         }
+    }
+}
+
+// Função para exibir mensagens de erro
+function exibirErro(mensagem) {
+    console.error("Erro no organograma:", mensagem);
+    if (container && container.node) {
+        const errorDiv = container.append('div')
+            .attr('class', 'alert alert-danger m-3')
+            .html(`<i class="fas fa-exclamation-circle me-2"></i>${mensagem}`);
     }
 }

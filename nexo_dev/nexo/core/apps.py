@@ -61,7 +61,7 @@ class CoreConfig(AppConfig):
             app.sites.add(site_obj)
             return
 
-        # Mantenha apenas um registro “principal”
+        # Mantenha apenas um registro "principal"
         primary = apps_qs.first()
         for other in apps_qs.exclude(id=primary.id):
             if not other.client_id:
@@ -82,8 +82,8 @@ class CoreConfig(AppConfig):
             primary.save()
 
         # Garante associação ao site
-        if site not in primary.sites.all():
-            primary.sites.add(site)
+        if site_obj not in primary.sites.all():
+            primary.sites.add(site_obj)
 
         # Customizar o admin quando o app iniciar
         admin.site.site_header = "Administração do Nexo"

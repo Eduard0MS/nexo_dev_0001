@@ -1,0 +1,31 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    {% if show_import_button %}
+        <li>
+            <a href="importar/" class="btn btn-import">
+                📁 Importar Planilha
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .btn-import {
+            background: #417690 !important;
+            color: white !important;
+            padding: 8px 12px !important;
+            text-decoration: none !important;
+            border-radius: 4px !important;
+            margin-right: 8px !important;
+            border: none !important;
+        }
+        .btn-import:hover {
+            background: #205067 !important;
+            color: white !important;
+        }
+    </style>
+{% endblock %} 

@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: nexo_db
+      POSTGRES_USER: nexo_user
+      POSTGRES_PASSWORD: nexo_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexo_user -d nexo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para cache e sessões
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicação Django
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nexo_dev/nexo:/app
+      - media_files:/app/media
+      - static_files:/app/static
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx para servir arquivos estáticos e proxy reverso
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - static_files:/var/www/static
+      - media_files:/var/www/media
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  # Celery Worker para tarefas assíncronas
+  celery:
+    build: .
+    command: celery -A Nexus worker -l info
+    volumes:
+      - ./nexo_dev/nexo:/app
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  # Celery Beat para tarefas agendadas
+  celery-beat:
+    build: .
+    command: celery -A Nexus beat -l info
+    volumes:
+      - ./nexo_dev/nexo:/app
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+  static_files: 

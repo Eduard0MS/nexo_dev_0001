@@ -183,15 +183,18 @@ jobs:
         ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOL'
           set -e  # Parar em caso de erro
           
-          echo "📁 Navegando para diretório do projeto..."
-          cd /home/eduardo/Documentos/nexo/nexo_dev_0001/nexo_dev/nexo
+          echo "📁 Navegando para diretório do repositório Git..."
+          cd /home/eduardo/Documentos/nexo/nexo_dev_0001
           
           echo "📥 Fazendo backup da versão atual..."
-          cp -r . ../backup_$(date +%Y%m%d_%H%M%S) || true
+          cp -r nexo_dev/nexo ../backup_$(date +%Y%m%d_%H%M%S) || true
           
           echo "🔄 Atualizando código do GitHub..."
           git fetch origin
           git reset --hard origin/main
+          
+          echo "📁 Navegando para diretório Django..."
+          cd nexo_dev/nexo
           
           echo "📦 Ativando ambiente virtual..."
           source /home/eduardo/Documentos/nexo/venv/bin/activate

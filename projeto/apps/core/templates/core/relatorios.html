@@ -1,0 +1,1410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    scroll-behavior: smooth;
+    overflow-y: auto;
+  }
+
+  /* Container principal */
+  .relatorios-container {
+    position: relative;
+    min-height: 500px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    background-color: #f9fafc;
+    overflow-y: visible;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Header da página */
+  .page-header {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .page-header .subtitle {
+    margin: 8px 0 0 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+
+  /* Navegação por abas */
+  .nav-tabs-container {
+    background-color: white;
+    border-bottom: 1px solid #eaeaea;
+    padding: 0 30px;
+  }
+
+  .nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 15px 20px;
+    transition: all 0.3s ease;
+  }
+
+  .nav-tabs .nav-link.active {
+    background-color: transparent;
+    border-bottom-color: #4a90e2;
+    color: #4a90e2;
+  }
+
+  .nav-tabs .nav-link:hover {
+    border-bottom-color: #4a90e2;
+    color: #4a90e2;
+  }
+
+  /* Conteúdo das abas */
+  .tab-content {
+    padding: 30px;
+    background-color: white;
+  }
+
+  /* Cards de métricas */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .metric-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 24px;
+    color: white;
+  }
+
+  .metric-icon.blue { background: linear-gradient(135deg, #4a90e2, #357abd); }
+  .metric-icon.green { background: linear-gradient(135deg, #38c172, #20a657); }
+  .metric-icon.orange { background: linear-gradient(135deg, #f6993f, #e67e22); }
+  .metric-icon.purple { background: linear-gradient(135deg, #9561e2, #8e44ad); }
+
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 4px;
+  }
+
+  .metric-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* Tabelas */
+  .data-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+
+  .table-header {
+    background: #f8fafc;
+    padding: 20px;
+    border-bottom: 1px solid #eaeaea;
+    font-weight: 600;
+    color: #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  .table th {
+    background: #f8fafc;
+    border: none;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 16px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table td {
+    padding: 16px;
+    border-color: #f1f5f9;
+    vertical-align: middle;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  /* Formulários */
+  .form-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+
+  .form-section h3 {
+    margin-bottom: 20px;
+    color: #2d3748;
+    font-weight: 600;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 8px;
+  }
+
+  .form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  }
+
+  /* Badges de status */
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-vigente {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-revogado {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  /* Índices e fórmulas */
+  .formula-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .formula-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+  }
+
+  .formula-content {
+    font-family: 'Courier New', monospace;
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    margin: 10px 0;
+  }
+
+  .interpretation {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 10px;
+  }
+
+  /* Siglário */
+  .siglario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .sigla-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .sigla-item:hover {
+    border-color: #4a90e2;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+  }
+
+  .sigla-code {
+    font-weight: 700;
+    color: #4a90e2;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+
+  .sigla-desc {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  /* Loading e estados */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+  }
+
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+
+  /* Responsivo */
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 20px;
+    }
+    
+    .page-header h1 {
+      font-size: 2rem;
+    }
+    
+    .metrics-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .tab-content {
+      padding: 20px;
+    }
+    
+    .nav-tabs-container {
+      padding: 0 20px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="relatorios-container">
+    <!-- Header da página -->
+    <div class="page-header">
+      <h1><i class="fas fa-chart-line me-3"></i>Relatórios</h1>
+      <p class="subtitle">Sistema de gestão e análise de relatórios institucionais</p>
+    </div>
+
+    <!-- Navegação por abas -->
+    <div class="nav-tabs-container">
+      <ul class="nav nav-tabs" id="relatoriosTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="pontos-tab" data-bs-toggle="tab" data-bs-target="#pontos" type="button" role="tab">
+            <i class="fas fa-calculator me-2"></i>Pontos e Gratificações
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="idp-tab" data-bs-toggle="tab" data-bs-target="#idp" type="button" role="tab">
+            <i class="fas fa-chart-bar me-2"></i>IDP
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="iee-tab" data-bs-toggle="tab" data-bs-target="#iee" type="button" role="tab">
+            <i class="fas fa-chart-line me-2"></i>IEE
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="decretos-tab" data-bs-toggle="tab" data-bs-target="#decretos" type="button" role="tab">
+            <i class="fas fa-file-alt me-2"></i>Histórico de Decretos
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="formularios-tab" data-bs-toggle="tab" data-bs-target="#formularios" type="button" role="tab">
+            <i class="fas fa-edit me-2"></i>Formulários
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="siglario-tab" data-bs-toggle="tab" data-bs-target="#siglario" type="button" role="tab">
+            <i class="fas fa-list me-2"></i>Siglário
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Conteúdo das abas -->
+    <div class="tab-content" id="relatoriosTabContent">
+      
+      <!-- Aba: Pontos e Gratificações -->
+      <div class="tab-pane fade show active" id="pontos" role="tabpanel">
+        <h2 class="mb-4">Relatório de Pontos e Gratificações</h2>
+        
+        <!-- Primeira Tabela: Gratificações (GSIST e GSISP) -->
+        <div class="data-table mb-4">
+          <div class="table-header">
+            <span><i class="fas fa-star me-2"></i>Relatório de Gratificações por Unidade</span>
+            <div class="d-flex gap-2">
+              <input type="text" id="filtro-gratificacoes" class="form-control form-control-sm" 
+                     placeholder="Filtrar por unidade..." style="width: 200px;">
+              <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltroGratificacoes()">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('gratificacoes')">
+                <i class="fas fa-download me-1"></i>Exportar
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="tabela-gratificacoes">
+              <thead>
+                <tr>
+                  <th>Unidade</th>
+                  <th>Pontos</th>
+                  <th>GSIST</th>
+                  <th>GSISP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" class="text-center">
+                    <div class="loading">
+                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando gratificações...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Controles de paginação para gratificações -->
+          <div id="pagination-gratificacoes" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+            <div class="pagination-info">
+              <small class="text-muted" id="pagination-info-gratificacoes"></small>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" id="prev-page-gratificacoes">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaGratificacoes(currentPageGratificacoes - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li class="page-item" id="next-page-gratificacoes">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaGratificacoes(currentPageGratificacoes + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Segunda Tabela: Dimensionamento da Força de Trabalho -->
+        <div class="data-table">
+          <div class="table-header">
+            <span><i class="fas fa-users me-2"></i>Dimensionamento da Força de Trabalho</span>
+            <div class="d-flex gap-2">
+              <input type="text" id="filtro-dimensionamento" class="form-control form-control-sm" 
+                     placeholder="Filtrar por unidade..." style="width: 200px;">
+              <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltroDimensionamento()">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('dimensionamento')">
+                <i class="fas fa-download me-1"></i>Exportar
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="tabela-dimensionamento">
+              <thead>
+                <tr>
+                  <th>Unidade</th>
+                  <th>Pontos</th>
+                  <th>Colaboradores</th>
+                  <th>Consultoria</th>
+                  <th>IEE <small class="text-muted">(Servidores/Pontos)</small></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" class="text-center">
+                    <div class="loading">
+                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando dimensionamento...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Controles de paginação para dimensionamento -->
+          <div id="pagination-dimensionamento" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+            <div class="pagination-info">
+              <small class="text-muted" id="pagination-info-dimensionamento"></small>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" id="prev-page-dimensionamento">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaDimensionamento(currentPageDimensionamento - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li class="page-item" id="next-page-dimensionamento">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaDimensionamento(currentPageDimensionamento + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: IDP -->
+      <div class="tab-pane fade" id="idp" role="tabpanel">
+        <h2 class="mb-4">Índice de Densidade de Pontos (IDP)</h2>
+        
+        <!-- Explicação do IDP -->
+        <div class="formula-box mb-4">
+          <div class="formula-title">Como funciona o IDP</div>
+          <div class="formula-content">IDP = Servidores na Unidade / Número de Pontos</div>
+          <div class="interpretation">
+            <strong>Objetivo:</strong> Medir quantos servidores estão associados a cada ponto/cargo na unidade.<br>
+            <strong>Exemplo de leitura:</strong> IDP = 3 significa que cada ponto está associado a 3 servidores.<br>
+            <strong>Interpretação:</strong><br>
+            • Valores mais altos = Maior densidade de servidores por ponto<br>
+            • Valores mais baixos = Menor densidade de servidores por ponto
+          </div>
+        </div>
+
+        <!-- Tabela IDP -->
+        <div class="data-table">
+          <div class="table-header">
+            <span><i class="fas fa-chart-bar me-2"></i>IDP por Unidade</span>
+            <div class="d-flex gap-2">
+              <input type="text" id="filtro-idp" class="form-control form-control-sm" 
+                     placeholder="Filtrar por unidade..." style="width: 200px;">
+              <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltroIDP()">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('idp')">
+                <i class="fas fa-download me-1"></i>Exportar
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="tabela-idp">
+              <thead>
+                <tr>
+                  <th>Unidade</th>
+                  <th>Colaboradores</th>
+                  <th>Pontos</th>
+                  <th>IDP</th>
+                  <th>Classificação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" class="text-center">
+                    <div class="loading">
+                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando IDP...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: IEE -->
+      <div class="tab-pane fade" id="iee" role="tabpanel">
+        <h2 class="mb-4">Índice de Equilíbrio Estrutural (IEE)</h2>
+        
+        <!-- Explicação do IEE -->
+        <div class="formula-box mb-4">
+          <div class="formula-title">Como funciona o IEE</div>
+          <div class="formula-content">IEE = (Número de Posições / Servidores na Unidade) / (Média da Instituição)</div>
+          <div class="interpretation">
+            <strong>Objetivo:</strong> Comparar a densidade de posições de cada unidade com a média institucional.<br>
+            <strong>Interpretação:</strong><br>
+            • <span class="text-success">IEE > 1</span>: Unidade tem densidade de posições <strong>acima da média</strong> institucional<br>
+            • <span class="text-warning">IEE = 1</span>: Unidade está <strong>na média</strong> institucional<br>
+            • <span class="text-danger">IEE < 1</span>: Unidade tem densidade de posições <strong>abaixo da média</strong> institucional
+          </div>
+        </div>
+
+        <!-- Tabela IEE -->
+        <div class="data-table">
+          <div class="table-header">
+            <span><i class="fas fa-chart-line me-2"></i>IEE por Unidade</span>
+            <div class="d-flex gap-2">
+              <input type="text" id="filtro-iee" class="form-control form-control-sm" 
+                     placeholder="Filtrar por unidade..." style="width: 200px;">
+              <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltroIEE()">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('iee')">
+                <i class="fas fa-download me-1"></i>Exportar
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="tabela-iee">
+              <thead>
+                <tr>
+                  <th>Unidade</th>
+                  <th>Colaboradores</th>
+                  <th>Pontos</th>
+                  <th>IEE</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" class="text-center">
+                    <div class="loading">
+                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando IEE...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: Histórico de Decretos -->
+      <div class="tab-pane fade" id="decretos" role="tabpanel">
+        <h2 class="mb-4">Histórico de Decretos</h2>
+        
+        <div class="data-table">
+          <div class="table-header">
+            <span><i class="fas fa-file-alt me-2"></i>Decretos Relacionados</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('decretos')">
+              <i class="fas fa-download me-1"></i>Exportar
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="tabela-decretos">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Data</th>
+                  <th>Título</th>
+                  <th>Tipo</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" class="text-center">
+                    <div class="loading">
+                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando decretos...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: Formulários -->
+      <div class="tab-pane fade" id="formularios" role="tabpanel">
+        <h2 class="mb-4">Formulários de Realocação e Permuta</h2>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-section">
+              <h3><i class="fas fa-exchange-alt me-2"></i>Formulário de Realocação</h3>
+              <form id="form-realocacao">
+                <div class="form-group">
+                  <label class="form-label">Nome do Servidor</label>
+                  <input type="text" class="form-control" name="nome_servidor" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Matrícula SIAPE</label>
+                  <input type="text" class="form-control" name="matricula" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Unidade Atual</label>
+                  <select class="form-control" name="unidade_atual" id="unidade_atual" required>
+                    <option value="">Selecione...</option>
+                    <!-- Unidades serão carregadas dinamicamente -->
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Unidade Destino</label>
+                  <select class="form-control" name="unidade_destino" id="unidade_destino" required>
+                    <option value="">Selecione...</option>
+                    <!-- Unidades serão carregadas dinamicamente -->
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Justificativa</label>
+                  <textarea class="form-control" name="justificativa" rows="3" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-paper-plane me-1"></i>Solicitar Realocação
+                </button>
+              </form>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="form-section">
+              <h3><i class="fas fa-random me-2"></i>Formulário de Permuta</h3>
+              <form id="form-permuta">
+                <div class="form-group">
+                  <label class="form-label">Servidor 1</label>
+                  <input type="text" class="form-control" name="servidor1" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Matrícula Servidor 1</label>
+                  <input type="text" class="form-control" name="matricula1" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Servidor 2</label>
+                  <input type="text" class="form-control" name="servidor2" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Matrícula Servidor 2</label>
+                  <input type="text" class="form-control" name="matricula2" required>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Observações</label>
+                  <textarea class="form-control" name="observacoes" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-handshake me-1"></i>Solicitar Permuta
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: Siglário -->
+      <div class="tab-pane fade" id="siglario" role="tabpanel">
+        <h2 class="mb-4">Siglário Institucional</h2>
+        
+        <div class="form-section">
+          <div class="row">
+            <div class="col-md-6">
+              <input type="text" class="form-control" id="filtro-siglario" placeholder="Buscar por sigla ou denominação...">
+            </div>
+            <div class="col-md-6">
+              <button class="btn btn-outline-primary" onclick="exportarDados('siglario')">
+                <i class="fas fa-download me-1"></i>Exportar Siglário
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="siglario-container">
+          <div class="loading">
+            <i class="fas fa-spinner fa-spin me-2"></i>Carregando siglário...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+// Variáveis globais para controle de paginação
+let currentPageGratificacoes = 1;
+let currentPageDimensionamento = 1;
+let currentPageIDP = 1;
+let currentPageIEE = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar dados iniciais
+    carregarDadosGratificacoes();
+    carregarDadosDimensionamento();
+    carregarUnidades();
+    
+    // Event listeners para abas
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            const target = event.target.getAttribute('data-bs-target');
+            switch(target) {
+                case '#pontos':
+                    carregarDadosGratificacoes();
+                    carregarDadosDimensionamento();
+                    break;
+                case '#idp':
+                    carregarDadosIDP();
+                    break;
+                case '#iee':
+                    carregarDadosIEE();
+                    break;
+                case '#decretos':
+                    carregarDecretos();
+                    break;
+                case '#formularios':
+                    carregarUnidades();
+                    break;
+                case '#siglario':
+                    carregarSiglario();
+                    break;
+            }
+        });
+    });
+    
+    // Filtro do siglário
+    document.getElementById('filtro-siglario').addEventListener('input', function() {
+        filtrarSiglario(this.value);
+    });
+    
+    // Filtros das tabelas - usar debounce para evitar muitas requisições
+    let timeoutGratificacoes, timeoutDimensionamento, timeoutIDP, timeoutIEE;
+    
+    document.getElementById('filtro-gratificacoes').addEventListener('input', function() {
+        clearTimeout(timeoutGratificacoes);
+        timeoutGratificacoes = setTimeout(() => {
+            currentPageGratificacoes = 1; // Reset para primeira página
+            carregarDadosGratificacoes(this.value, 1);
+        }, 500);
+    });
+    
+    document.getElementById('filtro-dimensionamento').addEventListener('input', function() {
+        clearTimeout(timeoutDimensionamento);
+        timeoutDimensionamento = setTimeout(() => {
+            currentPageDimensionamento = 1; // Reset para primeira página
+            carregarDadosDimensionamento(this.value, 1);
+        }, 500);
+    });
+    
+    document.getElementById('filtro-idp').addEventListener('input', function() {
+        clearTimeout(timeoutIDP);
+        timeoutIDP = setTimeout(() => {
+            carregarDadosIDP(this.value);
+        }, 500);
+    });
+    
+    document.getElementById('filtro-iee').addEventListener('input', function() {
+        clearTimeout(timeoutIEE);
+        timeoutIEE = setTimeout(() => {
+            carregarDadosIEE(this.value);
+        }, 500);
+    });
+    
+    // Formulários
+    document.getElementById('form-realocacao').addEventListener('submit', function(e) {
+        e.preventDefault();
+        enviarFormularioRealocacao();
+    });
+    
+    document.getElementById('form-permuta').addEventListener('submit', function(e) {
+        e.preventDefault();
+        enviarFormularioPermuta();
+    });
+});
+
+async function carregarDadosGratificacoes(filtroUnidade = '', page = 1) {
+    try {
+        let url = '/api/relatorio/pontos-gratificacoes/';
+        const params = new URLSearchParams();
+        
+        if (filtroUnidade) {
+            params.append('unidade', filtroUnidade);
+        }
+        params.append('page', page);
+        params.append('per_page', 11);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaGratificacoes(data.data);
+            atualizarPaginacaoGratificacoes(data.pagination);
+            mostrarInfoFiltro('gratificacoes', data.filtros);
+        } else {
+            mostrarErro('tabela-gratificacoes', data.message);
+        }
+    } catch (error) {
+        mostrarErro('tabela-gratificacoes', 'Erro ao carregar dados de gratificações');
+    }
+}
+
+function carregarPaginaGratificacoes(page) {
+    if (page >= 1) {
+        // Salvar referência da tabela para manter posição
+        const tabela = document.getElementById('tabela-gratificacoes');
+        
+        currentPageGratificacoes = page;
+        const filtro = document.getElementById('filtro-gratificacoes').value;
+        
+        // Carregar dados e depois manter a tabela visível
+        carregarDadosGratificacoes(filtro, page).then(() => {
+            // Manter a tabela visível na tela
+            setTimeout(() => {
+                tabela.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        });
+    }
+}
+
+function atualizarPaginacaoGratificacoes(pagination) {
+    const paginationDiv = document.getElementById('pagination-gratificacoes');
+    const paginationInfo = document.getElementById('pagination-info-gratificacoes');
+    const prevBtn = document.getElementById('prev-page-gratificacoes');
+    const nextBtn = document.getElementById('next-page-gratificacoes');
+    
+    if (pagination && pagination.total_pages > 1) {
+        paginationDiv.style.display = 'flex';
+        
+        // Atualizar informação da paginação
+        const start = ((pagination.current_page - 1) * pagination.per_page) + 1;
+        const end = Math.min(pagination.current_page * pagination.per_page, pagination.total_registros);
+        paginationInfo.textContent = `Exibindo ${start} a ${end} de ${pagination.total_registros} registros`;
+        
+        // Atualizar botões
+        prevBtn.classList.toggle('disabled', !pagination.has_previous);
+        nextBtn.classList.toggle('disabled', !pagination.has_next);
+    } else {
+        paginationDiv.style.display = 'none';
+    }
+}
+
+async function carregarDadosDimensionamento(filtroUnidade = '', page = 1) {
+    try {
+        let url = '/api/relatorio/dimensionamento/';
+        const params = new URLSearchParams();
+        
+        if (filtroUnidade) {
+            params.append('unidade', filtroUnidade);
+        }
+        params.append('page', page);
+        params.append('per_page', 11);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaDimensionamento(data.data);
+            atualizarPaginacaoDimensionamento(data.pagination);
+            mostrarInfoFiltro('dimensionamento', data.filtros);
+        } else {
+            mostrarErro('tabela-dimensionamento', data.message);
+        }
+    } catch (error) {
+        mostrarErro('tabela-dimensionamento', 'Erro ao carregar dados de dimensionamento');
+    }
+}
+
+function carregarPaginaDimensionamento(page) {
+    if (page >= 1) {
+        // Salvar referência da tabela para manter posição
+        const tabela = document.getElementById('tabela-dimensionamento');
+        
+        currentPageDimensionamento = page;
+        const filtro = document.getElementById('filtro-dimensionamento').value;
+        
+        // Carregar dados e depois manter a tabela visível
+        carregarDadosDimensionamento(filtro, page).then(() => {
+            // Manter a tabela visível na tela
+            setTimeout(() => {
+                tabela.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        });
+    }
+}
+
+function atualizarPaginacaoDimensionamento(pagination) {
+    const paginationDiv = document.getElementById('pagination-dimensionamento');
+    const paginationInfo = document.getElementById('pagination-info-dimensionamento');
+    const prevBtn = document.getElementById('prev-page-dimensionamento');
+    const nextBtn = document.getElementById('next-page-dimensionamento');
+    
+    if (pagination && pagination.total_pages > 1) {
+        paginationDiv.style.display = 'flex';
+        
+        // Atualizar informação da paginação
+        const start = ((pagination.current_page - 1) * pagination.per_page) + 1;
+        const end = Math.min(pagination.current_page * pagination.per_page, pagination.total_registros);
+        paginationInfo.textContent = `Exibindo ${start} a ${end} de ${pagination.total_registros} registros`;
+        
+        // Atualizar botões
+        prevBtn.classList.toggle('disabled', !pagination.has_previous);
+        nextBtn.classList.toggle('disabled', !pagination.has_next);
+    } else {
+        paginationDiv.style.display = 'none';
+    }
+}
+
+async function carregarDadosIDP(filtroUnidade = '') {
+    try {
+        let url = '/api/relatorio/dimensionamento/';
+        if (filtroUnidade) {
+            url += `?unidade=${encodeURIComponent(filtroUnidade)}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaIDP(data.data);
+            mostrarInfoFiltro('idp', data.filtros);
+        } else {
+            mostrarErro('tabela-idp', data.message);
+        }
+    } catch (error) {
+        mostrarErro('tabela-idp', 'Erro ao carregar dados IDP');
+    }
+}
+
+async function carregarDadosIEE(filtroUnidade = '') {
+    try {
+        let url = '/api/relatorio/dimensionamento/';
+        if (filtroUnidade) {
+            url += `?unidade=${encodeURIComponent(filtroUnidade)}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaIEE(data.data);
+            mostrarInfoFiltro('iee', data.filtros);
+        } else {
+            mostrarErro('tabela-iee', data.message);
+        }
+    } catch (error) {
+        mostrarErro('tabela-iee', 'Erro ao carregar dados IEE');
+    }
+}
+
+async function carregarDecretos() {
+    try {
+        const response = await fetch('/api/historico-decretos/');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaDecretos(data.decretos);
+        } else {
+            mostrarErro('tabela-decretos', 'Erro ao carregar decretos');
+        }
+    } catch (error) {
+        mostrarErro('tabela-decretos', 'Erro ao carregar decretos');
+    }
+}
+
+async function carregarSiglario() {
+    try {
+        const response = await fetch('/api/siglario/');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherSiglario(data.data);
+        } else {
+            mostrarErro('siglario-container', 'Erro ao carregar siglário');
+        }
+    } catch (error) {
+        mostrarErro('siglario-container', 'Erro ao carregar siglário');
+    }
+}
+
+function preencherTabelaGratificacoes(dados) {
+    const tbody = document.querySelector('#tabela-gratificacoes tbody');
+    
+    if (!dados || dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum dado encontrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = dados.map(item => `
+        <tr>
+            <td><strong>${item.unidade}</strong></td>
+            <td>${item.pontos.toFixed(2)}</td>
+            <td>${item.gsist}</td>
+            <td>${item.gsisp}</td>
+        </tr>
+    `).join('');
+}
+
+function preencherTabelaDimensionamento(dados) {
+    const tbody = document.querySelector('#tabela-dimensionamento tbody');
+    
+    if (!dados || dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = dados.map(item => `
+        <tr>
+            <td><strong>${item.unidade}</strong></td>
+            <td>${item.pontos.toFixed(2)}</td>
+            <td>${item.colaboradores}</td>
+            <td>${item.consultoria}</td>
+            <td><strong>${item.iee || 'N/A'}</strong></td>
+        </tr>
+    `).join('');
+}
+
+function preencherTabelaIDP(dados) {
+    const tbody = document.querySelector('#tabela-idp tbody');
+    
+    if (!dados || dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
+        return;
+    }
+    
+    // Ordenar por IDP (maior para menor) para classificação
+    const dadosOrdenados = [...dados].sort((a, b) => b.idp - a.idp);
+    
+    tbody.innerHTML = dadosOrdenados.map((item, index) => {
+        let classificacao = '';
+        let badgeClass = '';
+        
+        if (index < dadosOrdenados.length / 3) {
+            classificacao = 'Alta Densidade';
+            badgeClass = 'status-vigente';
+        } else if (index < (2 * dadosOrdenados.length) / 3) {
+            classificacao = 'Densidade Média';
+            badgeClass = 'bg-warning text-dark';
+        } else {
+            classificacao = 'Baixa Densidade';
+            badgeClass = 'status-revogado';
+        }
+        
+        return `
+            <tr>
+                <td><strong>${item.unidade}</strong></td>
+                <td>${item.colaboradores}</td>
+                <td>${item.pontos.toFixed(2)}</td>
+                <td><strong>${item.idp}</strong></td>
+                <td><span class="status-badge ${badgeClass}">${classificacao}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function preencherTabelaIEE(dados) {
+    const tbody = document.querySelector('#tabela-iee tbody');
+    
+    if (!dados || dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = dados.map(item => {
+        let statusIEE = '';
+        let badgeClass = '';
+        
+        if (item.iee > 1) {
+            statusIEE = 'Acima da Média';
+            badgeClass = 'status-vigente';
+        } else if (item.iee === 1) {
+            statusIEE = 'Na Média';
+            badgeClass = 'bg-warning text-dark';
+        } else {
+            statusIEE = 'Abaixo da Média';
+            badgeClass = 'status-revogado';
+        }
+        
+        return `
+            <tr>
+                <td><strong>${item.unidade}</strong></td>
+                <td>${item.colaboradores}</td>
+                <td>${item.pontos.toFixed(2)}</td>
+                <td><strong>${item.iee}</strong></td>
+                <td><span class="status-badge ${badgeClass}">${statusIEE}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function preencherTabelaDecretos(decretos) {
+    const tbody = document.querySelector('#tabela-decretos tbody');
+    
+    if (!decretos || decretos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum decreto encontrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = decretos.map(decreto => {
+        const statusClass = decreto.status === 'Vigente' ? 'status-vigente' : 'status-revogado';
+        
+        return `
+            <tr>
+                <td><strong>${decreto.numero}</strong></td>
+                <td>${formatarData(decreto.data)}</td>
+                <td>${decreto.titulo}</td>
+                <td>${decreto.tipo}</td>
+                <td><span class="status-badge ${statusClass}">${decreto.status}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function preencherSiglario(dados) {
+    const container = document.getElementById('siglario-container');
+    
+    if (!dados || dados.length === 0) {
+        container.innerHTML = '<p class="text-center">Nenhuma sigla encontrada</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="siglario-grid">
+            ${dados.map(item => `
+                <div class="sigla-item" data-sigla="${item.sigla.toLowerCase()}" data-desc="${item.denominacao.toLowerCase()}">
+                    <div class="sigla-code">${item.sigla}</div>
+                    <div class="sigla-desc">${item.denominacao}</div>
+                    <small class="text-muted">${item.categoria}</small>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function filtrarSiglario(termo) {
+    const items = document.querySelectorAll('.sigla-item');
+    const filtro = termo.toLowerCase();
+    
+    items.forEach(item => {
+        const sigla = item.getAttribute('data-sigla');
+        const desc = item.getAttribute('data-desc');
+        
+        if (sigla.includes(filtro) || desc.includes(filtro)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+
+
+function mostrarErro(elementId, mensagem) {
+    const elemento = document.getElementById(elementId);
+    if (elemento.tagName === 'TBODY') {
+        elemento.innerHTML = `<tr><td colspan="100%" class="text-center error-message">${mensagem}</td></tr>`;
+    } else {
+        elemento.innerHTML = `<div class="error-message">${mensagem}</div>`;
+    }
+}
+
+function formatarData(dataStr) {
+    const data = new Date(dataStr);
+    return data.toLocaleDateString('pt-BR');
+}
+
+async function carregarUnidades() {
+    try {
+        const response = await fetch('/api/unidades-disponiveis/');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const selects = document.querySelectorAll('#unidade_atual, #unidade_destino');
+            selects.forEach(select => {
+                // Limpar opções existentes (exceto a primeira)
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+                
+                // Adicionar novas opções
+                data.unidades.forEach(unidade => {
+                    const option = document.createElement('option');
+                    option.value = unidade.nome;
+                    option.textContent = `${unidade.nome} ${unidade.sigla ? '(' + unidade.sigla + ')' : ''}`;
+                    select.appendChild(option);
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar unidades:', error);
+    }
+}
+
+async function enviarFormularioRealocacao() {
+    const form = document.getElementById('form-realocacao');
+    const formData = new FormData(form);
+    
+    const dados = {
+        nome_servidor: formData.get('nome_servidor'),
+        matricula: formData.get('matricula'),
+        unidade_atual: formData.get('unidade_atual'),
+        unidade_destino: formData.get('unidade_destino'),
+        justificativa: formData.get('justificativa')
+    };
+    
+    try {
+        const response = await fetch('/api/solicitacao-realocacao/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert(result.message);
+            form.reset();
+        } else {
+            alert(`Erro: ${result.message}`);
+        }
+    } catch (error) {
+        alert('Erro ao enviar solicitação. Tente novamente.');
+        console.error('Erro:', error);
+    }
+}
+
+async function enviarFormularioPermuta() {
+    const form = document.getElementById('form-permuta');
+    const formData = new FormData(form);
+    
+    const dados = {
+        servidor1: formData.get('servidor1'),
+        matricula1: formData.get('matricula1'),
+        servidor2: formData.get('servidor2'),
+        matricula2: formData.get('matricula2'),
+        observacoes: formData.get('observacoes')
+    };
+    
+    try {
+        const response = await fetch('/api/solicitacao-permuta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert(result.message);
+            form.reset();
+        } else {
+            alert(`Erro: ${result.message}`);
+        }
+    } catch (error) {
+        alert('Erro ao enviar solicitação. Tente novamente.');
+        console.error('Erro:', error);
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function exportarDados(tipo) {
+    // Implementar exportação de dados
+    alert(`Exportação de dados: ${tipo} - Em desenvolvimento`);
+}
+
+function mostrarInfoFiltro(tipo, filtros) {
+    if (filtros && filtros.unidade) {
+        console.log(`Filtro aplicado em ${tipo}: "${filtros.unidade}" - ${filtros.total_registros} registros encontrados`);
+    }
+}
+
+function limparFiltroGratificacoes() {
+    document.getElementById('filtro-gratificacoes').value = '';
+    currentPageGratificacoes = 1; // Reset para primeira página
+    carregarDadosGratificacoes('', 1);
+}
+
+function limparFiltroDimensionamento() {
+    document.getElementById('filtro-dimensionamento').value = '';
+    currentPageDimensionamento = 1; // Reset para primeira página
+    carregarDadosDimensionamento('', 1);
+}
+
+function limparFiltroIDP() {
+    document.getElementById('filtro-idp').value = '';
+    carregarDadosIDP();
+}
+
+function limparFiltroIEE() {
+    document.getElementById('filtro-iee').value = '';
+    carregarDadosIEE();
+}
+</script>
+
+{% endblock %} 

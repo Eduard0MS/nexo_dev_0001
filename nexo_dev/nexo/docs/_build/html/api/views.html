@@ -1,0 +1,868 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Views &#8212; Nexo - Documentação</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2bde2ffa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=68842761"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=30646c52"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaedd51"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/views';</script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Pesquisar" href="../search.html" />
+    <link rel="next" title="Modelos (Gerado Automaticamente)" href="auto_models.html" />
+    <link rel="prev" title="Modelos" href="models.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">Sistema de Gestão Organizacional - CGEST/SAGE/MPO</div>
+</aside>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Nexo - Documentação</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Pesquisar</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Primeiros Passos</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Visão Geral do Sistema Nexo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Guia de Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Início Rápido</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Documentação da API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="models.html">Modelos</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_models.html">Modelos (Gerado Automaticamente)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_views.html">Views (Gerado Automaticamente)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Repositório fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/blob/main/nexo_dev_0001/nexo_dev/nexo/docs/api/views.rst?plain=1" target="_blank"
+   class="btn btn-sm btn-source-file-button dropdown-item"
+   title="Show source"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-code"></i>
+  </span>
+<span class="btn__text-container">Show source</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/edit/main/nexo_dev_0001/nexo_dev/nexo/docs/api/views.rst" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/issues/new?title=Issue%20on%20page%20%2Fapi/views.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Abra um problema"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Baixe esta página">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/views.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Baixar arquivo fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Imprimir em PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Modo tela cheia"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Views</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Conteúdo </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visao-geral">Visão Geral</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#views-principais">Views Principais</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#home-e-dashboard">Home e Dashboard</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma">Organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_view"><code class="docutils literal notranslate"><span class="pre">organograma_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulacoes">Simulações</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.salvar_simulacao"><code class="docutils literal notranslate"><span class="pre">salvar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relatorios">Relatórios</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#perfil-do-usuario">Perfil do Usuário</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.editar_perfil"><code class="docutils literal notranslate"><span class="pre">editar_perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#importacao-de-dados">Importação de Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#views-de-api-json">Views de API (JSON)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#class-based-views">Class-Based Views</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#listview-para-simulacoes">ListView para Simulações</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detailview-para-relatorios">DetailView para Relatórios</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixins-customizados">Mixins Customizados</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adminrequiredmixin">AdminRequiredMixin</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jsonresponsemixin">JSONResponseMixin</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decorators-customizados">Decorators Customizados</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tratamento-de-erros">Tratamento de Erros</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#middleware-personalizado">Middleware Personalizado</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testes-para-views">Testes para Views</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-e-otimizacao">Performance e Otimização</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="views">
+<h1>Views<a class="headerlink" href="#views" title="Link to this heading">#</a></h1>
+<p>Esta seção documenta todas as views do sistema Nexo, organizadas por funcionalidade.</p>
+<section id="visao-geral">
+<h2>Visão Geral<a class="headerlink" href="#visao-geral" title="Link to this heading">#</a></h2>
+<p>O sistema Nexo utiliza uma arquitetura baseada em views function-based e class-based para:</p>
+<ul class="simple">
+<li><p><strong>Autenticação e Perfis</strong>: Gerenciamento de usuários</p></li>
+<li><p><strong>Organograma</strong>: Visualização hierárquica</p></li>
+<li><p><strong>Simulações</strong>: Criação e gestão de simulações</p></li>
+<li><p><strong>Relatórios</strong>: Geração e exportação de dados</p></li>
+<li><p><strong>Importação</strong>: Upload e processamento de planilhas</p></li>
+</ul>
+</section>
+<section id="views-principais">
+<h2>Views Principais<a class="headerlink" href="#views-principais" title="Link to this heading">#</a></h2>
+<section id="home-e-dashboard">
+<h3>Home e Dashboard<a class="headerlink" href="#home-e-dashboard" title="Link to this heading">#</a></h3>
+</section>
+<section id="organograma">
+<h3>Organograma<a class="headerlink" href="#organograma" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.organograma_view">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">organograma_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#organograma_view"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.organograma_view" title="Link to this definition">#</a></dt>
+<dd><p><strong>Características:</strong></p>
+<ul class="simple">
+<li><p>Visualização interativa da estrutura organizacional</p></li>
+<li><p>Filtros dinâmicos por nível e categoria</p></li>
+<li><p>Dados em formato JSON para JavaScript</p></li>
+</ul>
+<p><strong>Template</strong>: <code class="docutils literal notranslate"><span class="pre">core/organograma.html</span></code></p>
+<p><strong>Dados retornados:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;dados_json&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">estrutura_organizacional</span><span class="p">),</span>
+    <span class="s1">&#39;niveis_disponiveis&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)),</span>
+    <span class="s1">&#39;categorias_disponiveis&#39;</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span>
+        <span class="n">UnidadeCargo</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">&#39;categoria&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="simulacoes">
+<h3>Simulações<a class="headerlink" href="#simulacoes" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.salvar_simulacao">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">salvar_simulacao</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#salvar_simulacao"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.salvar_simulacao" title="Link to this definition">#</a></dt>
+<dd><p>Salva uma nova simulação ou atualiza uma existente</p>
+<p><strong>Processo de salvamento:</strong></p>
+<ol class="arabic simple">
+<li><p>Validação dos dados recebidos</p></li>
+<li><p>Verificação de limite por usuário</p></li>
+<li><p>Serialização JSON dos dados</p></li>
+<li><p>Criação do registro no banco</p></li>
+</ol>
+<p><strong>Retorno JSON:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Simulação salva com sucesso&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;simulacao_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="relatorios">
+<h3>Relatórios<a class="headerlink" href="#relatorios" title="Link to this heading">#</a></h3>
+</section>
+<section id="perfil-do-usuario">
+<h3>Perfil do Usuário<a class="headerlink" href="#perfil-do-usuario" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.views.editar_perfil">
+<span class="sig-prename descclassname"><span class="pre">core.views.</span></span><span class="sig-name descname"><span class="pre">editar_perfil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/core/views.html#editar_perfil"><span class="viewcode-link"><span class="pre">[código</span> <span class="pre">fonte]</span></span></a><a class="headerlink" href="#core.views.editar_perfil" title="Link to this definition">#</a></dt>
+<dd><p>Permite ao usuário editar suas informações de perfil.</p>
+<p><strong>Campos editáveis:</strong></p>
+<ul class="simple">
+<li><p>Informações pessoais</p></li>
+<li><p>Dados profissionais</p></li>
+<li><p>Configurações de privacidade</p></li>
+</ul>
+<p><strong>Validações:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">clean_telefone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">telefone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;telefone&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">telefone</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\(\d</span><span class="si">{2}</span><span class="s1">\)\s\d{4,5}-\d</span><span class="si">{4}</span><span class="s1">$&#39;</span><span class="p">,</span> <span class="n">telefone</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;Formato inválido: (XX) XXXXX-XXXX&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">telefone</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="importacao-de-dados">
+<h3>Importação de Dados<a class="headerlink" href="#importacao-de-dados" title="Link to this heading">#</a></h3>
+</section>
+</section>
+<section id="views-de-api-json">
+<h2>Views de API (JSON)<a class="headerlink" href="#views-de-api-json" title="Link to this heading">#</a></h2>
+</section>
+<section id="class-based-views">
+<h2>Class-Based Views<a class="headerlink" href="#class-based-views" title="Link to this heading">#</a></h2>
+<p>Algumas funcionalidades utilizam CBVs para maior flexibilidade:</p>
+<section id="listview-para-simulacoes">
+<h3>ListView para Simulações<a class="headerlink" href="#listview-para-simulacoes" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SimulacaoListView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lista simulações do usuário logado.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SimulacaoSalva</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;core/simulacoes_lista.html&#39;</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">&#39;simulacoes&#39;</span>
+    <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">10</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SimulacaoSalva</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-criado_em&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="detailview-para-relatorios">
+<h3>DetailView para Relatórios<a class="headerlink" href="#detailview-para-relatorios" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">RelatorioDetailView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">DetailView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualiza relatório específico.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">RelatorioEfetivo</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;core/relatorio_detail.html&#39;</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">&#39;relatorio&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">&#39;estatisticas&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calcular_estatisticas</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">context</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="mixins-customizados">
+<h2>Mixins Customizados<a class="headerlink" href="#mixins-customizados" title="Link to this heading">#</a></h2>
+<section id="adminrequiredmixin">
+<h3>AdminRequiredMixin<a class="headerlink" href="#adminrequiredmixin" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AdminRequiredMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin que requer permissões de administrador.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PermissionDenied</span><span class="p">(</span><span class="s2">&quot;Acesso restrito a administradores&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="jsonresponsemixin">
+<h3>JSONResponseMixin<a class="headerlink" href="#jsonresponsemixin" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">JSONResponseMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin para retornos JSON.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">render_to_json_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="o">**</span><span class="n">response_kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+            <span class="n">safe</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">response_kwargs</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="decorators-customizados">
+<h2>Decorators Customizados<a class="headerlink" href="#decorators-customizados" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">ajax_required</span><span class="p">(</span><span class="n">view_func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator que exige requisição AJAX.&quot;&quot;&quot;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">view_func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X-Requested-With&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;XMLHttpRequest&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">({</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="s1">&#39;Requisição AJAX necessária&#39;</span><span class="p">},</span> <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">view_func</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cache_control_no_cache</span><span class="p">(</span><span class="n">view_func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator para desabilitar cache.&quot;&quot;&quot;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">view_func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">view_func</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Cache-Control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no-cache, no-store, must-revalidate&#39;</span>
+        <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Pragma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no-cache&#39;</span>
+        <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Expires&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+        <span class="k">return</span> <span class="n">response</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+</pre></div>
+</div>
+</section>
+<section id="tratamento-de-erros">
+<h2>Tratamento de Erros<a class="headerlink" href="#tratamento-de-erros" title="Link to this heading">#</a></h2>
+<p>Views customizadas para erros:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">handler404</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Página 404 customizada.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;errors/404.html&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handler500</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Página 500 customizada.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;errors/500.html&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handler403</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Página 403 customizada.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;errors/403.html&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">403</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="middleware-personalizado">
+<h2>Middleware Personalizado<a class="headerlink" href="#middleware-personalizado" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">LoggingMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Middleware para log de requisições.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_response</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span> <span class="o">=</span> <span class="n">get_response</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="c1"># Log da requisição</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s1"> - </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="c1"># Log da resposta</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Response: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+</section>
+<section id="testes-para-views">
+<h2>Testes para Views<a class="headerlink" href="#testes-para-views" title="Link to this heading">#</a></h2>
+<p>Exemplos de testes unitários:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ViewsTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="s1">&#39;testuser&#39;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s1">&#39;testpass123&#39;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;testuser&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;testpass123&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_home_view</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Testa a view principal.&quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertContains</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s1">&#39;Nexo&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_organograma_view</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Testa a view do organograma.&quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/organograma/&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertContains</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s1">&#39;dados_json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-e-otimizacao">
+<h2>Performance e Otimização<a class="headerlink" href="#performance-e-otimizacao" title="Link to this heading">#</a></h2>
+<p>Técnicas utilizadas para otimizar as views:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Cache de queries pesadas</span>
+<span class="nd">@cache_page</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">15</span><span class="p">)</span>  <span class="c1"># 15 minutos</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">estrutura_completa</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">dados</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;estrutura_organizacional&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dados</span><span class="p">:</span>
+        <span class="n">dados</span> <span class="o">=</span> <span class="n">gerar_estrutura_completa</span><span class="p">()</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;estrutura_organizacional&#39;</span><span class="p">,</span> <span class="n">dados</span><span class="p">,</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span><span class="n">dados</span><span class="p">)</span>
+
+<span class="c1"># Paginação eficiente</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lista_servidores</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">servidores</span> <span class="o">=</span> <span class="n">RelatorioEfetivo</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
+        <span class="s1">&#39;unidade&#39;</span><span class="p">,</span> <span class="s1">&#39;cargo&#39;</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">only</span><span class="p">(</span>
+        <span class="s1">&#39;nome_completo&#39;</span><span class="p">,</span> <span class="s1">&#39;funcao&#39;</span><span class="p">,</span> <span class="s1">&#39;unidade__denominacao&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">paginator</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">servidores</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">)</span>
+    <span class="n">servidores_page</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;servidores.html&#39;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s1">&#39;servidores&#39;</span><span class="p">:</span> <span class="n">servidores_page</span>
+    <span class="p">})</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="models.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">Modelos</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="auto_models.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">próximo</p>
+        <p class="prev-next-title">Modelos (Gerado Automaticamente)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Conteúdo
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visao-geral">Visão Geral</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#views-principais">Views Principais</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#home-e-dashboard">Home e Dashboard</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#organograma">Organograma</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.organograma_view"><code class="docutils literal notranslate"><span class="pre">organograma_view()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulacoes">Simulações</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.salvar_simulacao"><code class="docutils literal notranslate"><span class="pre">salvar_simulacao()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relatorios">Relatórios</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#perfil-do-usuario">Perfil do Usuário</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core.views.editar_perfil"><code class="docutils literal notranslate"><span class="pre">editar_perfil()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#importacao-de-dados">Importação de Dados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#views-de-api-json">Views de API (JSON)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#class-based-views">Class-Based Views</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#listview-para-simulacoes">ListView para Simulações</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detailview-para-relatorios">DetailView para Relatórios</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixins-customizados">Mixins Customizados</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adminrequiredmixin">AdminRequiredMixin</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jsonresponsemixin">JSONResponseMixin</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decorators-customizados">Decorators Customizados</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tratamento-de-erros">Tratamento de Erros</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#middleware-personalizado">Middleware Personalizado</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testes-para-views">Testes para Views</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-e-otimizacao">Performance e Otimização</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+De Eduardo Moura da Silva
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Eduardo Moura da Silva - CGEST/SAGE/MPO.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

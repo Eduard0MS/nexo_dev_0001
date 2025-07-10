@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rest_framework.decorators &#8212; Nexo - Documentação</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=2bde2ffa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=68842761"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/translations.js?v=beaedd51"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/rest_framework/decorators';</script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Pesquisar" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">Sistema de Gestão Organizacional - CGEST/SAGE/MPO</div>
+</aside>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Nexo - Documentação</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Pesquisar</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Primeiros Passos</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Visão Geral do Sistema Nexo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Guia de Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Início Rápido</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Documentação da API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api/models.html">Modelos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/views.html">Views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/auto_models.html">Modelos (Gerado Automaticamente)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/auto_views.html">Views (Gerado Automaticamente)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Repositório fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/issues/new?title=Issue%20on%20page%20%2F_modules/rest_framework/decorators.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Abra um problema"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Modo tela cheia"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Código fonte de rest_framework.decorators</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The most important decorator in this module is `@api_view`, which is used</span>
+<span class="sd">for writing function-based views with REST framework.</span>
+
+<span class="sd">There are also various decorators for setting the API policies on function</span>
+<span class="sd">based views, as well as the `@action` decorator, which is used to annotate</span>
+<span class="sd">methods on viewsets that should be included by routers.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.forms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">pretty_name</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIView</span>
+
+
+<div class="viewcode-block" id="api_view">
+<a class="viewcode-back" href="../../api/auto_views.html#core.views.api_view">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">api_view</span><span class="p">(</span><span class="n">http_method_names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator that converts a function-based view into an APIView subclass.</span>
+<span class="sd">    Takes a list of allowed methods for the view as an argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">http_method_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="k">else</span> <span class="n">http_method_names</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+
+        <span class="n">WrappedAPIView</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s1">&#39;WrappedAPIView&#39;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">APIView</span><span class="p">,),</span>
+            <span class="p">{</span><span class="s1">&#39;__doc__&#39;</span><span class="p">:</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Note, the above allows us to set the docstring.</span>
+        <span class="c1"># It is the equivalent of:</span>
+        <span class="c1">#</span>
+        <span class="c1">#     class WrappedAPIView(APIView):</span>
+        <span class="c1">#         pass</span>
+        <span class="c1">#     WrappedAPIView.__doc__ = func.doc    &lt;--- Not possible to do this</span>
+
+        <span class="c1"># api_view applied without (method_names)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">http_method_names</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">),</span> \
+            <span class="s1">&#39;@api_view missing list of allowed HTTP methods&#39;</span>
+
+        <span class="c1"># api_view applied with eg. string instead of list of strings</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">http_method_names</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)),</span> \
+            <span class="s1">&#39;@api_view expected a list of strings, received </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">http_method_names</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="n">allowed_methods</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">http_method_names</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="s1">&#39;options&#39;</span><span class="p">}</span>
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">allowed_methods</span><span class="p">]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">http_method_names</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">WrappedAPIView</span><span class="p">,</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">handler</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__module__</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">renderer_classes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;renderer_classes&#39;</span><span class="p">,</span>
+                                                  <span class="n">APIView</span><span class="o">.</span><span class="n">renderer_classes</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">parser_classes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;parser_classes&#39;</span><span class="p">,</span>
+                                                <span class="n">APIView</span><span class="o">.</span><span class="n">parser_classes</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">authentication_classes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;authentication_classes&#39;</span><span class="p">,</span>
+                                                        <span class="n">APIView</span><span class="o">.</span><span class="n">authentication_classes</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">throttle_classes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;throttle_classes&#39;</span><span class="p">,</span>
+                                                  <span class="n">APIView</span><span class="o">.</span><span class="n">throttle_classes</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">permission_classes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;permission_classes&#39;</span><span class="p">,</span>
+                                                    <span class="n">APIView</span><span class="o">.</span><span class="n">permission_classes</span><span class="p">)</span>
+
+        <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;schema&#39;</span><span class="p">,</span>
+                                        <span class="n">APIView</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">WrappedAPIView</span><span class="o">.</span><span class="n">as_view</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">renderer_classes</span><span class="p">(</span><span class="n">renderer_classes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">renderer_classes</span> <span class="o">=</span> <span class="n">renderer_classes</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parser_classes</span><span class="p">(</span><span class="n">parser_classes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">parser_classes</span> <span class="o">=</span> <span class="n">parser_classes</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">authentication_classes</span><span class="p">(</span><span class="n">authentication_classes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">authentication_classes</span> <span class="o">=</span> <span class="n">authentication_classes</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">throttle_classes</span><span class="p">(</span><span class="n">throttle_classes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">throttle_classes</span> <span class="o">=</span> <span class="n">throttle_classes</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">permission_classes</span><span class="p">(</span><span class="n">permission_classes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">permission_classes</span> <span class="o">=</span> <span class="n">permission_classes</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">schema</span><span class="p">(</span><span class="n">view_inspector</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">view_inspector</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">action</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">url_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">url_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mark a ViewSet method as a routable action.</span>
+
+<span class="sd">    `@action`-decorated functions will be endowed with a `mapping` property,</span>
+<span class="sd">    a `MethodMapper` that can be used to add additional method-based behaviors</span>
+<span class="sd">    on the routed action.</span>
+
+<span class="sd">    :param methods: A list of HTTP method names this action responds to.</span>
+<span class="sd">                    Defaults to GET only.</span>
+<span class="sd">    :param detail: Required. Determines whether this action applies to</span>
+<span class="sd">                   instance/detail requests or collection/list requests.</span>
+<span class="sd">    :param url_path: Define the URL segment for this action. Defaults to the</span>
+<span class="sd">                     name of the method decorated.</span>
+<span class="sd">    :param url_name: Define the internal (`reverse`) URL name for this action.</span>
+<span class="sd">                     Defaults to the name of the method decorated with underscores</span>
+<span class="sd">                     replaced with dashes.</span>
+<span class="sd">    :param kwargs: Additional properties to set on the view.  This can be used</span>
+<span class="sd">                   to override viewset-level *_classes settings, equivalent to</span>
+<span class="sd">                   how the `@renderer_classes` etc. decorators work for function-</span>
+<span class="sd">                   based API views.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">methods</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">methods</span>
+    <span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">]</span>
+
+    <span class="k">assert</span> <span class="n">detail</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+        <span class="s2">&quot;@action() missing required argument: &#39;detail&#39;&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># name and suffix are mutually exclusive</span>
+    <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="s1">&#39;suffix&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`name` and `suffix` are mutually exclusive arguments.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="n">MethodMapper</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">methods</span><span class="p">)</span>
+
+        <span class="n">func</span><span class="o">.</span><span class="n">detail</span> <span class="o">=</span> <span class="n">detail</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">url_path</span> <span class="o">=</span> <span class="n">url_path</span> <span class="k">if</span> <span class="n">url_path</span> <span class="k">else</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">url_name</span> <span class="o">=</span> <span class="n">url_name</span> <span class="k">if</span> <span class="n">url_name</span> <span class="k">else</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
+
+        <span class="c1"># These kwargs will end up being passed to `ViewSet.as_view()` within</span>
+        <span class="c1"># the router, which eventually delegates to Django&#39;s CBV `View`,</span>
+        <span class="c1"># which assigns them as instance attributes for each request.</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="c1"># Set descriptive arguments for viewsets</span>
+        <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="s1">&#39;suffix&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">func</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pretty_name</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">or</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodMapper</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enables mapping HTTP methods to different ViewSet methods for a single,</span>
+<span class="sd">    logical action.</span>
+
+<span class="sd">    Example usage:</span>
+
+<span class="sd">        class MyViewSet(ViewSet):</span>
+
+<span class="sd">            @action(detail=False)</span>
+<span class="sd">            def example(self, request, **kwargs):</span>
+<span class="sd">                ...</span>
+
+<span class="sd">            @example.mapping.post</span>
+<span class="sd">            def create_example(self, request, **kwargs):</span>
+<span class="sd">                ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">methods</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">action</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">method</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Method &#39;</span><span class="si">%s</span><span class="s2">&#39; has already been mapped to &#39;.</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">method</span><span class="p">]))</span>
+        <span class="k">assert</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Method mapping does not behave like the property decorator. You &quot;</span>
+            <span class="s2">&quot;cannot use the same method name for each mapping declaration.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="n">method</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="k">return</span> <span class="n">func</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;put&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;patch&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;options&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">(</span><span class="s1">&#39;trace&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+De Eduardo Moura da Silva
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Eduardo Moura da Silva - CGEST/SAGE/MPO.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

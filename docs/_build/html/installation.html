@@ -1,0 +1,1148 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Guia de Instalação &#8212; Nexo - Documentação</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=2bde2ffa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=68842761"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=30646c52"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="_static/translations.js?v=beaedd51"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/tabs.js?v=3030b3cb"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'installation';</script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Pesquisar" href="search.html" />
+    <link rel="next" title="Início Rápido" href="quickstart.html" />
+    <link rel="prev" title="Visão Geral do Sistema Nexo" href="overview.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">Sistema de Gestão Organizacional - CGEST/SAGE/MPO</div>
+</aside>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Nexo - Documentação</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Pesquisar</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Primeiros Passos</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Visão Geral do Sistema Nexo</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Guia de Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Início Rápido</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Documentação da API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api/models.html">Modelos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/views.html">Views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/auto_models.html">Modelos (Gerado Automaticamente)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/auto_views.html">Views (Gerado Automaticamente)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Repositório fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/blob/main/nexo_dev_0001/nexo_dev/nexo/docs/installation.rst?plain=1" target="_blank"
+   class="btn btn-sm btn-source-file-button dropdown-item"
+   title="Show source"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-code"></i>
+  </span>
+<span class="btn__text-container">Show source</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/edit/main/nexo_dev_0001/nexo_dev/nexo/docs/installation.rst" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/Eduard0MS/nexo_dev_0001/issues/new?title=Issue%20on%20page%20%2Finstallation.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Abra um problema"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Baixe esta página">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/installation.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Baixar arquivo fonte"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Imprimir em PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Modo tela cheia"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Pesquisar" aria-label="Pesquisar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Guia de Instalação</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Conteúdo </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-requisitos">Pré-requisitos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#software-necessario">Software Necessário</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#conhecimentos-recomendados">Conhecimentos Recomendados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-rapida">Instalação Rápida</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-detalhada">Instalação Detalhada</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preparacao-do-ambiente">1. Preparação do Ambiente</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#criar-diretorio-do-projeto">Criar Diretório do Projeto</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#clonar-repositorio">Clonar Repositório</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#configurar-ambiente-virtual">Configurar Ambiente Virtual</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-ativacao">Verificar Ativação</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-de-dependencias">2. Instalação de Dependências</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#instalar-pacotes-python">Instalar Pacotes Python</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-instalacao">Verificar Instalação</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-do-banco-de-dados">3. Configuração do Banco de Dados</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sqlite-desenvolvimento">SQLite (Desenvolvimento)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#postgresql-recomendado">PostgreSQL (Recomendado)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mysql">MySQL</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-do-django">4. Configuração do Django</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#executar-migracoes">Executar Migrações</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#criar-superusuario">Criar Superusuário</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#coletar-arquivos-estaticos">Coletar Arquivos Estáticos</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracoes-opcionais">5. Configurações Opcionais</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variaveis-de-ambiente">Variáveis de Ambiente</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cache-redis-opcional">Cache Redis (Opcional)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#teste-da-instalacao">6. Teste da Instalação</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-funcionamento">Verificar Funcionamento</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acessar-o-sistema">Acessar o Sistema</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#importar-dados-de-exemplo">Importar Dados de Exemplo</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-para-producao">Configuração para Produção</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#servidor-web">Servidor Web</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#nginx-gunicorn-recomendado">Nginx + Gunicorn (Recomendado)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seguranca">Segurança</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#https">HTTPS</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#firewall">Firewall</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backup">Backup</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#script-de-backup">Script de Backup</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monitoramento">Monitoramento</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#logs">Logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solucao-de-problemas">Solução de Problemas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problemas-comuns">Problemas Comuns</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#erro-de-dependencias">Erro de Dependências</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#erro-de-migracao">Erro de Migração</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#problema-de-permissoes">Problema de Permissões</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#logs-de-debug">Logs de Debug</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proximos-passos">Próximos Passos</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="guia-de-instalacao">
+<h1>Guia de Instalação<a class="headerlink" href="#guia-de-instalacao" title="Link to this heading">#</a></h1>
+<p>Este guia fornece instruções detalhadas para instalar e configurar o sistema Nexo em diferentes ambientes.</p>
+<section id="pre-requisitos">
+<h2>Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Link to this heading">#</a></h2>
+<section id="software-necessario">
+<h3>Software Necessário<a class="headerlink" href="#software-necessario" title="Link to this heading">#</a></h3>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-0-0" aria-selected="true" class="sphinx-tabs-tab" id="tab-0-0-0" name="0-0" role="tab" tabindex="0">Windows</button><button aria-controls="panel-0-0-1" aria-selected="false" class="sphinx-tabs-tab" id="tab-0-0-1" name="0-1" role="tab" tabindex="-1">Linux (Ubuntu/Debian)</button><button aria-controls="panel-0-0-2" aria-selected="false" class="sphinx-tabs-tab" id="tab-0-0-2" name="0-2" role="tab" tabindex="-1">macOS</button></div><div aria-labelledby="tab-0-0-0" class="sphinx-tabs-panel" id="panel-0-0-0" name="0-0" role="tabpanel" tabindex="0"><ul class="simple">
+<li><p><strong>Python 3.8+</strong> - <a class="reference external" href="https://python.org/downloads/">Download Python</a></p></li>
+<li><p><strong>Git</strong> - <a class="reference external" href="https://git-scm.com/download/win">Download Git</a></p></li>
+<li><p><strong>Node.js 16+</strong> (opcional, para desenvolvimento frontend)</p></li>
+<li><p><strong>PostgreSQL</strong> ou <strong>MySQL</strong> (recomendado para produção)</p></li>
+</ul>
+</div><div aria-labelledby="tab-0-0-1" class="sphinx-tabs-panel" hidden="true" id="panel-0-0-1" name="0-1" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>python3-pip<span class="w"> </span>python3-venv<span class="w"> </span>git
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>postgresql-contrib<span class="w">  </span><span class="c1"># ou mysql-server</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-0-2" class="sphinx-tabs-panel" hidden="true" id="panel-0-0-2" name="0-2" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Usando Homebrew</span>
+brew<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>git<span class="w"> </span>postgresql
+<span class="c1"># ou</span>
+brew<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>git<span class="w"> </span>mysql
+</pre></div>
+</div>
+</div></div>
+</section>
+<section id="conhecimentos-recomendados">
+<h3>Conhecimentos Recomendados<a class="headerlink" href="#conhecimentos-recomendados" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Conhecimento básico de Python e Django</p></li>
+<li><p>Familiaridade com linha de comando</p></li>
+<li><p>Conceitos básicos de banco de dados</p></li>
+</ul>
+</section>
+</section>
+<section id="instalacao-rapida">
+<h2>Instalação Rápida<a class="headerlink" href="#instalacao-rapida" title="Link to this heading">#</a></h2>
+<p>Para desenvolvedores experientes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone o repositório</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/seu-usuario/nexo.git
+<span class="nb">cd</span><span class="w"> </span>nexo
+
+<span class="c1"># Configure ambiente virtual</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate<span class="w">  </span><span class="c1"># Windows: venv\Scripts\activate</span>
+
+<span class="c1"># Instale dependências</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Configure banco de dados</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>migrate
+
+<span class="c1"># Crie superusuário</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
+
+<span class="c1"># Execute o servidor</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>runserver
+</pre></div>
+</div>
+</section>
+<section id="instalacao-detalhada">
+<h2>Instalação Detalhada<a class="headerlink" href="#instalacao-detalhada" title="Link to this heading">#</a></h2>
+<section id="preparacao-do-ambiente">
+<h3>1. Preparação do Ambiente<a class="headerlink" href="#preparacao-do-ambiente" title="Link to this heading">#</a></h3>
+<section id="criar-diretorio-do-projeto">
+<h4>Criar Diretório do Projeto<a class="headerlink" href="#criar-diretorio-do-projeto" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>nexo-projeto
+<span class="nb">cd</span><span class="w"> </span>nexo-projeto
+</pre></div>
+</div>
+</section>
+<section id="clonar-repositorio">
+<h4>Clonar Repositório<a class="headerlink" href="#clonar-repositorio" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/seu-usuario/nexo.git
+<span class="nb">cd</span><span class="w"> </span>nexo
+</pre></div>
+</div>
+</section>
+<section id="configurar-ambiente-virtual">
+<h4>Configurar Ambiente Virtual<a class="headerlink" href="#configurar-ambiente-virtual" title="Link to this heading">#</a></h4>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-1-0" aria-selected="true" class="sphinx-tabs-tab" id="tab-1-1-0" name="1-0" role="tab" tabindex="0">Linux/macOS</button><button aria-controls="panel-1-1-1" aria-selected="false" class="sphinx-tabs-tab" id="tab-1-1-1" name="1-1" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-1-1-0" class="sphinx-tabs-panel" id="panel-1-1-0" name="1-0" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-1-1" class="sphinx-tabs-panel" hidden="true" id="panel-1-1-1" name="1-1" role="tabpanel" tabindex="0"><div class="highlight-cmd notranslate"><div class="highlight"><pre><span></span>python -m venv venv
+venv\Scripts\activate
+</pre></div>
+</div>
+</div></div>
+</section>
+<section id="verificar-ativacao">
+<h4>Verificar Ativação<a class="headerlink" href="#verificar-ativacao" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>which<span class="w"> </span>python<span class="w">  </span><span class="c1"># Linux/macOS</span>
+where<span class="w"> </span>python<span class="w">  </span><span class="c1"># Windows</span>
+</pre></div>
+</div>
+<p>Deve apontar para o diretório do ambiente virtual.</p>
+</section>
+</section>
+<section id="instalacao-de-dependencias">
+<h3>2. Instalação de Dependências<a class="headerlink" href="#instalacao-de-dependencias" title="Link to this heading">#</a></h3>
+<section id="instalar-pacotes-python">
+<h4>Instalar Pacotes Python<a class="headerlink" href="#instalar-pacotes-python" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Dependências principais</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Dependências de desenvolvimento (opcional)</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+
+<span class="c1"># Dependências de documentação (opcional)</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-docs.txt
+</pre></div>
+</div>
+</section>
+<section id="verificar-instalacao">
+<h4>Verificar Instalação<a class="headerlink" href="#verificar-instalacao" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>Django
+<span class="c1"># Deve mostrar: Django==5.1.5</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="configuracao-do-banco-de-dados">
+<h3>3. Configuração do Banco de Dados<a class="headerlink" href="#configuracao-do-banco-de-dados" title="Link to this heading">#</a></h3>
+<section id="sqlite-desenvolvimento">
+<h4>SQLite (Desenvolvimento)<a class="headerlink" href="#sqlite-desenvolvimento" title="Link to this heading">#</a></h4>
+<p>Configuração padrão - nenhuma ação necessária.</p>
+</section>
+<section id="postgresql-recomendado">
+<h4>PostgreSQL (Recomendado)<a class="headerlink" href="#postgresql-recomendado" title="Link to this heading">#</a></h4>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-2-2-0" aria-selected="true" class="sphinx-tabs-tab" id="tab-2-2-0" name="2-0" role="tab" tabindex="0">Instalação</button><button aria-controls="panel-2-2-1" aria-selected="false" class="sphinx-tabs-tab" id="tab-2-2-1" name="2-1" role="tab" tabindex="-1">Configuração</button><button aria-controls="panel-2-2-2" aria-selected="false" class="sphinx-tabs-tab" id="tab-2-2-2" name="2-2" role="tab" tabindex="-1">Settings Django</button></div><div aria-labelledby="tab-2-2-0" class="sphinx-tabs-panel" id="panel-2-2-0" name="2-0" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ubuntu/Debian</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>postgresql-contrib
+
+<span class="c1"># CentOS/RHEL</span>
+sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>postgresql-server
+
+<span class="c1"># macOS</span>
+brew<span class="w"> </span>install<span class="w"> </span>postgresql
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-2-2-1" class="sphinx-tabs-panel" hidden="true" id="panel-2-2-1" name="2-1" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Iniciar serviço</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>postgresql
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>postgresql
+
+<span class="c1"># Criar usuário e banco</span>
+sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>psql
+CREATE<span class="w"> </span>DATABASE<span class="w"> </span>nexo_db<span class="p">;</span>
+CREATE<span class="w"> </span>USER<span class="w"> </span>nexo_user<span class="w"> </span>WITH<span class="w"> </span>PASSWORD<span class="w"> </span><span class="s1">&#39;sua_senha_segura&#39;</span><span class="p">;</span>
+GRANT<span class="w"> </span>ALL<span class="w"> </span>PRIVILEGES<span class="w"> </span>ON<span class="w"> </span>DATABASE<span class="w"> </span>nexo_db<span class="w"> </span>TO<span class="w"> </span>nexo_user<span class="p">;</span>
+<span class="se">\q</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-2-2-2" class="sphinx-tabs-panel" hidden="true" id="panel-2-2-2" name="2-2" role="tabpanel" tabindex="0"><p>Editar <code class="docutils literal notranslate"><span class="pre">Nexus/settings.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DATABASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;ENGINE&#39;</span><span class="p">:</span> <span class="s1">&#39;django.db.backends.postgresql&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;NAME&#39;</span><span class="p">:</span> <span class="s1">&#39;nexo_db&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;USER&#39;</span><span class="p">:</span> <span class="s1">&#39;nexo_user&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PASSWORD&#39;</span><span class="p">:</span> <span class="s1">&#39;sua_senha_segura&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HOST&#39;</span><span class="p">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PORT&#39;</span><span class="p">:</span> <span class="s1">&#39;5432&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div>
+</section>
+<section id="mysql">
+<h4>MySQL<a class="headerlink" href="#mysql" title="Link to this heading">#</a></h4>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-3-3-0" aria-selected="true" class="sphinx-tabs-tab" id="tab-3-3-0" name="3-0" role="tab" tabindex="0">Instalação</button><button aria-controls="panel-3-3-1" aria-selected="false" class="sphinx-tabs-tab" id="tab-3-3-1" name="3-1" role="tab" tabindex="-1">Configuração</button><button aria-controls="panel-3-3-2" aria-selected="false" class="sphinx-tabs-tab" id="tab-3-3-2" name="3-2" role="tab" tabindex="-1">Settings Django</button></div><div aria-labelledby="tab-3-3-0" class="sphinx-tabs-panel" id="panel-3-3-0" name="3-0" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ubuntu/Debian</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>mysql-server<span class="w"> </span>mysql-client
+
+<span class="c1"># CentOS/RHEL</span>
+sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>mysql-server
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-3-3-1" class="sphinx-tabs-panel" hidden="true" id="panel-3-3-1" name="3-1" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configuração inicial</span>
+sudo<span class="w"> </span>mysql_secure_installation
+
+<span class="c1"># Criar banco e usuário</span>
+mysql<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-p
+CREATE<span class="w"> </span>DATABASE<span class="w"> </span>nexo_db<span class="w"> </span>CHARACTER<span class="w"> </span>SET<span class="w"> </span>utf8mb4<span class="p">;</span>
+CREATE<span class="w"> </span>USER<span class="w"> </span><span class="s1">&#39;nexo_user&#39;</span>@<span class="s1">&#39;localhost&#39;</span><span class="w"> </span>IDENTIFIED<span class="w"> </span>BY<span class="w"> </span><span class="s1">&#39;sua_senha_segura&#39;</span><span class="p">;</span>
+GRANT<span class="w"> </span>ALL<span class="w"> </span>PRIVILEGES<span class="w"> </span>ON<span class="w"> </span>nexo_db.*<span class="w"> </span>TO<span class="w"> </span><span class="s1">&#39;nexo_user&#39;</span>@<span class="s1">&#39;localhost&#39;</span><span class="p">;</span>
+FLUSH<span class="w"> </span>PRIVILEGES<span class="p">;</span>
+EXIT<span class="p">;</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-3-3-2" class="sphinx-tabs-panel" hidden="true" id="panel-3-3-2" name="3-2" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DATABASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;ENGINE&#39;</span><span class="p">:</span> <span class="s1">&#39;django.db.backends.mysql&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;NAME&#39;</span><span class="p">:</span> <span class="s1">&#39;nexo_db&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;USER&#39;</span><span class="p">:</span> <span class="s1">&#39;nexo_user&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PASSWORD&#39;</span><span class="p">:</span> <span class="s1">&#39;sua_senha_segura&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HOST&#39;</span><span class="p">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PORT&#39;</span><span class="p">:</span> <span class="s1">&#39;3306&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;OPTIONS&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;charset&#39;</span><span class="p">:</span> <span class="s1">&#39;utf8mb4&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></div>
+</section>
+</section>
+<section id="configuracao-do-django">
+<h3>4. Configuração do Django<a class="headerlink" href="#configuracao-do-django" title="Link to this heading">#</a></h3>
+<section id="executar-migracoes">
+<h4>Executar Migrações<a class="headerlink" href="#executar-migracoes" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Aplicar migrações</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>migrate
+
+<span class="c1"># Verificar status</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>showmigrations
+</pre></div>
+</div>
+</section>
+<section id="criar-superusuario">
+<h4>Criar Superusuário<a class="headerlink" href="#criar-superusuario" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
+</pre></div>
+</div>
+<p>Siga as instruções para definir username, email e senha.</p>
+</section>
+<section id="coletar-arquivos-estaticos">
+<h4>Coletar Arquivos Estáticos<a class="headerlink" href="#coletar-arquivos-estaticos" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>manage.py<span class="w"> </span>collectstatic
+</pre></div>
+</div>
+</section>
+</section>
+<section id="configuracoes-opcionais">
+<h3>5. Configurações Opcionais<a class="headerlink" href="#configuracoes-opcionais" title="Link to this heading">#</a></h3>
+<section id="variaveis-de-ambiente">
+<h4>Variáveis de Ambiente<a class="headerlink" href="#variaveis-de-ambiente" title="Link to this heading">#</a></h4>
+<p>Criar arquivo <code class="docutils literal notranslate"><span class="pre">.env</span></code> na raiz do projeto:</p>
+<div class="highlight-env notranslate"><div class="highlight"><pre><span></span># Configurações de segurança
+SECRET_KEY=sua_chave_secreta_muito_longa_e_aleatoria
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1,seu-dominio.com
+
+# Banco de dados
+DATABASE_URL=postgresql://nexo_user:senha@localhost:5432/nexo_db
+
+# Email
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=seu_email@gmail.com
+EMAIL_HOST_PASSWORD=sua_senha_app
+
+# Autenticação Social
+GOOGLE_OAUTH2_CLIENT_ID=seu_client_id
+GOOGLE_OAUTH2_CLIENT_SECRET=seu_client_secret
+</pre></div>
+</div>
+</section>
+<section id="cache-redis-opcional">
+<h4>Cache Redis (Opcional)<a class="headerlink" href="#cache-redis-opcional" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Instalar Redis</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>redis-server<span class="w">  </span><span class="c1"># Ubuntu</span>
+brew<span class="w"> </span>install<span class="w"> </span>redis<span class="w">             </span><span class="c1"># macOS</span>
+
+<span class="c1"># Instalar cliente Python</span>
+pip<span class="w"> </span>install<span class="w"> </span>redis
+</pre></div>
+</div>
+<p>Configurar em <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">CACHES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;BACKEND&#39;</span><span class="p">:</span> <span class="s1">&#39;django.core.cache.backends.redis.RedisCache&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;LOCATION&#39;</span><span class="p">:</span> <span class="s1">&#39;redis://127.0.0.1:6379/1&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="teste-da-instalacao">
+<h3>6. Teste da Instalação<a class="headerlink" href="#teste-da-instalacao" title="Link to this heading">#</a></h3>
+<section id="verificar-funcionamento">
+<h4>Verificar Funcionamento<a class="headerlink" href="#verificar-funcionamento" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Executar testes</span>
+python<span class="w"> </span>manage.py<span class="w"> </span><span class="nb">test</span>
+
+<span class="c1"># Verificar configuração</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>check
+
+<span class="c1"># Executar servidor de desenvolvimento</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>runserver
+</pre></div>
+</div>
+</section>
+<section id="acessar-o-sistema">
+<h4>Acessar o Sistema<a class="headerlink" href="#acessar-o-sistema" title="Link to this heading">#</a></h4>
+<ol class="arabic simple">
+<li><p>Abrir navegador em <a class="reference external" href="http://localhost:8000">http://localhost:8000</a></p></li>
+<li><p>Fazer login com superusuário criado</p></li>
+<li><p>Acessar admin em <a class="reference external" href="http://localhost:8000/admin/">http://localhost:8000/admin/</a></p></li>
+</ol>
+</section>
+<section id="importar-dados-de-exemplo">
+<h4>Importar Dados de Exemplo<a class="headerlink" href="#importar-dados-de-exemplo" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Executar comando para criar dados exemplo</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>criar_dados_exemplo
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="configuracao-para-producao">
+<h2>Configuração para Produção<a class="headerlink" href="#configuracao-para-producao" title="Link to this heading">#</a></h2>
+<section id="servidor-web">
+<h3>Servidor Web<a class="headerlink" href="#servidor-web" title="Link to this heading">#</a></h3>
+<section id="nginx-gunicorn-recomendado">
+<h4>Nginx + Gunicorn (Recomendado)<a class="headerlink" href="#nginx-gunicorn-recomendado" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Instalar Gunicorn</span>
+pip<span class="w"> </span>install<span class="w"> </span>gunicorn
+
+<span class="c1"># Criar arquivo de configuração</span>
+<span class="c1"># gunicorn_config.py (já existe no projeto)</span>
+
+<span class="c1"># Executar Gunicorn</span>
+gunicorn<span class="w"> </span>--config<span class="w"> </span>gunicorn_config.py<span class="w"> </span>Nexus.wsgi:application
+</pre></div>
+</div>
+<p>Configurar Nginx:</p>
+<div class="highlight-nginx notranslate"><div class="highlight"><pre><span></span><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">seu-dominio.com</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/static/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">alias</span><span class="w"> </span><span class="s">/caminho/para/nexo/static/</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/media/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">alias</span><span class="w"> </span><span class="s">/caminho/para/nexo/media/</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://127.0.0.1:8000</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="seguranca">
+<h3>Segurança<a class="headerlink" href="#seguranca" title="Link to this heading">#</a></h3>
+<section id="https">
+<h4>HTTPS<a class="headerlink" href="#https" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Usando Let&#39;s Encrypt</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>certbot<span class="w"> </span>python3-certbot-nginx
+sudo<span class="w"> </span>certbot<span class="w"> </span>--nginx<span class="w"> </span>-d<span class="w"> </span>seu-dominio.com
+</pre></div>
+</div>
+</section>
+<section id="firewall">
+<h4>Firewall<a class="headerlink" href="#firewall" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configurar UFW (Ubuntu)</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">22</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">80</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">443</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span><span class="nb">enable</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="backup">
+<h3>Backup<a class="headerlink" href="#backup" title="Link to this heading">#</a></h3>
+<section id="script-de-backup">
+<h4>Script de Backup<a class="headerlink" href="#script-de-backup" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1"># backup.sh</span>
+
+<span class="nv">DATE</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d_%H%M%S<span class="k">)</span>
+<span class="nv">BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/backup/nexo&quot;</span>
+
+<span class="c1"># Backup do banco</span>
+pg_dump<span class="w"> </span>nexo_db<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$BACKUP_DIR</span>/db_<span class="nv">$DATE</span>.sql
+
+<span class="c1"># Backup dos arquivos</span>
+tar<span class="w"> </span>-czf<span class="w"> </span><span class="nv">$BACKUP_DIR</span>/files_<span class="nv">$DATE</span>.tar.gz<span class="w"> </span>/caminho/para/nexo/media/
+</pre></div>
+</div>
+<p>Configurar Cron:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Backup diário às 2h</span>
+<span class="m">0</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>/caminho/para/backup.sh
+</pre></div>
+</div>
+</section>
+</section>
+<section id="monitoramento">
+<h3>Monitoramento<a class="headerlink" href="#monitoramento" title="Link to this heading">#</a></h3>
+<section id="logs">
+<h4>Logs<a class="headerlink" href="#logs" title="Link to this heading">#</a></h4>
+<p>Configurar em <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">&#39;disable_existing_loggers&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;INFO&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;logging.FileHandler&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s1">&#39;/var/log/nexo/django.log&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;loggers&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;django&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;file&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;INFO&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;propagate&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="solucao-de-problemas">
+<h2>Solução de Problemas<a class="headerlink" href="#solucao-de-problemas" title="Link to this heading">#</a></h2>
+<section id="problemas-comuns">
+<h3>Problemas Comuns<a class="headerlink" href="#problemas-comuns" title="Link to this heading">#</a></h3>
+<section id="erro-de-dependencias">
+<h4>Erro de Dependências<a class="headerlink" href="#erro-de-dependencias" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Limpar cache do pip</span>
+pip<span class="w"> </span>cache<span class="w"> </span>purge
+
+<span class="c1"># Reinstalar dependências</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>--force-reinstall
+</pre></div>
+</div>
+</section>
+<section id="erro-de-migracao">
+<h4>Erro de Migração<a class="headerlink" href="#erro-de-migracao" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resetar migrações (CUIDADO em produção)</span>
+python<span class="w"> </span>manage.py<span class="w"> </span>migrate<span class="w"> </span>--fake<span class="w"> </span>core<span class="w"> </span>zero
+python<span class="w"> </span>manage.py<span class="w"> </span>migrate
+</pre></div>
+</div>
+</section>
+<section id="problema-de-permissoes">
+<h4>Problema de Permissões<a class="headerlink" href="#problema-de-permissoes" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ajustar permissões dos arquivos</span>
+sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span>www-data:www-data<span class="w"> </span>/caminho/para/nexo/
+sudo<span class="w"> </span>chmod<span class="w"> </span>-R<span class="w"> </span><span class="m">755</span><span class="w"> </span>/caminho/para/nexo/
+</pre></div>
+</div>
+</section>
+<section id="logs-de-debug">
+<h4>Logs de Debug<a class="headerlink" href="#logs-de-debug" title="Link to this heading">#</a></h4>
+<p>Habilitar debug temporariamente em <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">LOGGING</span><span class="p">[</span><span class="s1">&#39;loggers&#39;</span><span class="p">][</span><span class="s1">&#39;django&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;DEBUG&#39;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="proximos-passos">
+<h2>Próximos Passos<a class="headerlink" href="#proximos-passos" title="Link to this heading">#</a></h2>
+<p>Após a instalação bem-sucedida:</p>
+<ol class="arabic simple">
+<li><p>📖 Leia o <a class="reference internal" href="quickstart.html"><span class="doc">Início Rápido</span></a> para primeiros passos</p></li>
+<li><p>👥 Configure autenticação social no <span class="xref std std-doc">user-guide/index</span></p></li>
+<li><p>📊 Explore o sistema de relatórios</p></li>
+<li><p>🎯 Crie suas primeiras simulações</p></li>
+<li><p>📝 Gere a documentação com <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">gerar_documentacao</span></code></p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>Para ambientes de desenvolvimento, o SQLite é suficiente. Para produção, recomendamos PostgreSQL ou MySQL.</p>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="overview.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">Visão Geral do Sistema Nexo</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="quickstart.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">próximo</p>
+        <p class="prev-next-title">Início Rápido</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Conteúdo
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-requisitos">Pré-requisitos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#software-necessario">Software Necessário</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#conhecimentos-recomendados">Conhecimentos Recomendados</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-rapida">Instalação Rápida</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-detalhada">Instalação Detalhada</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preparacao-do-ambiente">1. Preparação do Ambiente</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#criar-diretorio-do-projeto">Criar Diretório do Projeto</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#clonar-repositorio">Clonar Repositório</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#configurar-ambiente-virtual">Configurar Ambiente Virtual</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-ativacao">Verificar Ativação</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#instalacao-de-dependencias">2. Instalação de Dependências</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#instalar-pacotes-python">Instalar Pacotes Python</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-instalacao">Verificar Instalação</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-do-banco-de-dados">3. Configuração do Banco de Dados</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sqlite-desenvolvimento">SQLite (Desenvolvimento)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#postgresql-recomendado">PostgreSQL (Recomendado)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mysql">MySQL</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-do-django">4. Configuração do Django</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#executar-migracoes">Executar Migrações</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#criar-superusuario">Criar Superusuário</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#coletar-arquivos-estaticos">Coletar Arquivos Estáticos</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracoes-opcionais">5. Configurações Opcionais</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variaveis-de-ambiente">Variáveis de Ambiente</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cache-redis-opcional">Cache Redis (Opcional)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#teste-da-instalacao">6. Teste da Instalação</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#verificar-funcionamento">Verificar Funcionamento</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acessar-o-sistema">Acessar o Sistema</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#importar-dados-de-exemplo">Importar Dados de Exemplo</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuracao-para-producao">Configuração para Produção</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#servidor-web">Servidor Web</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#nginx-gunicorn-recomendado">Nginx + Gunicorn (Recomendado)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seguranca">Segurança</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#https">HTTPS</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#firewall">Firewall</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backup">Backup</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#script-de-backup">Script de Backup</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monitoramento">Monitoramento</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#logs">Logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solucao-de-problemas">Solução de Problemas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problemas-comuns">Problemas Comuns</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#erro-de-dependencias">Erro de Dependências</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#erro-de-migracao">Erro de Migração</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#problema-de-permissoes">Problema de Permissões</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#logs-de-debug">Logs de Debug</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proximos-passos">Próximos Passos</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+De Eduardo Moura da Silva
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Eduardo Moura da Silva - CGEST/SAGE/MPO.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

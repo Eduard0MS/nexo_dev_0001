@@ -19,7 +19,14 @@ from .forms import (
     PerfilUpdateForm,
     CustomPasswordChangeForm
 )
-from .models import UnidadeCargo, CargoSIORG
+from .models import (
+    UnidadeCargo, 
+    CargoSIORG, 
+    SimulacaoSalva, 
+    TipoUsuario, 
+    SolicitacaoSimulacao, 
+    NotificacaoSimulacao
+)
 from .utils import processa_planilhas, processa_organograma, estrutura_json_organograma, processa_json_organograma, gerar_anexo_simulacao
 import os
 from django.conf import settings
@@ -47,7 +54,7 @@ from .dados_json_update import gerar_organograma_json
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views import View
-from .models import SimulacaoSalva
+from django.contrib.auth.models import User, Group
 
 
 class CustomLoginView(LoginView):
@@ -1267,9 +1274,12 @@ def api_cargos_diretos(request):
     logger.info(f"API cargos_diretos - Parâmetros: sigla={sigla}, tipo_cargo={tipo_cargo}, nivel={nivel}, pagina={pagina}, tamanho={tamanho}")
     
     try:
-        # Consulta base
-        query = UnidadeCargo.objects.all()
-        logger.info(f"Total de registros na tabela UnidadeCargo: {query.count()}")
+        # Consulta base - FILTRAR POR USUÁRIO: cargos padrão (sem usuario) + cargos do usuário atual
+        from django.db.models import Q
+        query = UnidadeCargo.objects.filter(
+            Q(usuario__isnull=True) | Q(usuario=request.user)  # Cargos padrão + cargos do usuário
+        )
+        logger.info(f"Total de registros filtrados por usuário: {query.count()}")
         
         # Se houver sigla, aplicar filtro especial
         if sigla:
@@ -1400,6 +1410,7 @@ def api_cargos_diretos(request):
             gasto_total = pontos_total * valor_unitario
             
             result.append({
+                'id': cargo.id,  # ID do cargo
                 'area': cargo.sigla_unidade or '',
                 'categoria_unidade': cargo.tipo_unidade or '',
                 'sigla_unidade': cargo.sigla_unidade or '',  # Campo explícito para compatibilidade
@@ -1413,7 +1424,9 @@ def api_cargos_diretos(request):
                 'valor_unitario': valor_unitario,
                 'pontos_totais': pontos_total,
                 'gastos_totais': gasto_total,
-                'grafo': cargo.grafo or ''  # Include grafo field for hierarchical ordering
+                'grafo': cargo.grafo or '',  # Include grafo field for hierarchical ordering
+                'is_manual': cargo.usuario is not None,  # ✅ MARCAR SE É CARGO MANUAL
+                'manual_id': cargo.id if cargo.usuario is not None else None  # ✅ ID PARA REMOÇÃO
             })
         
         logger.info(f"Dados formatados: {len(result)} registros processados")
@@ -1693,25 +1706,68 @@ class BaixarAnexoSimulacaoView(View):
 @login_required
 @require_http_methods(["GET"])
 def listar_simulacoes(request):
-    """Lista todas as simulações salvas do usuário atual"""
-    simulacoes = SimulacaoSalva.objects.filter(usuario=request.user)
+    """Lista simulações baseado no tipo de usuário"""
+    from .models import obter_tipo_usuario
+    
+    user = request.user
+    tipo_usuario = obter_tipo_usuario(user)
+    
+    # Se for gerente, pode ver simulações próprias + enviadas para análise + rejeitadas
+    if tipo_usuario == 'gerente':
+        simulacoes_proprias = SimulacaoSalva.objects.filter(usuario=user)
+        simulacoes_analise = SimulacaoSalva.objects.filter(
+            status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+            visivel_para_gerentes=True
+        ).exclude(usuario=user)
+        simulacoes = simulacoes_proprias.union(simulacoes_analise).order_by('-atualizado_em')
+    else:
+        # Usuários normais veem apenas suas próprias simulações
+        simulacoes = SimulacaoSalva.objects.filter(usuario=user)
     
     data = []
     for sim in simulacoes:
+        is_owner = sim.usuario == user
+        
+        # Para simulações de análise, verificar se o usuário criador é realmente interno
+        if not is_owner and sim.status == 'enviada_analise':
+            if sim.tipo_usuario_atual != 'interno':
+                continue  # Pular simulações de usuários que não são internos
+        
         data.append({
             'id': sim.id,
             'nome': sim.nome,
             'descricao': sim.descricao or '',
             'unidade_base': sim.unidade_base or '',
+            'status': sim.get_status_display(),
+            'status_code': sim.status,
+            'tipo_usuario': sim.get_tipo_usuario_display_atual(),  # Usar o método dinâmico
+            'usuario': sim.usuario.get_full_name() or sim.usuario.username if not is_owner else 'Você',
+            'usuario_email': sim.usuario.email if not is_owner else '',
+            'is_owner': is_owner,
+            'pode_enviar_analise': is_owner and sim.status in ['rascunho', 'rejeitada', 'rejeitada_editada'] and sim.tipo_usuario_atual == 'interno',  # Usar propriedade dinâmica
+            'pode_avaliar': not is_owner and tipo_usuario == 'gerente' and sim.status in ['enviada_analise', 'rejeitada', 'rejeitada_editada'],
             'criado_em': sim.criado_em.strftime('%d/%m/%Y %H:%M'),
             'atualizado_em': sim.atualizado_em.strftime('%d/%m/%Y %H:%M')
         })
     
-    return JsonResponse({
+    # Configurar resposta baseada no tipo de usuário
+    response_data = {
         'simulacoes': data,
         'total': len(data),
-        'limite': 5
-    })
+        'user_type': tipo_usuario
+    }
+    
+    # Adicionar informações específicas para gerentes
+    if tipo_usuario == 'gerente':
+        response_data['limite'] = None  # Sem limite para gerentes
+        response_data['is_gerente'] = True
+        print(f"🔍 [DEBUG] Resposta API para gerente: limite={response_data['limite']}, is_gerente={response_data['is_gerente']}")
+    else:
+        response_data['limite'] = 5
+        response_data['is_gerente'] = False
+        print(f"🔍 [DEBUG] Resposta API para {tipo_usuario}: limite={response_data['limite']}, is_gerente={response_data['is_gerente']}")
+    
+    return JsonResponse(response_data)
 
 @login_required
 @require_http_methods(["POST"])
@@ -1751,12 +1807,14 @@ def salvar_simulacao(request):
                 return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
         else:
             # Criação
-            # Verificar limite de 5 simulações
-            total_simulacoes = SimulacaoSalva.objects.filter(usuario=request.user).count()
-            if total_simulacoes >= 5:
-                return JsonResponse({
-                    'erro': 'Limite de 5 simulações atingido. Delete uma simulação existente antes de criar uma nova.'
-                }, status=400)
+            # Verificar limite de 5 simulações (não se aplica a gerentes)
+            from .models import obter_tipo_usuario
+            if obter_tipo_usuario(request.user) != 'gerente':
+                total_simulacoes = SimulacaoSalva.objects.filter(usuario=request.user).count()
+                if total_simulacoes >= 5:
+                    return JsonResponse({
+                        'erro': 'Limite de 5 simulações atingido. Delete uma simulação existente antes de criar uma nova.'
+                    }, status=400)
             
             # Verificar se já existe simulação com mesmo nome
             if SimulacaoSalva.objects.filter(usuario=request.user, nome=nome).exists():
@@ -1787,7 +1845,27 @@ def salvar_simulacao(request):
 def carregar_simulacao(request, simulacao_id):
     """Carrega os dados de uma simulação específica"""
     try:
-        simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        from .models import obter_tipo_usuario
+        
+        user = request.user
+        tipo_usuario = obter_tipo_usuario(user)
+        
+        # Lógica de permissões baseada no tipo de usuário
+        if tipo_usuario == 'gerente':
+            # Gerentes podem carregar simulações próprias + enviadas para análise
+            try:
+                # Primeiro tenta carregar simulação própria
+                simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
+            except SimulacaoSalva.DoesNotExist:
+                # Se não for própria, verifica se é uma simulação enviada para análise ou rejeitada
+                simulacao = SimulacaoSalva.objects.get(
+                    id=simulacao_id,
+                    status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+                    visivel_para_gerentes=True
+                )
+        else:
+            # Usuários normais só podem carregar simulações próprias
+            simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
         
         return JsonResponse({
             'id': simulacao.id,
@@ -1796,10 +1874,13 @@ def carregar_simulacao(request, simulacao_id):
             'dados_estrutura': simulacao.dados_estrutura,
             'unidade_base': simulacao.unidade_base or '',
             'criado_em': simulacao.criado_em.strftime('%d/%m/%Y %H:%M'),
-            'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M'),
+            'usuario': simulacao.usuario.get_full_name() or simulacao.usuario.username,
+            'status': simulacao.get_status_display(),
+            'tipo_usuario_autor': simulacao.tipo_usuario_atual
         })
     except SimulacaoSalva.DoesNotExist:
-        return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+        return JsonResponse({'erro': 'Simulação não encontrada ou sem permissão de acesso'}, status=404)
 
 @login_required
 @require_http_methods(["DELETE"])
@@ -1815,3 +1896,1513 @@ def deletar_simulacao(request, simulacao_id):
         })
     except SimulacaoSalva.DoesNotExist:
         return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+
+
+@login_required
+@require_http_methods(["PUT", "PATCH"])
+def atualizar_simulacao(request, simulacao_id):
+    """View para atualizar uma simulação existente (auto-save)"""
+    import json
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    from .models import SimulacaoSalva, obter_tipo_usuario
+    
+    try:
+        # Verificar se usuário tem permissão para editar
+        simulacao = get_object_or_404(SimulacaoSalva, id=simulacao_id)
+        
+        # Verificar permissões
+        if simulacao.usuario != request.user:
+            # Verificar se é gerente e pode editar simulações enviadas para análise
+            user_tipo = obter_tipo_usuario(request.user)
+            if user_tipo != 'gerente' or simulacao.status not in ['enviada_analise', 'rejeitada', 'rejeitada_editada']:
+                return JsonResponse({'success': False, 'message': 'Você não tem permissão para editar esta simulação'}, status=403)
+        
+        # Parse dos dados JSON
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        if 'dados_estrutura' not in data:
+            return JsonResponse({'success': False, 'message': 'Dados da estrutura são obrigatórios'}, status=400)
+        
+        # Atualizar campos opcionais se fornecidos
+        if 'nome' in data:
+            simulacao.nome = data['nome']
+        if 'descricao' in data:
+            simulacao.descricao = data['descricao']
+        if 'unidade_base' in data:
+            simulacao.unidade_base = data['unidade_base']
+        
+        # Atualizar dados da estrutura
+        simulacao.dados_estrutura = data['dados_estrutura']
+        
+        # Se simulação foi rejeitada e está sendo editada, marcar como rejeitada_editada
+        if simulacao.status == 'rejeitada':
+            simulacao.status = 'rejeitada_editada'
+        
+        simulacao.save()
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Simulação atualizada com sucesso',
+            'simulacao': {
+                'id': simulacao.id,
+                'nome': simulacao.nome,
+                'descricao': simulacao.descricao,
+                'status': simulacao.get_status_display(),
+                'status_code': simulacao.status,
+                'atualizado_em': simulacao.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Dados JSON inválidos'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao atualizar simulação {simulacao_id}: {str(e)}")
+        return JsonResponse({'success': False, 'message': f'Erro interno: {str(e)}'}, status=500)
+
+
+# === VIEWS PARA SISTEMA DE RELATÓRIOS ===
+
+@login_required
+def relatorios(request):
+    """
+    Página principal do sistema de relatórios.
+    Inclui todas as funcionalidades solicitadas.
+    """
+    from .models import RelatorioGratificacoes, RelatorioOrgaosCentrais, RelatorioEfetivo, UnidadeCargo
+    from django.db.models import Count, Sum, Avg
+    
+    context = {}
+    
+    # Dados para o relatório de pontos e gratificações
+    try:
+        # Estatísticas básicas
+        total_servidores = RelatorioGratificacoes.objects.count()
+        total_unidades = RelatorioGratificacoes.objects.values('unidade_lotacao').distinct().count()
+        total_cargos = RelatorioGratificacoes.objects.values('cargo').distinct().count()
+        
+        # Dados por unidade para cálculo dos índices
+        unidades_data = RelatorioGratificacoes.objects.values(
+            'unidade_lotacao', 'sigla_unidade'
+        ).annotate(
+            total_servidores=Count('id'),
+            cargos_unicos=Count('cargo', distinct=True)
+        ).order_by('-total_servidores')
+        
+        # Dados do organograma para cálculo de pontos
+        pontos_data = UnidadeCargo.objects.values(
+            'denominacao_unidade', 'sigla_unidade'
+        ).annotate(
+            total_pontos=Sum('pontos_total'),
+            total_quantidade=Sum('quantidade')
+        ).filter(total_pontos__gt=0)
+        
+        context.update({
+            'total_servidores': total_servidores,
+            'total_unidades': total_unidades,
+            'total_cargos': total_cargos,
+            'unidades_data': list(unidades_data),
+            'pontos_data': list(pontos_data),
+        })
+        
+    except Exception as e:
+        context['erro_dados'] = f"Erro ao carregar dados: {str(e)}"
+    
+    return render(request, 'core/relatorios.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_relatorio_pontos_gratificacoes(request):
+    """
+    API para dados do relatório usando a API do organograma.
+    Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)
+    """
+    from django.http import HttpRequest
+    import json
+    
+    try:
+        # Parâmetros de filtro e paginação
+        filtro_unidade = request.GET.get('unidade', '').strip()
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 11))
+        
+        # Criar uma requisição interna para a API do organograma
+        internal_request = HttpRequest()
+        internal_request.method = 'GET'
+        internal_request.user = request.user
+        internal_request.GET = request.GET.copy()
+        
+        # Chamar a API do organograma
+        response = api_organograma(internal_request)
+        
+        if response.status_code == 200:
+            data = json.loads(response.content)
+            registros = data.get('core_unidadecargo', [])
+            
+            # Processar dados do organograma
+            tabela_gratificacoes = []
+            unidades_unicas = {}
+            
+            for registro in registros:
+                unidade = registro.get('denominacao_unidade', '')
+                pontos = float(registro.get('pontos_total', 0))
+                
+                # Aplicar filtro se fornecido
+                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
+                    continue
+                
+                if unidade:  # Só incluir se tem nome da unidade
+                    if unidade in unidades_unicas:
+                        unidades_unicas[unidade]['pontos'] += pontos
+                    else:
+                        unidades_unicas[unidade] = {
+                            'unidade': unidade,
+                            'pontos': pontos,
+                            'gsist': 0,  # Por enquanto zerado
+                            'gsisp': 0   # Por enquanto zerado
+                        }
+            
+            # Converter para lista e ordenar
+            tabela_final = list(unidades_unicas.values())
+            tabela_final.sort(key=lambda x: x['unidade'])
+            
+            # Arredondar pontos
+            for item in tabela_final:
+                item['pontos'] = round(item['pontos'], 2)
+            
+            # Implementar paginação
+            total_registros = len(tabela_final)
+            total_pages = (total_registros + per_page - 1) // per_page
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            dados_paginados = tabela_final[start_index:end_index]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': dados_paginados,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'total_registros': total_registros,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                },
+                'filtros': {
+                    'unidade': filtro_unidade,
+                    'total_registros': total_registros
+                }
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Erro ao acessar dados do organograma'
+            }, status=500)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar dados de gratificações: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_relatorio_dimensionamento(request):
+    """
+    API para dados do dimensionamento usando a API do organograma.
+    Segunda tabela: Unidade, Pontos da área, Colaboradores (quantidade), IEE
+    """
+    from django.http import HttpRequest
+    import json
+    
+    try:
+        # Parâmetros de filtro e paginação
+        filtro_unidade = request.GET.get('unidade', '').strip()
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 11))
+        
+        # Criar uma requisição interna para a API do organograma
+        internal_request = HttpRequest()
+        internal_request.method = 'GET'
+        internal_request.user = request.user
+        internal_request.GET = request.GET.copy()
+        
+        # Chamar a API do organograma
+        response = api_organograma(internal_request)
+        
+        if response.status_code == 200:
+            data = json.loads(response.content)
+            registros = data.get('core_unidadecargo', [])
+            
+            # Processar dados do organograma
+            tabela_dimensionamento = []
+            total_colaboradores_instituicao = 0
+            total_pontos_instituicao = 0
+            
+            # Agrupar por unidade
+            unidades_dados = {}
+            for registro in registros:
+                unidade = registro.get('denominacao_unidade', '')
+                pontos = float(registro.get('pontos_total', 0))
+                quantidade = int(registro.get('quantidade', 0))
+                
+                # Aplicar filtro se fornecido
+                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
+                    continue
+                
+                if unidade:
+                    if unidade in unidades_dados:
+                        unidades_dados[unidade]['pontos'] += pontos
+                        unidades_dados[unidade]['colaboradores'] += quantidade
+                    else:
+                        unidades_dados[unidade] = {
+                            'unidade': unidade,
+                            'pontos': pontos,
+                            'colaboradores': quantidade,
+                            'consultoria': 0  # Por enquanto zerado
+                        }
+            
+            # Calcular totais para IEE
+            for dados in unidades_dados.values():
+                total_colaboradores_instituicao += dados['colaboradores']
+                total_pontos_instituicao += dados['pontos']
+            
+            # Calcular IEE: (Servidores na Unidade / Número de Pontos)
+            for dados in unidades_dados.values():
+                colaboradores = dados['colaboradores']
+                pontos = dados['pontos']
+                
+                # IEE = Servidores na Unidade / Número de Pontos
+                iee = round(colaboradores / pontos, 3) if pontos > 0 else 0
+                
+                tabela_dimensionamento.append({
+                    'unidade': dados['unidade'],
+                    'pontos': round(pontos, 2),
+                    'colaboradores': colaboradores,
+                    'consultoria': dados['consultoria'],
+                    'iee': iee
+                })
+            
+            # Ordenar por nome da unidade
+            tabela_dimensionamento.sort(key=lambda x: x['unidade'])
+            
+            # Implementar paginação
+            total_registros = len(tabela_dimensionamento)
+            total_pages = (total_registros + per_page - 1) // per_page
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            dados_paginados = tabela_dimensionamento[start_index:end_index]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': dados_paginados,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'total_registros': total_registros,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                },
+                'filtros': {
+                    'unidade': filtro_unidade,
+                    'total_registros': total_registros
+                },
+                'estatisticas': {
+                    'total_colaboradores_instituicao': total_colaboradores_instituicao,
+                    'total_pontos_instituicao': round(total_pontos_instituicao, 2),
+                    'formula_iee': 'IEE = (Servidores na Unidade / Número de Pontos)'
+                }
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Erro ao acessar dados do organograma'
+            }, status=500)
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar dados de dimensionamento: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_historico_decretos(request):
+    """
+    API para histórico de decretos.
+    """
+    from .models import Decreto
+    
+    try:
+        decretos_db = Decreto.objects.all().order_by('-data_publicacao')
+        
+        decretos = []
+        for decreto in decretos_db:
+            decretos.append({
+                'id': decreto.id,
+                'numero': decreto.numero,
+                'data': decreto.data_publicacao.strftime('%Y-%m-%d'),
+                'titulo': decreto.titulo,
+                'tipo': decreto.get_tipo_display(),
+                'status': decreto.get_status_display()
+            })
+        
+        # Se não há decretos no banco, usar dados simulados
+        if not decretos:
+            decretos = [
+                {
+                    'id': 1,
+                    'numero': 'Decreto nº 10.185/2019',
+                    'data': '2019-12-20',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério da Economia',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Vigente'
+                },
+                {
+                    'id': 2,
+                    'numero': 'Decreto nº 9.745/2019',
+                    'data': '2019-04-08',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério do Planejamento, Desenvolvimento e Gestão',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Revogado'
+                },
+                {
+                    'id': 3,
+                    'numero': 'Decreto nº 11.355/2022',
+                    'data': '2022-12-30',
+                    'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério do Planejamento e Orçamento',
+                    'tipo': 'Estrutura Regimental',
+                    'status': 'Vigente'
+                }
+            ]
+        
+        return JsonResponse({
+            'status': 'success',
+            'decretos': decretos
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar decretos: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_siglario(request):
+    """
+    API para o siglário institucional.
+    """
+    from .models import UnidadeCargo
+    
+    try:
+        # Buscar todas as siglas únicas do organograma
+        siglas = UnidadeCargo.objects.values(
+            'sigla_unidade', 'denominacao_unidade', 'categoria_unidade'
+        ).distinct().exclude(
+            sigla_unidade__isnull=True
+        ).exclude(
+            sigla_unidade__exact=''
+        ).order_by('sigla_unidade')
+        
+        siglario_data = []
+        for item in siglas:
+            siglario_data.append({
+                'sigla': item['sigla_unidade'],
+                'denominacao': item['denominacao_unidade'],
+                'categoria': item['categoria_unidade'] or 'Não categorizado'
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': siglario_data,
+            'total': len(siglario_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar siglário: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_unidades_disponiveis(request):
+    """
+    API para buscar unidades disponíveis para formulários.
+    """
+    from .models import UnidadeCargo
+    
+    try:
+        unidades = UnidadeCargo.objects.values(
+            'denominacao_unidade', 'sigla_unidade'
+        ).distinct().exclude(
+            denominacao_unidade__isnull=True
+        ).exclude(
+            denominacao_unidade__exact=''
+        ).order_by('denominacao_unidade')
+        
+        unidades_data = []
+        for unidade in unidades:
+            unidades_data.append({
+                'nome': unidade['denominacao_unidade'],
+                'sigla': unidade['sigla_unidade'] or ''
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'unidades': unidades_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar unidades: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_solicitacao_realocacao(request):
+    """
+    Processa o envio de solicitação de realocação.
+    """
+    from .models import SolicitacaoRealocacao
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        campos_obrigatorios = ['nome_servidor', 'matricula', 'unidade_atual', 'unidade_destino', 'justificativa']
+        for campo in campos_obrigatorios:
+            if not data.get(campo):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Campo obrigatório não preenchido: {campo}'
+                }, status=400)
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoRealocacao.objects.create(
+            nome_servidor=data['nome_servidor'],
+            matricula_siape=data['matricula'],
+            unidade_atual=data['unidade_atual'],
+            unidade_destino=data['unidade_destino'],
+            justificativa=data['justificativa'],
+            usuario_solicitante=request.user
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Solicitação de realocação enviada com sucesso!',
+            'id': solicitacao.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Dados inválidos'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao processar solicitação: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_solicitacao_permuta(request):
+    """
+    Processa o envio de solicitação de permuta.
+    """
+    from .models import SolicitacaoPermuta
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Validar dados obrigatórios
+        campos_obrigatorios = ['servidor1', 'matricula1', 'servidor2', 'matricula2']
+        for campo in campos_obrigatorios:
+            if not data.get(campo):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Campo obrigatório não preenchido: {campo}'
+                }, status=400)
+        
+        # Buscar unidades dos servidores (simplificado - em produção seria mais complexo)
+        unidade1 = "Unidade a definir"  # Aqui seria feita uma busca real
+        unidade2 = "Unidade a definir"  # Aqui seria feita uma busca real
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoPermuta.objects.create(
+            nome_servidor1=data['servidor1'],
+            matricula_servidor1=data['matricula1'],
+            unidade_servidor1=unidade1,
+            nome_servidor2=data['servidor2'],
+            matricula_servidor2=data['matricula2'],
+            unidade_servidor2=unidade2,
+            observacoes=data.get('observacoes', ''),
+            usuario_solicitante=request.user
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Solicitação de permuta enviada com sucesso!',
+            'id': solicitacao.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Dados inválidos'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao processar solicitação: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_minhas_solicitacoes(request):
+    """
+    API para listar as solicitações do usuário (realocações e permutas).
+    """
+    try:
+        # Buscar solicitações de realocação
+        solicitacoes_realocacao = SolicitacaoRealocacao.objects.filter(
+            usuario_solicitante=request.user
+        ).order_by('-data_solicitacao')
+        
+        # Buscar solicitações de permuta
+        solicitacoes_permuta = SolicitacaoPermuta.objects.filter(
+            usuario_solicitante=request.user
+        ).order_by('-data_solicitacao')
+        
+        # Preparar dados
+        realocacoes_data = []
+        for sol in solicitacoes_realocacao:
+            realocacoes_data.append({
+                'id': sol.id,
+                'tipo': 'realocacao',
+                'nome_servidor': sol.nome_servidor,
+                'unidade_atual': sol.unidade_atual,
+                'unidade_destino': sol.unidade_destino,
+                'status': sol.status,
+                'data_solicitacao': sol.data_solicitacao.strftime('%d/%m/%Y %H:%M'),
+                'observacoes': sol.observacoes_analise or ''
+            })
+        
+        permutas_data = []
+        for sol in solicitacoes_permuta:
+            permutas_data.append({
+                'id': sol.id,
+                'tipo': 'permuta',
+                'servidor1': f"{sol.nome_servidor1} ({sol.unidade_servidor1})",
+                'servidor2': f"{sol.nome_servidor2} ({sol.unidade_servidor2})",
+                'status': sol.status,
+                'data_solicitacao': sol.data_solicitacao.strftime('%d/%m/%Y %H:%M'),
+                'observacoes': sol.observacoes_analise or ''
+            })
+        
+        return JsonResponse({
+            'realocacoes': realocacoes_data,
+            'permutas': permutas_data,
+            'total': len(realocacoes_data) + len(permutas_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+# === NOVAS VIEWS PARA SISTEMA DE TRÊS NÍVEIS DE USUÁRIOS ===
+
+@login_required
+@require_http_methods(["GET"])
+def listar_simulacoes_gerente(request):
+    """
+    Lista simulações visíveis para gerentes (enviadas para análise por usuários internos)
+    """
+    from .models import obter_tipo_usuario
+    
+    if obter_tipo_usuario(request.user) != 'gerente':
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    # Buscar simulações enviadas para análise e rejeitadas por usuários internos
+    simulacoes = SimulacaoSalva.objects.filter(
+        status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+        visivel_para_gerentes=True
+    ).order_by('-atualizado_em')
+    
+    data = []
+    for sim in simulacoes:
+        # Só incluir se o usuário for realmente interno
+        if sim.tipo_usuario_atual == 'interno':
+            data.append({
+                'id': sim.id,
+                'nome': sim.nome,
+                'descricao': sim.descricao or '',
+                'unidade_base': sim.unidade_base or '',
+                'usuario': sim.usuario.get_full_name() or sim.usuario.username,
+                'usuario_email': sim.usuario.email,
+                'status': sim.get_status_display(),
+                'tipo_usuario': sim.get_tipo_usuario_display_atual(),
+                'criado_em': sim.criado_em.strftime('%d/%m/%Y %H:%M'),
+                'atualizado_em': sim.atualizado_em.strftime('%d/%m/%Y %H:%M')
+            })
+    
+        return JsonResponse({
+        'simulacoes': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_simulacao_para_analise(request):
+    """
+    Envia uma simulação para análise (disponível para usuários internos)
+    """
+    try:
+        data = json.loads(request.body)
+        simulacao_id = data.get('simulacao_id')
+        
+        if not simulacao_id:
+            return JsonResponse({'erro': 'ID da simulação é obrigatório'}, status=400)
+        
+        # Verificar se o usuário é interno (tem permissão para enviar para análise)
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'interno':
+            return JsonResponse({'erro': 'Apenas usuários internos podem enviar simulações para análise'}, status=403)
+        
+        # Buscar a simulação
+        try:
+            simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=request.user)
+        except SimulacaoSalva.DoesNotExist:
+            return JsonResponse({'erro': 'Simulação não encontrada'}, status=404)
+        
+        # Verificar se está em status válido para envio
+        if simulacao.status not in ['rascunho', 'rejeitada', 'rejeitada_editada']:
+            return JsonResponse({'erro': 'Esta simulação já foi enviada para análise ou aprovada'}, status=400)
+        
+        # Atualizar status
+        status_anterior = simulacao.status
+        simulacao.status = 'enviada_analise'
+        simulacao.save()
+        
+        # Criar notificações para gerentes
+        from .models import TipoUsuario
+        gerentes = User.objects.filter(tipo_usuario_simulacao__tipo='gerente', tipo_usuario_simulacao__ativo=True)
+        for gerente in gerentes:
+            if status_anterior in ['rejeitada', 'rejeitada_editada']:
+                titulo = f'Simulação corrigida para reavaliação: {simulacao.nome}'
+                mensagem = f'{request.user.get_full_name() or request.user.username} corrigiu e reenviou a simulação "{simulacao.nome}" para nova análise.'
+            else:
+                titulo = f'Nova simulação para análise: {simulacao.nome}'
+                mensagem = f'{request.user.get_full_name() or request.user.username} enviou a simulação "{simulacao.nome}" para análise.'
+            
+            NotificacaoSimulacao.objects.create(
+                usuario=gerente,
+                tipo='simulacao_enviada',
+                titulo=titulo,
+                mensagem=mensagem,
+                simulacao=simulacao
+            )
+        
+        if status_anterior in ['rejeitada', 'rejeitada_editada']:
+            mensagem_sucesso = 'Simulação corrigida e reenviada para análise com sucesso'
+        else:
+            mensagem_sucesso = 'Simulação enviada para análise com sucesso'
+        
+        return JsonResponse({
+            'mensagem': mensagem_sucesso,
+            'status': simulacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def avaliar_simulacao(request):
+    """
+    Permite que gerentes aprovem ou rejeitem simulações
+    """
+    try:
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Acesso negado'}, status=403)
+        
+        data = json.loads(request.body)
+        simulacao_id = data.get('simulacao_id')
+        acao = data.get('acao')  # 'aprovar' ou 'rejeitar'
+        observacoes = data.get('observacoes', '')
+        
+        if not all([simulacao_id, acao]):
+            return JsonResponse({'erro': 'ID da simulação e ação são obrigatórios'}, status=400)
+        
+        if acao not in ['aprovar', 'rejeitar']:
+            return JsonResponse({'erro': 'Ação deve ser "aprovar" ou "rejeitar"'}, status=400)
+        
+        # Buscar a simulação (pode estar em análise ou rejeitada para reavaliação)
+        try:
+            simulacao = SimulacaoSalva.objects.get(
+                id=simulacao_id, 
+                status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+                visivel_para_gerentes=True
+            )
+        except SimulacaoSalva.DoesNotExist:
+            return JsonResponse({'erro': 'Simulação não encontrada ou não disponível para avaliação'}, status=404)
+        
+        # Atualizar status
+        status_anterior = simulacao.status
+        if acao == 'aprovar':
+            simulacao.status = 'aprovada'
+            mensagem_tipo = 'simulacao_aprovada'
+            if status_anterior in ['rejeitada', 'rejeitada_editada']:
+                mensagem_titulo = f'Simulação reavaliada e aprovada: {simulacao.nome}'
+                mensagem_texto = f'Sua simulação "{simulacao.nome}" foi reavaliada e aprovada após as correções.'
+            else:
+                mensagem_titulo = f'Simulação aprovada: {simulacao.nome}'
+                mensagem_texto = f'Sua simulação "{simulacao.nome}" foi aprovada.'
+        else:
+            simulacao.status = 'rejeitada'
+            mensagem_tipo = 'simulacao_rejeitada'
+            mensagem_titulo = f'Simulação rejeitada: {simulacao.nome}'
+            mensagem_texto = f'Sua simulação "{simulacao.nome}" foi rejeitada. Faça as correções necessárias e solicite nova avaliação.'
+        
+        if observacoes:
+            mensagem_texto += f' Observações: {observacoes}'
+        
+        simulacao.save()
+        
+        # Criar notificação para o criador da simulação
+        NotificacaoSimulacao.objects.create(
+            usuario=simulacao.usuario,
+            tipo=mensagem_tipo,
+            titulo=mensagem_titulo,
+            mensagem=mensagem_texto,
+            simulacao=simulacao
+        )
+        
+        return JsonResponse({
+            'mensagem': f'Simulação {acao}da com sucesso',
+            'status': simulacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def criar_solicitacao_simulacao(request):
+    """
+    Permite que gerentes criem solicitações de simulação para usuários internos
+    """
+    try:
+        from .models import obter_tipo_usuario
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Apenas gerentes podem criar solicitações'}, status=403)
+        
+        data = json.loads(request.body)
+        usuario_designado_id = data.get('usuario_designado_id')
+        titulo = data.get('titulo', '').strip()
+        descricao = data.get('descricao', '').strip()
+        unidade_base_sugerida = data.get('unidade_base_sugerida', '').strip()
+        prazo_estimado = data.get('prazo_estimado')
+        prioridade = data.get('prioridade', 'normal')
+        
+        # Validações
+        if not all([usuario_designado_id, titulo, descricao]):
+            return JsonResponse({'erro': 'Usuário designado, título e descrição são obrigatórios'}, status=400)
+        
+        # Verificar se o usuário designado existe e é interno
+        try:
+            usuario_designado = User.objects.get(id=usuario_designado_id)
+            if obter_tipo_usuario(usuario_designado) != 'interno':
+                return JsonResponse({'erro': 'Usuário designado deve ser um usuário interno'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'erro': 'Usuário designado não encontrado'}, status=404)
+        
+        # Converter prazo se fornecido
+        prazo_obj = None
+        if prazo_estimado:
+            try:
+                from datetime import datetime
+                prazo_obj = datetime.strptime(prazo_estimado, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'erro': 'Formato de data inválido para prazo estimado'}, status=400)
+        
+        # Criar solicitação
+        solicitacao = SolicitacaoSimulacao.objects.create(
+            solicitante=request.user,
+            usuario_designado=usuario_designado,
+            titulo=titulo,
+            descricao=descricao,
+            unidade_base_sugerida=unidade_base_sugerida,
+            prazo_estimado=prazo_obj,
+            prioridade=prioridade
+        )
+        
+        # Criar notificação para o usuário designado
+        NotificacaoSimulacao.objects.create(
+            usuario=usuario_designado,
+            tipo='nova_solicitacao',
+            titulo=f'Nova solicitação de simulação: {titulo}',
+            mensagem=f'Você recebeu uma nova solicitação de simulação de {request.user.get_full_name() or request.user.username}.',
+            solicitacao=solicitacao
+        )
+        
+        return JsonResponse({
+            'mensagem': 'Solicitação criada com sucesso',
+            'solicitacao_id': solicitacao.id
+        }, status=201)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def listar_usuarios_internos(request):
+    """
+    Lista usuários internos disponíveis para receber solicitações
+    """
+    from .models import obter_tipo_usuario, TipoUsuario
+    
+    if obter_tipo_usuario(request.user) != 'gerente':
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    # Buscar usuários que são internos baseado no modelo TipoUsuario
+    usuarios_internos = User.objects.filter(
+        tipo_usuario_simulacao__tipo='interno',
+        tipo_usuario_simulacao__ativo=True,
+        is_active=True
+    ).distinct()
+    
+    data = []
+    for usuario in usuarios_internos:
+        nome_completo = usuario.get_full_name()
+        if not nome_completo or nome_completo.strip() == '':
+            nome_completo = usuario.username
+            
+        data.append({
+            'id': usuario.id,
+            'username': usuario.username,
+            'nome_completo': nome_completo,
+            'email': usuario.email or 'Sem email',
+            'grupos': [group.name for group in usuario.groups.all()]
+        })
+    
+    return JsonResponse({
+        'usuarios': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def minhas_solicitacoes_simulacao(request):
+    """
+    Lista solicitações de simulação recebidas pelo usuário
+    """
+    # Buscar solicitações recebidas
+    solicitacoes = SolicitacaoSimulacao.objects.filter(
+        usuario_designado=request.user
+    ).order_by('-criada_em')
+    
+    data = []
+    for sol in solicitacoes:
+        data.append({
+            'id': sol.id,
+            'titulo': sol.titulo,
+            'descricao': sol.descricao,
+            'solicitante': sol.solicitante.get_full_name() or sol.solicitante.username,
+            'solicitante_email': sol.solicitante.email,
+            'unidade_base_sugerida': sol.unidade_base_sugerida or '',
+            'prazo_estimado': sol.prazo_estimado.strftime('%d/%m/%Y') if sol.prazo_estimado else '',
+            'prioridade': sol.get_prioridade_display(),
+            'status': sol.get_status_display(),
+            'criada_em': sol.criada_em.strftime('%d/%m/%Y %H:%M'),
+            'aceita_em': sol.aceita_em.strftime('%d/%m/%Y %H:%M') if sol.aceita_em else '',
+            'simulacao_criada_id': sol.simulacao_criada.id if sol.simulacao_criada else None,
+            'simulacao_criada_nome': sol.simulacao_criada.nome if sol.simulacao_criada else '',
+            'observacoes_usuario': sol.observacoes_usuario or ''
+        })
+    
+    return JsonResponse({
+        'solicitacoes': data,
+        'total': len(data)
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def aceitar_solicitacao_simulacao(request):
+    """
+    Permite que usuários aceitem uma solicitação de simulação
+    """
+    try:
+        data = json.loads(request.body)
+        solicitacao_id = data.get('solicitacao_id')
+        observacoes = data.get('observacoes', '')
+        
+        if not solicitacao_id:
+            return JsonResponse({'erro': 'ID da solicitação é obrigatório'}, status=400)
+        
+        # Buscar a solicitação
+        try:
+            solicitacao = SolicitacaoSimulacao.objects.get(
+                id=solicitacao_id, 
+                usuario_designado=request.user,
+                status='pendente'
+            )
+        except SolicitacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Solicitação não encontrada ou já foi processada'}, status=404)
+        
+        # Atualizar solicitação
+        solicitacao.status = 'em_andamento'
+        solicitacao.aceita_em = timezone.now()
+        if observacoes:
+            solicitacao.observacoes_usuario = observacoes
+        solicitacao.save()
+        
+        # Criar notificação para o solicitante
+        NotificacaoSimulacao.objects.create(
+            usuario=solicitacao.solicitante,
+            tipo='solicitacao_aceita',
+            titulo=f'Solicitação aceita: {solicitacao.titulo}',
+            mensagem=f'{request.user.get_full_name() or request.user.username} aceitou sua solicitação de simulação.',
+            solicitacao=solicitacao
+        )
+        
+        return JsonResponse({
+            'mensagem': 'Solicitação aceita com sucesso',
+            'status': solicitacao.get_status_display()
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def vincular_simulacao_solicitacao(request):
+    """
+    Vincula uma simulação criada a uma solicitação
+    """
+    try:
+        data = json.loads(request.body)
+        solicitacao_id = data.get('solicitacao_id')
+        simulacao_id = data.get('simulacao_id')
+        
+        if not all([solicitacao_id, simulacao_id]):
+            return JsonResponse({'erro': 'ID da solicitação e da simulação são obrigatórios'}, status=400)
+        
+        # Buscar solicitação e simulação
+        try:
+            solicitacao = SolicitacaoSimulacao.objects.get(
+                id=solicitacao_id,
+                usuario_designado=request.user
+            )
+            simulacao = SimulacaoSalva.objects.get(
+                id=simulacao_id,
+                usuario=request.user
+            )
+        except (SolicitacaoSimulacao.DoesNotExist, SimulacaoSalva.DoesNotExist):
+            return JsonResponse({'erro': 'Solicitação ou simulação não encontrada'}, status=404)
+        
+        # Vincular simulação à solicitação
+        solicitacao.simulacao_criada = simulacao
+        solicitacao.status = 'concluida'
+        solicitacao.save()
+        
+        return JsonResponse({
+            'mensagem': 'Simulação vinculada à solicitação com sucesso'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def minhas_notificacoes(request):
+    """
+    Lista notificações do usuário
+    """
+    notificacoes = NotificacaoSimulacao.objects.filter(
+        usuario=request.user
+    ).order_by('-criada_em')[:20]  # Últimas 20 notificações
+    
+    data = []
+    for notif in notificacoes:
+        data.append({
+            'id': notif.id,
+            'tipo': notif.tipo,
+            'titulo': notif.titulo,
+            'mensagem': notif.mensagem,
+            'lida': notif.lida,
+            'criada_em': notif.criada_em.strftime('%d/%m/%Y %H:%M'),
+            'solicitacao_id': notif.solicitacao.id if notif.solicitacao else None,
+            'simulacao_id': notif.simulacao.id if notif.simulacao else None
+        })
+    
+    # Contar não lidas
+    nao_lidas = NotificacaoSimulacao.objects.filter(
+        usuario=request.user,
+        lida=False
+    ).count()
+    
+    return JsonResponse({
+        'notificacoes': data,
+        'total': len(data),
+        'nao_lidas': nao_lidas
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def marcar_notificacao_lida(request):
+    """
+    Marca uma notificação como lida
+    """
+    try:
+        data = json.loads(request.body)
+        notificacao_id = data.get('notificacao_id')
+        
+        if not notificacao_id:
+            return JsonResponse({'erro': 'ID da notificação é obrigatório'}, status=400)
+        
+        try:
+            notificacao = NotificacaoSimulacao.objects.get(
+                id=notificacao_id,
+                usuario=request.user
+            )
+            notificacao.lida = True
+            notificacao.save()
+            
+            return JsonResponse({'mensagem': 'Notificação marcada como lida'})
+        except NotificacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Notificação não encontrada'}, status=404)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def excluir_notificacao(request):
+    """
+    Exclui uma notificação específica do usuário
+    """
+    try:
+        # Verificar se há dados no corpo da requisição
+        if hasattr(request, 'body') and request.body:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                notificacao_id = data.get('notificacao_id')
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return JsonResponse({'erro': 'Dados JSON inválidos'}, status=400)
+        else:
+            return JsonResponse({'erro': 'Dados não fornecidos'}, status=400)
+        
+        if not notificacao_id:
+            return JsonResponse({'erro': 'ID da notificação é obrigatório'}, status=400)
+        
+        try:
+            notificacao = NotificacaoSimulacao.objects.get(
+                id=notificacao_id,
+                usuario=request.user
+            )
+            notificacao.delete()
+            
+            return JsonResponse({'mensagem': 'Notificação excluída com sucesso'})
+        except NotificacaoSimulacao.DoesNotExist:
+            return JsonResponse({'erro': 'Notificação não encontrada'}, status=404)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Erro ao excluir notificação: {str(e)}')
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def excluir_todas_notificacoes(request):
+    """
+    Exclui todas as notificações do usuário
+    """
+    try:
+        # Contar quantas notificações serão excluídas
+        total_notificacoes = NotificacaoSimulacao.objects.filter(
+            usuario=request.user
+        ).count()
+        
+        if total_notificacoes == 0:
+            return JsonResponse({'mensagem': 'Nenhuma notificação encontrada para excluir'})
+        
+        # Excluir todas as notificações do usuário
+        NotificacaoSimulacao.objects.filter(
+            usuario=request.user
+        ).delete()
+        
+        return JsonResponse({
+            'mensagem': f'{total_notificacoes} notificações excluídas com sucesso',
+            'total_excluidas': total_notificacoes
+        })
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Erro ao excluir todas as notificações: {str(e)}')
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def adicionar_cargo(request):
+    """
+    Endpoint para adicionar um novo cargo à estrutura.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Obter dados do JSON
+        import json
+        data = json.loads(request.body)
+        
+        # Validar campos obrigatórios
+        required_fields = ['sigla_unidade', 'tipo_cargo', 'denominacao', 'categoria', 'nivel', 'quantidade']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Campo obrigatório ausente: {field}'
+                }, status=400)
+        
+        # Obter dados dos campos
+        sigla_unidade = data['sigla_unidade'].strip()
+        tipo_cargo = data['tipo_cargo'].strip()
+        denominacao = data['denominacao'].strip()
+        categoria = int(data['categoria'])
+        nivel = int(data['nivel'])
+        quantidade = int(data['quantidade'])
+        
+        # Validações específicas
+        if categoria < 1 or categoria > 4:
+            return JsonResponse({
+                'success': False,
+                'error': 'Categoria deve estar entre 1 e 4'
+            }, status=400)
+            
+        if nivel < 1 or nivel > 18:
+            return JsonResponse({
+                'success': False,
+                'error': 'Nível deve estar entre 1 e 18'
+            }, status=400)
+            
+        if quantidade < 1:
+            return JsonResponse({
+                'success': False,
+                'error': 'Quantidade deve ser pelo menos 1'
+            }, status=400)
+        
+        # Buscar uma unidade existente com a mesma sigla para pegar informações base
+        unidade_base = UnidadeCargo.objects.filter(sigla_unidade=sigla_unidade).first()
+        
+        if not unidade_base:
+            return JsonResponse({
+                'success': False,
+                'error': f'Não foi encontrada unidade com sigla: {sigla_unidade}'
+            }, status=400)
+        
+        # Buscar dados do cargo SIORG para obter pontos e valor
+        cargo_siorg = CargoSIORG.objects.filter(
+            cargo__icontains=f"{tipo_cargo} {categoria}"
+        ).first()
+        
+        pontos_unitario = 0
+        valor_unitario = 0
+        if cargo_siorg:
+            # Extrair pontos do campo valor (formato: X.XX/Y.YY pts)
+            valor_str = cargo_siorg.valor
+            if '/' in valor_str and 'pts' in valor_str:
+                try:
+                    pontos_parte = valor_str.split('/')[1].replace('pts', '').strip()
+                    pontos_unitario = float(pontos_parte)
+                except:
+                    pontos_unitario = 0
+            
+            valor_unitario = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+        
+        # Calcular valores totais
+        pontos_total = pontos_unitario * quantidade
+        valor_total = valor_unitario * quantidade
+        
+        # Gerar um grafo único para o cargo adicionado manualmente
+        import uuid
+        grafo_unico = f"MANUAL_{sigla_unidade}_{tipo_cargo}_{categoria}_{nivel}_{uuid.uuid4().hex[:8]}"
+        
+        # Criar o novo cargo ASSOCIADO AO USUÁRIO
+        novo_cargo = UnidadeCargo.objects.create(
+            nivel_hierarquico=unidade_base.nivel_hierarquico,
+            tipo_unidade=unidade_base.tipo_unidade,
+            denominacao_unidade=unidade_base.denominacao_unidade,
+            codigo_unidade=unidade_base.codigo_unidade,
+            sigla_unidade=sigla_unidade,
+            categoria_unidade=unidade_base.categoria_unidade,
+            orgao_entidade=unidade_base.orgao_entidade,
+            tipo_cargo=tipo_cargo,
+            denominacao=denominacao,
+            categoria=categoria,
+            nivel=nivel,
+            quantidade=quantidade,
+            sigla=sigla_unidade,
+            grafo=grafo_unico,
+            pontos_total=pontos_total,
+            valor_total=valor_total,
+            usuario=request.user  # ✅ ASSOCIAR AO USUÁRIO ATUAL
+        )
+        
+        logger.info(f"Novo cargo criado: {novo_cargo.denominacao} (ID: {novo_cargo.id}) por usuário {request.user.username}")
+        
+        # Retornar dados do cargo criado
+        return JsonResponse({
+            'success': True,
+            'cargo': {
+                'id': novo_cargo.id,
+                'sigla': novo_cargo.sigla,
+                'tipo_cargo': novo_cargo.tipo_cargo,
+                'denominacao': novo_cargo.denominacao,
+                'categoria': novo_cargo.categoria,
+                'nivel': novo_cargo.nivel,
+                'quantidade': novo_cargo.quantidade,
+                'pontos': pontos_unitario,  # Pontos unitários para o frontend
+                'valor_unitario': valor_unitario,  # Valor unitário para o frontend
+                'pontos_total': novo_cargo.pontos_total,
+                'valor_total': novo_cargo.valor_total,
+                'grafo': novo_cargo.grafo,
+                'is_manual': True,  # ✅ MARCAR COMO CARGO MANUAL
+                'manual_id': novo_cargo.id  # ✅ ID PARA REMOÇÃO
+            },
+            'message': 'Cargo adicionado com sucesso!'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Dados JSON inválidos'
+        }, status=400)
+        
+    except ValueError as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Erro de validação: {str(e)}'
+        }, status=400)
+        
+    except Exception as e:
+        logger.error(f"Erro ao adicionar cargo: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }, status=500)
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def mesclar_simulacoes(request):
+    """
+    Mescla múltiplas simulações em uma nova simulação.
+    Disponível apenas para gerentes.
+    """
+    import json
+    from .models import obter_tipo_usuario
+    
+    try:
+        # Verificar se usuário é gerente
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Acesso negado. Apenas gerentes podem mesclar simulações.'}, status=403)
+        
+        # Obter dados da requisição
+        data = json.loads(request.body)
+        simulacao_ids = data.get('simulacao_ids', [])
+        metodo_mesclagem = data.get('metodo', 'somar')
+        nome_nova_simulacao = data.get('nome', '').strip()
+        descricao_nova_simulacao = data.get('descricao', '').strip()
+        
+        # Validações
+        if not simulacao_ids or len(simulacao_ids) < 2:
+            return JsonResponse({'erro': 'Selecione pelo menos 2 simulações para mesclar.'}, status=400)
+        
+        if not nome_nova_simulacao:
+            return JsonResponse({'erro': 'Nome da nova simulação é obrigatório.'}, status=400)
+        
+        if metodo_mesclagem not in ['somar', 'media', 'substituir']:
+            return JsonResponse({'erro': 'Método de mesclagem inválido.'}, status=400)
+        
+        # Verificar se já existe simulação com mesmo nome
+        if SimulacaoSalva.objects.filter(usuario=request.user, nome=nome_nova_simulacao).exists():
+            return JsonResponse({'erro': f'Já existe uma simulação com o nome "{nome_nova_simulacao}"'}, status=400)
+        
+        # Carregar simulações
+        simulacoes = []
+        simulacoes_nao_aprovadas = []
+        
+        for sim_id in simulacao_ids:
+            try:
+                # Gerentes podem acessar qualquer simulação disponível
+                try:
+                    sim = SimulacaoSalva.objects.get(id=sim_id, usuario=request.user)
+                except SimulacaoSalva.DoesNotExist:
+                    sim = SimulacaoSalva.objects.get(
+                        id=sim_id,
+                        status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
+                        visivel_para_gerentes=True
+                    )
+                
+                # Verificar se a simulação está aprovada
+                if sim.status != 'aprovada':
+                    simulacoes_nao_aprovadas.append({
+                        'id': sim.id,
+                        'nome': sim.nome,
+                        'status': sim.get_status_display()
+                    })
+                else:
+                    simulacoes.append(sim)
+                    
+            except SimulacaoSalva.DoesNotExist:
+                return JsonResponse({'erro': f'Simulação {sim_id} não encontrada ou sem acesso.'}, status=404)
+        
+        # Verificar se há simulações não aprovadas
+        if simulacoes_nao_aprovadas:
+            nomes_nao_aprovadas = [f'"{s["nome"]}" ({s["status"]})' for s in simulacoes_nao_aprovadas]
+            return JsonResponse({
+                'erro': f'Apenas simulações aprovadas podem ser mescladas. As seguintes simulações não estão aprovadas: {", ".join(nomes_nao_aprovadas)}'
+            }, status=400)
+        
+        # Extrair dados das simulações
+        todos_dados = []
+        unidades_base = []
+        
+        for sim in simulacoes:
+            dados_estrutura = sim.dados_estrutura or []
+            todos_dados.extend(dados_estrutura)
+            if sim.unidade_base:
+                unidades_base.append(sim.unidade_base)
+        
+        if not todos_dados:
+            return JsonResponse({'erro': 'Nenhum dado encontrado nas simulações selecionadas.'}, status=400)
+        
+        # Aplicar método de mesclagem
+        dados_mesclados = []
+        
+        if metodo_mesclagem == 'somar':
+            # Agrupar por chave única e somar quantidades
+            grupos = {}
+            for item in todos_dados:
+                # Criar chave única baseada em campos principais
+                chave = f"{item.get('sigla', '')}_{item.get('tipo_cargo', '')}_{item.get('denominacao', '')}_{item.get('categoria', '')}_{item.get('nivel', '')}"
+                
+                if chave in grupos:
+                    # Somar quantidades
+                    grupos[chave]['quantidade'] = int(grupos[chave].get('quantidade', 0)) + int(item.get('quantidade', 0))
+                    # Recalcular pontos e valores totais
+                    pontos_unit = float(grupos[chave].get('pontos', 0))
+                    valor_unit = float(grupos[chave].get('valor_unitario', 0))
+                    nova_qtd = grupos[chave]['quantidade']
+                    grupos[chave]['pontos_total'] = pontos_unit * nova_qtd
+                    grupos[chave]['valor_total'] = valor_unit * nova_qtd
+                else:
+                    grupos[chave] = item.copy()
+            
+            dados_mesclados = list(grupos.values())
+            
+        elif metodo_mesclagem == 'media':
+            # Agrupar por chave única e calcular média das quantidades
+            grupos = {}
+            contadores = {}
+            
+            for item in todos_dados:
+                chave = f"{item.get('sigla', '')}_{item.get('tipo_cargo', '')}_{item.get('denominacao', '')}_{item.get('categoria', '')}_{item.get('nivel', '')}"
+                
+                if chave in grupos:
+                    grupos[chave]['quantidade'] = int(grupos[chave].get('quantidade', 0)) + int(item.get('quantidade', 0))
+                    contadores[chave] += 1
+                else:
+                    grupos[chave] = item.copy()
+                    contadores[chave] = 1
+            
+            # Calcular médias
+            for chave in grupos:
+                qtd_media = round(grupos[chave]['quantidade'] / contadores[chave])
+                grupos[chave]['quantidade'] = qtd_media
+                
+                # Recalcular pontos e valores totais
+                pontos_unit = float(grupos[chave].get('pontos', 0))
+                valor_unit = float(grupos[chave].get('valor_unitario', 0))
+                grupos[chave]['pontos_total'] = pontos_unit * qtd_media
+                grupos[chave]['valor_total'] = valor_unit * qtd_media
+            
+            dados_mesclados = list(grupos.values())
+            
+        elif metodo_mesclagem == 'substituir':
+            # Usar dados da última simulação para itens duplicados
+            dados_mesclados = todos_dados.copy()  # Manter ordem, últimos prevalecem
+        
+        # Determinar unidade base (primeira não vazia ou combinação)
+        unidade_base_final = unidades_base[0] if unidades_base else 'Simulações Mescladas'
+        if len(set(unidades_base)) > 1:
+            unidade_base_final = f"Mesclagem: {' + '.join(set(unidades_base))}"
+        
+        # Criar nova simulação mesclada
+        nova_simulacao = SimulacaoSalva.objects.create(
+            usuario=request.user,
+            nome=nome_nova_simulacao,
+            descricao=f"{descricao_nova_simulacao}\n\nMesclagem de {len(simulacoes)} simulações usando método '{metodo_mesclagem}'.",
+            dados_estrutura=dados_mesclados,
+            unidade_base=unidade_base_final
+        )
+        
+        print(f"🔗 [DEBUG] Simulação mesclada criada: {nova_simulacao.nome} (ID: {nova_simulacao.id}) com {len(dados_mesclados)} itens usando método '{metodo_mesclagem}' de {len(simulacoes)} simulações aprovadas")
+        
+        return JsonResponse({
+            'mensagem': f'Simulação "{nome_nova_simulacao}" criada com sucesso pela mesclagem de {len(simulacoes)} simulações.',
+            'id': nova_simulacao.id,
+            'itens_mesclados': len(dados_mesclados),
+            'metodo_usado': metodo_mesclagem
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados JSON inválidos.'}, status=400)
+    except Exception as e:
+        print(f"❌ [ERROR] Erro ao mesclar simulações: {str(e)}")
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)

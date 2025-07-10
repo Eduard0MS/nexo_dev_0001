@@ -52,10 +52,10 @@ whitenoise==6.6.0
 win32_setctime==1.2.0
 
 # Dependências de CI/CD
-flake8==6.0.0
-black==23.12.1
-pytest==7.4.0
-pytest-django==4.5.2
-coverage==7.3.0
-bandit==1.7.5
-safety==2.3.5
+flake8==7.0.0
+black==24.8.0
+pytest==8.3.3
+pytest-django==4.9.0
+coverage==7.6.7
+bandit==1.7.10
+safety==3.2.8

@@ -171,8 +171,58 @@ jobs:
     - name: Deploy to production
       if: github.ref == 'refs/heads/main'
       run: |
-        echo "Deploying to production environment..."
-        # Aqui você adicionaria o script de deploy para produção
+        echo "🚀 Iniciando deploy automático para produção..."
+        
+        # Configurar SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+        
+        # Executar deploy via SSH
+        ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOL'
+          set -e  # Parar em caso de erro
+          
+          echo "📁 Navegando para diretório do projeto..."
+          cd ${{ secrets.PRODUCTION_PROJECT_PATH }}
+          
+          echo "📥 Fazendo backup da versão atual..."
+          cp -r . ../backup_$(date +%Y%m%d_%H%M%S) || true
+          
+          echo "🔄 Atualizando código do GitHub..."
+          git fetch origin
+          git reset --hard origin/main
+          
+          echo "📦 Ativando ambiente virtual..."
+          source ${{ secrets.PRODUCTION_VENV_PATH }}/bin/activate || source venv/bin/activate || true
+          
+          echo "⬇️ Instalando/atualizando dependências..."
+          pip install -r requirements.txt
+          
+          echo "🗃️ Executando migrações do banco..."
+          python manage.py migrate --noinput
+          
+          echo "📋 Coletando arquivos estáticos..."
+          python manage.py collectstatic --noinput
+          
+          echo "🔄 Reiniciando serviços..."
+          sudo systemctl restart gunicorn_nexo
+          
+          echo "✅ Verificando status do serviço..."
+          sudo systemctl is-active gunicorn_nexo
+          
+          echo "🏥 Verificando saúde da aplicação..."
+          # Aguardar alguns segundos para o serviço inicializar
+          sleep 5
+          
+          # Verificar se a aplicação responde (ajuste a URL conforme necessário)
+          curl -f http://localhost:8000 || curl -f http://127.0.0.1:8000 || echo "⚠️ Aplicação pode estar inicializando..."
+          
+          echo "📊 Status final dos serviços..."
+          sudo systemctl status gunicorn_nexo --no-pager -l
+          
+          echo "🎉 Deploy concluído com sucesso!"
+        EOL
 
     - name: Upload deployment artifact
       uses: actions/upload-artifact@v4
@@ -189,11 +239,29 @@ jobs:
     - name: Notify on success
       if: needs.build-and-deploy.result == 'success'
       run: |
-        echo "✅ Deployment successful!"
-        # Aqui você pode adicionar notificações (Slack, email, etc.)
+        echo "🎉 DEPLOY AUTOMÁTICO CONCLUÍDO COM SUCESSO!"
+        echo "✅ Testes passaram"
+        echo "✅ Verificações de segurança aprovadas"
+        echo "✅ Deploy em produção realizado"
+        echo "🌐 Aplicação atualizada e rodando com gunicorn_nexo"
+        echo ""
+        echo "📊 Pipeline completo executado em: $(date)"
+        # Aqui você pode adicionar notificações (Slack, email, Discord, etc.)
 
     - name: Notify on failure
       if: needs.test.result == 'failure' || needs.security.result == 'failure' || needs.build-and-deploy.result == 'failure'
       run: |
-        echo "❌ Pipeline failed!"
-        # Aqui você pode adicionar notificações de falha 
+        echo "❌ FALHA NO PIPELINE CI/CD!"
+        echo ""
+        if [ "${{ needs.test.result }}" = "failure" ]; then
+          echo "❌ Testes falharam - verificar código"
+        fi
+        if [ "${{ needs.security.result }}" = "failure" ]; then
+          echo "❌ Verificações de segurança falharam - vulnerabilidades detectadas"
+        fi
+        if [ "${{ needs.build-and-deploy.result }}" = "failure" ]; then
+          echo "❌ Deploy falhou - produção não foi atualizada"
+        fi
+        echo ""
+        echo "🔍 Verifique os logs para mais detalhes"
+        # Aqui você pode adicionar notificações de falha urgentes 

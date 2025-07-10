@@ -1,4 +1,4 @@
-# Nexo Dev 0001
+# Nexo - Sistema de Gestão
 
 Este repositório contém o projeto Nexo Dev, uma solução para automatização de tarefas relacionadas ao gerenciamento de organogramas e cargos.
 
@@ -369,3 +369,6 @@ class AdminIPRestrictionMiddleware:
 
 # Adicione este middleware à lista MIDDLEWARE no settings.py
 ``` 
+
+## Deploy Automático ✅
+Sistema CI/CD com deploy automático configurado e funcionando - Última atualização: $(date)

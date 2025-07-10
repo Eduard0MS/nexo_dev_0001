@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
             name='TipoUsuario',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tipo', models.CharField(choices=[('externo', 'Usuário Externo'), ('interno', 'Usuário Interno'), ('gerente', 'Usuário Gerente (SE)')], default='externo', max_length=10, verbose_name='Tipo de Usuário')),
+                ('tipo', models.CharField(choices=[('externo', 'Usuário Externo'), ('interno', 'Usuário Interno'), ('gerente', 'Usuário Gerente')], default='externo', max_length=10, verbose_name='Tipo de Usuário')),
                 ('pode_solicitar', models.BooleanField(default=False, verbose_name='Pode Solicitar Simulações')),
                 ('pode_ver_todas', models.BooleanField(default=False, verbose_name='Pode Ver Todas as Simulações')),
                 ('ativo', models.BooleanField(default=True, verbose_name='Ativo')),

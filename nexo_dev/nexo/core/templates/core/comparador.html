@@ -1249,7 +1249,7 @@
                 <button id="clearFilterBtn" class="btn btn-sm btn-outline-secondary ms-2" title="Limpar filtro">
                   <i class="fas fa-times me-1"></i> Limpar
                 </button>
-                <button id="addCargoBtn" class="btn btn-sm btn-success ms-2" title="Adicionar Novo Cargo">
+                <button id="adicionarCargoBtn" class="btn btn-sm btn-success ms-2" title="Adicionar Novo Cargo">
                   <i class="fas fa-plus me-1"></i> Adicionar Cargo
                 </button>
                 <button type="button" class="btn btn-sm btn-success ms-2" id="baixarAnexoBtn" title="Baixar Anexo Preenchido"><i class="fas fa-file-excel"></i> Baixar Anexo</button>
@@ -1261,7 +1261,7 @@
                   </button>
                   <ul class="dropdown-menu" aria-labelledby="dropdownSimulacoes">
                     <li><a class="dropdown-item" href="#" id="salvarSimulacaoBtn"><i class="fas fa-save me-1"></i> Salvar Simulação</a></li>
-                    <li><a class="dropdown-item" href="#" id="carregarSimulacaoBtn"><i class="fas fa-folder-open me-1"></i> Carregar Simulação</a></li>
+                    <li><a class="dropdown-item" href="#" id="carregarSimulacaoBtn"><i class="fas fa-folder-open me-1"></i> <span id="carregarSimulacaoTexto">Carregar Simulação</span></a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" id="gerenciarSimulacoesBtn"><i class="fas fa-cog me-1"></i> Gerenciar Simulações</a></li>
                     <li><a class="dropdown-item" href="#" id="solicitacoesSimulacaoBtn"><i class="fas fa-tasks me-1"></i> Solicitações</a></li>
@@ -1435,7 +1435,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalCarregarSimulacaoLabel">Carregar Simulação</h5>
+        <h5 class="modal-title" id="modalCarregarSimulacaoLabel"><span id="modalCarregarTitulo">Carregar Simulação</span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -1612,6 +1612,109 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar Cargo -->
+<div class="modal fade" id="modalAdicionarCargo" tabindex="-1" aria-labelledby="modalAdicionarCargoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalAdicionarCargoLabel">
+          <i class="fas fa-plus"></i> Adicionar Novo Cargo
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formAdicionarCargo">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="siglaUnidade" class="form-label">Sigla da Unidade *</label>
+                <input type="text" class="form-control" id="siglaUnidade" required 
+                       placeholder="Ex: MPO" maxlength="20">
+                <div class="form-text">
+                  <i class="fas fa-info-circle text-info"></i> 
+                  Sigla da unidade onde o cargo será criado
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="tipoCargo" class="form-label">Tipo de Cargo *</label>
+                <select class="form-select" id="tipoCargo" required>
+                  <option value="">Selecione...</option>
+                  <option value="CCE">CCE - Cargo em Comissão Executiva</option>
+                  <option value="FCE">FCE - Função Comissionada Executiva</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="denominacaoCargo" class="form-label">Denominação do Cargo *</label>
+            <input type="text" class="form-control" id="denominacaoCargo" required 
+                   placeholder="Ex: Diretor de Planejamento" maxlength="200">
+            <div class="form-text">
+              <i class="fas fa-info-circle text-info"></i> 
+              Nome completo do cargo a ser criado
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="categoriaCargo" class="form-label">Categoria *</label>
+                <select class="form-select" id="categoriaCargo" required>
+                  <option value="">Selecione...</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+                <div class="form-text">
+                  <i class="fas fa-info-circle text-info"></i> 
+                  Categoria do cargo (1-4)
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="nivelCargo" class="form-label">Nível *</label>
+                <select class="form-select" id="nivelCargo" required>
+                  <option value="">Selecione...</option>
+                  <!-- Opções de 1 a 18 serão geradas via JavaScript -->
+                </select>
+                <div class="form-text">
+                  <i class="fas fa-info-circle text-info"></i> 
+                  Nível do cargo (1-18)
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="quantidadeCargo" class="form-label">Quantidade *</label>
+                <input type="number" class="form-control" id="quantidadeCargo" required 
+                       min="1" max="999" value="1">
+                <div class="form-text">
+                  <i class="fas fa-info-circle text-info"></i> 
+                  Número de cargos
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="alertaAdicionarCargo" class="alert d-none" role="alert"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="confirmarAdicionarCargo">
+          <i class="fas fa-plus"></i> Adicionar Cargo
+        </button>
       </div>
     </div>
   </div>

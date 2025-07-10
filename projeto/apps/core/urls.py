@@ -32,6 +32,7 @@ urlpatterns = [
     path('atualizar-organograma-json/', views.atualizar_organograma_json, name='atualizar_organograma_json'),
     path('api/organograma-filter/', views.api_organograma_filter, name='api_organograma_filter'),
     path('api/cargos_diretos/', views.api_cargos_diretos, name='api_cargos_diretos'),
+    path('api/adicionar-cargo/', views.adicionar_cargo, name='api_adicionar_cargo'),
     path('simulador/', views.comparador, name='simulador'), # Corrected to use views.comparador
     path('comparador/', views.simulacao_page, name='comparador'), # Corrected to use views.simulacao_page
     # path('painel_de_bordo/', PainelDeBordoView.as_view(), name='painel_de_bordo'), # Commented out as PainelDeBordoView is not defined in views.py
@@ -51,6 +52,7 @@ urlpatterns = [
     path('api/simulacoes/<int:simulacao_id>/', views.carregar_simulacao, name='carregar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/atualizar/', views.atualizar_simulacao, name='atualizar_simulacao'),
     path('api/simulacoes/<int:simulacao_id>/deletar/', views.deletar_simulacao, name='deletar_simulacao'),
+    path('api/simulacoes/mesclar/', views.mesclar_simulacoes, name='mesclar_simulacoes'),
     
     # URLs para Sistema de Relatórios
     path('relatorios/', views.relatorios, name='relatorios'),

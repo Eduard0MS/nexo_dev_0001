@@ -12,6 +12,8 @@
     let simulacoesCarregadas = [];
     let simulacaoAtual = null;
     let tipoUsuario = 'externo'; // Será definido pela API
+    let simulacaoEmEdicao = null; // CORREÇÃO: Mover para escopo global
+    let timeoutAutoSave = null; // CORREÇÃO: Adicionar timeout global
     
     // Função para limpar o contexto de simulação atual
     function limparContextoSimulacao() {
@@ -19,6 +21,26 @@
             console.log('🧹 Limpando contexto da simulação:', simulacaoAtual.nome);
         }
         simulacaoAtual = null;
+        
+        // CORREÇÃO: Limpar banner de edição se existir
+        const bannerEdicao = document.getElementById('edicao-banner');
+        if (bannerEdicao) {
+            bannerEdicao.remove();
+            console.log('🧹 Banner de edição removido');
+        }
+        
+        // CORREÇÃO: Cancelar timeout de auto-save pendente
+        if (typeof timeoutAutoSave !== 'undefined' && timeoutAutoSave) {
+            clearTimeout(timeoutAutoSave);
+            timeoutAutoSave = null;
+            console.log('🧹 Timeout de auto-save cancelado');
+        }
+        
+        // CORREÇÃO: Limpar estado de edição se não foi feito via finalizarEdicao
+        if (simulacaoEmEdicao) {
+            console.log('🧹 Limpando estado de edição:', simulacaoEmEdicao.nome);
+            simulacaoEmEdicao = null;
+        }
     }
     
     // Função para carregar o tipo de usuário na inicialização
@@ -28,7 +50,8 @@
             if (response.ok) {
                 const data = await response.json();
                 tipoUsuario = data.user_type || 'externo';
-                console.log('👤 Tipo de usuário carregado:', tipoUsuario);
+                const isGerente = data.is_gerente || false;
+                console.log('👤 Tipo de usuário carregado:', tipoUsuario, '| É gerente:', isGerente);
                 
                 // Configurar interface baseada no tipo de usuário
                 configurarInterfacePorTipo();
@@ -36,26 +59,81 @@
         } catch (error) {
             console.warn('Erro ao carregar tipo de usuário:', error);
             tipoUsuario = 'externo';
+            configurarInterfacePorTipo(); // Configurar mesmo se der erro
         }
     }
     
     // Função para configurar interface baseada no tipo de usuário
     function configurarInterfacePorTipo() {
+        console.log('🔧 configurarInterfacePorTipo() chamado - tipoUsuario:', tipoUsuario);
+        
         const criarTabLi = document.getElementById('criar-tab-li');
+        const carregarTexto = document.getElementById('carregarSimulacaoTexto');
+        const modalTitulo = document.getElementById('modalCarregarTitulo');
+        
+        console.log('📋 Elementos encontrados:', {
+            criarTabLi: !!criarTabLi,
+            carregarTexto: !!carregarTexto, 
+            modalTitulo: !!modalTitulo
+        });
         
         if (tipoUsuario === 'gerente') {
+            console.log('👑 CONFIGURANDO PARA GERENTE!');
+            
             // Mostrar aba de criar solicitação para gerentes
             if (criarTabLi) {
                 criarTabLi.style.display = 'block';
             }
-            console.log('🔧 Interface configurada para gerente');
+            
+            // Alterar texto para "Mesclar Simulações" para gerentes
+            if (carregarTexto) {
+                console.log('📝 Alterando texto do botão para "Mesclar Simulações"');
+                carregarTexto.textContent = 'Mesclar Simulações';
+                carregarTexto.style.fontWeight = 'bold'; // Forçar mudança visual
+                carregarTexto.style.color = '#0066cc'; // Cor azul para destacar
+            } else {
+                console.error('❌ Elemento carregarSimulacaoTexto NÃO ENCONTRADO!');
+            }
+            
+            if (modalTitulo) {
+                console.log('📝 Alterando título do modal para "Mesclar Simulações"');
+                modalTitulo.textContent = 'Mesclar Simulações';
+            } else {
+                console.error('❌ Elemento modalCarregarTitulo NÃO ENCONTRADO!');
+            }
+            
+            console.log('✅ Interface configurada para gerente - Mesclar Simulações disponível');
         } else {
+            console.log('👤 Configurando para usuário normal:', tipoUsuario);
+            
             // Ocultar aba de criar solicitação para não-gerentes
             if (criarTabLi) {
                 criarTabLi.style.display = 'none';
             }
-            console.log('🔧 Interface configurada para', tipoUsuario);
+            
+            // Manter texto original para outros usuários
+            if (carregarTexto) {
+                carregarTexto.textContent = 'Carregar Simulação';
+                carregarTexto.style.fontWeight = ''; // Resetar estilo
+                carregarTexto.style.color = ''; // Resetar cor
+            }
+            if (modalTitulo) {
+                modalTitulo.textContent = 'Carregar Simulação';
+            }
+            
+            console.log('✅ Interface configurada para', tipoUsuario);
         }
+        
+        // Forçar uma nova verificação após 1 segundo (caso os elementos ainda não existam)
+        setTimeout(() => {
+            const carregarTextoAgain = document.getElementById('carregarSimulacaoTexto');
+            if (carregarTextoAgain && tipoUsuario === 'gerente') {
+                console.log('🔄 Verificação após 1s - forçando alteração do texto');
+                carregarTextoAgain.textContent = 'Mesclar Simulações';
+                carregarTextoAgain.style.fontWeight = 'bold';
+                carregarTextoAgain.style.color = '#0066cc';
+            }
+        }, 1000);
     }
     
     // Inicialização
@@ -63,7 +141,44 @@
         setupEventListeners();
         carregarTipoUsuario();
         carregarNotificacoes();
+        
+        // VERIFICAÇÃO FORÇADA A CADA 2 SEGUNDOS PARA DEBUG
+        setInterval(() => {
+            forcarVerificacaoGerente();
+        }, 2000);
     });
+    
+    // Função para forçar verificação se é gerente e alterar texto
+    async function forcarVerificacaoGerente() {
+        try {
+            const response = await fetch('/api/simulacoes/');
+            if (response.ok) {
+                const data = await response.json();
+                const isGerente = data.is_gerente || data.user_type === 'gerente';
+                
+                if (isGerente) {
+                    const carregarTexto = document.getElementById('carregarSimulacaoTexto');
+                    const modalTitulo = document.getElementById('modalCarregarTitulo');
+                    
+                    if (carregarTexto && carregarTexto.textContent !== 'Mesclar Simulações') {
+                        console.log('🚨 FORÇANDO alteração para Mesclar Simulações!');
+                        carregarTexto.textContent = 'Mesclar Simulações';
+                        carregarTexto.style.fontWeight = 'bold';
+                        carregarTexto.style.color = '#ff6600';
+                        carregarTexto.style.backgroundColor = '#ffeecc';
+                        carregarTexto.style.padding = '2px 4px';
+                        carregarTexto.style.borderRadius = '3px';
+                    }
+                    
+                    if (modalTitulo && modalTitulo.textContent !== 'Mesclar Simulações') {
+                        modalTitulo.textContent = 'Mesclar Simulações';
+                    }
+                }
+            }
+        } catch (error) {
+            // Silencioso para não spammar o console
+        }
+    }
     
     // Configurar event listeners
     function setupEventListeners() {
@@ -113,35 +228,46 @@
             if (response.ok) {
                 const data = await response.json();
                 const total = data.total || 0;
+                const isGerente = data.is_gerente || false;
                 
-                // Atualizar o texto informativo no modal
+                // Atualizar o texto informativo no modal baseado no tipo de usuário
                 const modalLabel = document.getElementById('modalSalvarSimulacaoLabel');
-                modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total}/5 simulações salvas)</small>`;
                 
-                // Mostrar aviso se está próximo do limite
-                if (total >= 4) {
-                    const alertDiv = document.getElementById('alertaSalvar');
-                    const mensagem = total === 4 
-                        ? '⚠️ Atenção: Esta será sua última simulação (5/5). Para salvar mais, delete uma existente.'
-                        : '🚫 Limite atingido! Você já tem 5 simulações. Delete uma existente para criar uma nova.';
+                if (isGerente) {
+                    modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total} simulações salvas - sem limite)</small>`;
                     
-                    mostrarAlerta(alertDiv, total === 4 ? 'warning' : 'danger', mensagem);
-                    
-                    // Se já tem 5, desabilitar o botão de salvar
-                    const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
-                    if (total >= 5) {
-                        salvarBtn.disabled = true;
-                        salvarBtn.textContent = 'Limite Atingido';
-                        return; // Não abrir o modal se já tem 5
-                    } else {
-                        salvarBtn.disabled = false;
-                        salvarBtn.textContent = 'Salvar';
-                    }
-                } else {
-                    // Garantir que o botão esteja habilitado
+                    // Garantir que o botão esteja habilitado para gerentes
                     const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
                     salvarBtn.disabled = false;
                     salvarBtn.textContent = 'Salvar';
+                } else {
+                    modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total}/5 simulações salvas)</small>`;
+                    
+                    // Mostrar aviso se está próximo do limite (apenas para não-gerentes)
+                    if (total >= 4) {
+                        const alertDiv = document.getElementById('alertaSalvar');
+                        const mensagem = total === 4 
+                            ? '⚠️ Atenção: Esta será sua última simulação (5/5). Para salvar mais, delete uma existente.'
+                            : '🚫 Limite atingido! Você já tem 5 simulações. Delete uma existente para criar uma nova.';
+                        
+                        mostrarAlerta(alertDiv, total === 4 ? 'warning' : 'danger', mensagem);
+                        
+                        // Se já tem 5, desabilitar o botão de salvar
+                        const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
+                        if (total >= 5) {
+                            salvarBtn.disabled = true;
+                            salvarBtn.textContent = 'Limite Atingido';
+                            return; // Não abrir o modal se já tem 5
+                        } else {
+                            salvarBtn.disabled = false;
+                            salvarBtn.textContent = 'Salvar';
+                        }
+                    } else {
+                        // Garantir que o botão esteja habilitado
+                        const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
+                        salvarBtn.disabled = false;
+                        salvarBtn.textContent = 'Salvar';
+                    }
                 }
             }
         } catch (error) {
@@ -297,6 +423,18 @@
     async function abrirModalCarregar(e) {
         e.preventDefault();
         
+        // CORREÇÃO: Verificar se há simulação em edição
+        if (simulacaoEmEdicao) {
+            alert(
+                `⚠️ Você está editando a simulação "${simulacaoEmEdicao.nome}".\n\n` +
+                `Para carregar outra simulação:\n` +
+                `1. Finalize a edição atual (botão "Finalizar Edição")\n` +
+                `2. Ou cancele a edição (botão "Cancelar")\n\n` +
+                `Depois você poderá carregar uma nova simulação.`
+            );
+            return;
+        }
+        
         // Limpar lista e alerta
         const listaDiv = document.getElementById('listaSimulacoesCarregar');
         const alertDiv = document.getElementById('alertaCarregar');
@@ -313,7 +451,19 @@
             const data = await response.json();
             
             if (response.ok) {
-                renderizarListaSimulacoes(data.simulacoes, listaDiv, 'carregar');
+                const isGerente = data.is_gerente || false;
+                
+                // Configurar interface baseada no tipo de usuário
+                if (isGerente) {
+                    const instrucoesMesclagem = document.getElementById('instrucoesMesclagem');
+                    const btnModoMesclagem = document.getElementById('btnModoMesclagem');
+                    
+                    instrucoesMesclagem.classList.remove('d-none');
+                    btnModoMesclagem.classList.remove('d-none');
+                    renderizarListaSimulacoesComCheckbox(data.simulacoes, listaDiv);
+                } else {
+                    renderizarListaSimulacoes(data.simulacoes, listaDiv, 'carregar');
+                }
             } else {
                 mostrarAlerta(alertDiv, 'danger', 'Erro ao carregar simulações');
                 listaDiv.innerHTML = '';
@@ -343,18 +493,26 @@
             if (response.ok) {
                 // Atualizar tipo de usuário
                 tipoUsuario = data.user_type || 'externo';
+                const isGerente = data.is_gerente || false;
                 
                 const total = data.total || 0;
-                const limite = 5;
-                const restantes = limite - total;
                 
-                // Atualizar contador com informações mais detalhadas
-                let contadorTexto = `Você tem <strong>${total}</strong> de <strong>${limite}</strong> simulações salvas`;
+                // Atualizar contador baseado no tipo de usuário
+                let contadorTexto;
                 
-                if (restantes > 0) {
-                    contadorTexto += ` (restam <strong class="text-success">${restantes} slots</strong>)`;
+                if (isGerente) {
+                    contadorTexto = `Você tem <strong>${total}</strong> simulações no sistema <strong>(sem limite)</strong>`;
                 } else {
-                    contadorTexto += ` (<strong class="text-danger">limite atingido</strong>)`;
+                    const limite = 5;
+                    const restantes = limite - total;
+                    
+                    contadorTexto = `Você tem <strong>${total}</strong> de <strong>${limite}</strong> simulações salvas`;
+                    
+                    if (restantes > 0) {
+                        contadorTexto += ` (restam <strong class="text-success">${restantes} slots</strong>)`;
+                    } else {
+                        contadorTexto += ` (<strong class="text-danger">limite atingido</strong>)`;
+                    }
                 }
                 
                 contadorTexto += '.';
@@ -362,7 +520,7 @@
                 
                 // Mostrar informações sobre o tipo de usuário
                 if (tipoUsuario === 'gerente') {
-                    mostrarAlerta(alertDiv, 'info', '👥 Como gerente, você pode ver simulações enviadas para análise por usuários internos.');
+                    mostrarAlerta(alertDiv, 'info', '👥 Como gerente, você pode ver TODAS as simulações do sistema e não tem limite de criação.');
                 } else if (tipoUsuario === 'interno') {
                     mostrarAlerta(alertDiv, 'info', '📊 Como usuário interno, você pode enviar simulações para análise dos gerentes.');
                 }
@@ -401,12 +559,71 @@
                     <h6 class="mb-1">${sim.nome}</h6>
                     <small>${sim.criado_em}</small>
                 </div>
-                <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'}</small>
+                <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'} | Status: ${sim.status}</small>
             `;
             
             item.addEventListener('click', () => carregarSimulacao(sim.id));
             container.appendChild(item);
         });
+    }
+    
+    // Renderizar lista de simulações com checkbox para mesclagem (gerentes)
+    function renderizarListaSimulacoesComCheckbox(simulacoes, container) {
+        container.innerHTML = '';
+        
+        if (simulacoes.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">Nenhuma simulação salva</div>';
+            return;
+        }
+        
+        simulacoes.forEach(sim => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            item.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <div class="form-check me-3">
+                        <input class="form-check-input simulacao-checkbox" type="checkbox" value="${sim.id}" id="check_${sim.id}">
+                        <label class="form-check-label" for="check_${sim.id}"></label>
+                    </div>
+                    <div class="flex-grow-1" style="cursor: pointer;" onclick="carregarSimulacao(${sim.id})">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${sim.nome}</h6>
+                            <small>${sim.criado_em}</small>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'}</small>
+                            <small class="text-muted">
+                                <span class="badge ${getStatusBadgeClass(sim.status_code)}">${sim.status}</span>
+                                ${sim.usuario !== 'Você' ? ` | ${sim.usuario}` : ''}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
+        
+        // Adicionar event listeners para os checkboxes
+        const checkboxes = container.querySelectorAll('.simulacao-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', atualizarContadorSelecionadas);
+        });
+        
+        // Configurar event listeners para o formulário de mesclagem
+        configurarEventListenersMesclagem();
+    }
+    
+    // Função auxiliar para obter classe CSS do badge do status
+    function getStatusBadgeClass(statusCode) {
+        switch(statusCode) {
+            case 'rascunho': return 'bg-secondary';
+            case 'enviada_analise': return 'bg-warning';
+            case 'aprovada': return 'bg-success';
+            case 'rejeitada': return 'bg-danger';
+            case 'rejeitada_editada': return 'bg-warning text-dark';
+            default: return 'bg-light text-dark';
+        }
     }
     
     // Renderizar tabela de simulações para gerenciar
@@ -521,6 +738,29 @@
     // Carregar simulação específica
     async function carregarSimulacao(id) {
         try {
+            // CORREÇÃO: Verificar se há simulação em edição
+            if (simulacaoEmEdicao) {
+                const confirmar = confirm(
+                    `🚨 Atenção! Você está editando a simulação "${simulacaoEmEdicao.nome}".\n\n` +
+                    `Carregar uma nova simulação irá:\n` +
+                    `• Finalizar a edição atual automaticamente\n` +
+                    `• Salvar as alterações pendentes\n` +
+                    `• Carregar a nova simulação\n\n` +
+                    `Deseja continuar?`
+                );
+                
+                if (!confirmar) {
+                    return; // Usuário cancelou
+                }
+                
+                // Finalizar edição atual automaticamente
+                console.log('🔄 Finalizando edição automática antes de carregar nova simulação');
+                await finalizarEdicao();
+            }
+            
+            // CORREÇÃO: Limpar contexto de simulação anterior
+            limparContextoSimulacao();
+            
             console.log('🔄 Iniciando carregamento da simulação ID:', id);
             
             const response = await fetch(`/api/simulacoes/${id}/`);
@@ -1724,9 +1964,6 @@
     
     // === FUNCIONALIDADE DE EDIÇÃO COM AUTO-SAVE ===
     
-    let simulacaoEmEdicao = null;
-    let timeoutAutoSave = null;
-    
     // Função para editar simulação
     async function editarSimulacao(simulacaoId) {
         try {
@@ -2059,4 +2296,160 @@
     window.marcarComoLida = marcarComoLida;
     window.excluirNotificacao = excluirNotificacao;
     window.excluirTodasNotificacoes = excluirTodasNotificacoes;
+
+    // Atualizar contador de simulações selecionadas para mesclagem
+    function atualizarContadorSelecionadas() {
+        const checkboxes = document.querySelectorAll('.simulacao-checkbox:checked');
+        const contador = document.getElementById('contadorSelecionadas');
+        const formMesclagem = document.getElementById('formMesclagem');
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        
+        const totalSelecionadas = checkboxes.length;
+        contador.textContent = totalSelecionadas;
+        
+        // Mostrar/ocultar formulário de mesclagem baseado na seleção
+        if (totalSelecionadas >= 2) {
+            formMesclagem.classList.remove('d-none');
+            btnExecutar.disabled = false;
+        } else {
+            formMesclagem.classList.add('d-none');
+            btnExecutar.disabled = true;
+        }
+    }
+    
+    // Configurar event listeners para mesclagem
+    function configurarEventListenersMesclagem() {
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        const btnModoMesclagem = document.getElementById('btnModoMesclagem');
+        
+        // Remover listeners antigos se existirem
+        if (btnExecutar) {
+            btnExecutar.removeEventListener('click', executarMesclagem);
+            btnExecutar.addEventListener('click', executarMesclagem);
+        }
+        
+        if (btnModoMesclagem) {
+            btnModoMesclagem.removeEventListener('click', toggleModoMesclagem);
+            btnModoMesclagem.addEventListener('click', toggleModoMesclagem);
+        }
+    }
+    
+    // Toggle modo mesclagem (para alternar entre carregar e mesclar)
+    function toggleModoMesclagem() {
+        const checkboxes = document.querySelectorAll('.simulacao-checkbox');
+        const allUnchecked = Array.from(checkboxes).every(cb => !cb.checked);
+        
+        if (allUnchecked) {
+            // Selecionar todos
+            checkboxes.forEach(cb => cb.checked = true);
+        } else {
+            // Desmarcar todos
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+        
+        atualizarContadorSelecionadas();
+    }
+    
+    // Executar mesclagem de simulações
+    async function executarMesclagem() {
+        const checkboxesSelecionados = document.querySelectorAll('.simulacao-checkbox:checked');
+        const nomeMesclagem = document.getElementById('nomeMesclagem').value.trim();
+        const descricaoMesclagem = document.getElementById('descricaoMesclagem').value.trim();
+        const metodoMesclagem = document.getElementById('metodoMesclagem').value;
+        const alertDiv = document.getElementById('alertaCarregar');
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        
+        // Validações
+        if (checkboxesSelecionados.length < 2) {
+            mostrarAlerta(alertDiv, 'warning', 'Selecione pelo menos 2 simulações para mesclar.');
+            return;
+        }
+        
+        if (!nomeMesclagem) {
+            mostrarAlerta(alertDiv, 'warning', 'Informe um nome para a simulação mesclada.');
+            document.getElementById('nomeMesclagem').focus();
+            return;
+        }
+        
+        if (nomeMesclagem.length < 3) {
+            mostrarAlerta(alertDiv, 'warning', 'O nome deve ter pelo menos 3 caracteres.');
+            document.getElementById('nomeMesclagem').focus();
+            return;
+        }
+        
+        // Coletar IDs das simulações selecionadas
+        const simulacoesIds = Array.from(checkboxesSelecionados).map(cb => parseInt(cb.value));
+        
+        // Preparar dados da mesclagem
+        const dadosMesclagem = {
+            simulacoes_ids: simulacoesIds,
+            nome_mesclagem: nomeMesclagem,
+            descricao_mesclagem: descricaoMesclagem,
+            metodo_mesclagem: metodoMesclagem
+        };
+        
+        // Mostrar loading
+        btnExecutar.disabled = true;
+        btnExecutar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mesclando...';
+        
+        try {
+            const csrfToken = getCSRFToken();
+            if (!csrfToken) {
+                mostrarAlerta(alertDiv, 'danger', 'Erro: Token CSRF não encontrado. Recarregue a página.');
+                return;
+            }
+            
+            console.log('🔄 Mesclando simulações:', simulacoesIds);
+            console.log('📋 Dados:', dadosMesclagem);
+            
+            const response = await fetch('/api/simulacoes/mesclar/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(dadosMesclagem)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.sucesso) {
+                // Sucesso na mesclagem
+                mostrarAlerta(alertDiv, 'success', 
+                    `✅ ${result.mensagem}\n\n` +
+                    `📊 Nova simulação: ${result.simulacao_mesclada.nome}\n` +
+                    `📈 Total de registros: ${result.simulacao_mesclada.total_registros}\n` +
+                    `🔧 Método: ${result.simulacao_mesclada.metodo_mesclagem}\n` +
+                    `📋 Origem: ${result.simulacao_mesclada.simulacoes_origem.join(', ')}`
+                );
+                
+                // Limpar formulário
+                document.getElementById('nomeMesclagem').value = '';
+                document.getElementById('descricaoMesclagem').value = '';
+                document.querySelectorAll('.simulacao-checkbox').forEach(cb => cb.checked = false);
+                atualizarContadorSelecionadas();
+                
+                // Perguntar se quer carregar a simulação mesclada
+                if (confirm(`Simulação "${result.simulacao_mesclada.nome}" criada com sucesso!\n\nDeseja carregá-la agora no comparador?`)) {
+                    // Fechar modal e carregar simulação
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalCarregarSimulacao'));
+                    modal.hide();
+                    carregarSimulacao(result.simulacao_mesclada.id);
+                }
+                
+            } else {
+                // Erro na mesclagem
+                const mensagemErro = result.erro || 'Erro desconhecido ao mesclar simulações';
+                mostrarAlerta(alertDiv, 'danger', `❌ Erro: ${mensagemErro}`);
+            }
+            
+        } catch (error) {
+            console.error('Erro ao mesclar simulações:', error);
+            mostrarAlerta(alertDiv, 'danger', 'Erro de rede ao mesclar simulações. Tente novamente.');
+        } finally {
+            // Restaurar botão
+            btnExecutar.disabled = false;
+            btnExecutar.innerHTML = '<i class="fas fa-magic"></i> Mesclar Simulações';
+        }
+    }
 })(); 

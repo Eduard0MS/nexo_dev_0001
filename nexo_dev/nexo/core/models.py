@@ -30,6 +30,16 @@ class UnidadeCargo(models.Model):
     sigla = models.CharField(max_length=100, verbose_name="Sigla")
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Valor Total")
     pontos_total = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Pontos Total")
+    
+    # Campo para associar cargo ao usuário (cargos manuais)
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        verbose_name="Usuário Criador",
+        help_text="Deixe em branco para cargos padrão do sistema"
+    )
 
     def __str__(self):
         tipo_cargo = self.tipo_cargo if self.tipo_cargo else ""
@@ -302,7 +312,7 @@ class TipoUsuario(models.Model):
     TIPOS = [
         ('externo', 'Usuário Externo'),
         ('interno', 'Usuário Interno'), 
-        ('gerente', 'Usuário Gerente (SE)'),
+        ('gerente', 'Usuário Gerente'),
     ]
     
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tipo_usuario_simulacao')

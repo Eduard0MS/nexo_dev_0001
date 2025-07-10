@@ -3923,6 +3923,18 @@
       "nivel": 10,
       "quantidade": 1,
       "grafo": "308804-2032-310394-401129-401150"
+    },
+    {
+      "tipo_unidade": "Unidade Administrativa",
+      "denominacao_unidade": "Subsecretaria de Administração e Gestão Estratégica - SAGE",
+      "codigo_unidade": "309724",
+      "sigla": "SAGE",
+      "tipo_cargo": "FCE",
+      "denominacao": "programador",
+      "categoria": 3,
+      "nivel": 10,
+      "quantidade": 1,
+      "grafo": "MANUAL_SAGE_FCE_3_10_6246e712"
     }
   ],
   "core_cargosiorg": [

@@ -1274,9 +1274,12 @@ def api_cargos_diretos(request):
     logger.info(f"API cargos_diretos - Parâmetros: sigla={sigla}, tipo_cargo={tipo_cargo}, nivel={nivel}, pagina={pagina}, tamanho={tamanho}")
     
     try:
-        # Consulta base
-        query = UnidadeCargo.objects.all()
-        logger.info(f"Total de registros na tabela UnidadeCargo: {query.count()}")
+        # Consulta base - FILTRAR POR USUÁRIO: cargos padrão (sem usuario) + cargos do usuário atual
+        from django.db.models import Q
+        query = UnidadeCargo.objects.filter(
+            Q(usuario__isnull=True) | Q(usuario=request.user)  # Cargos padrão + cargos do usuário
+        )
+        logger.info(f"Total de registros filtrados por usuário: {query.count()}")
         
         # Se houver sigla, aplicar filtro especial
         if sigla:
@@ -1407,6 +1410,7 @@ def api_cargos_diretos(request):
             gasto_total = pontos_total * valor_unitario
             
             result.append({
+                'id': cargo.id,  # ID do cargo
                 'area': cargo.sigla_unidade or '',
                 'categoria_unidade': cargo.tipo_unidade or '',
                 'sigla_unidade': cargo.sigla_unidade or '',  # Campo explícito para compatibilidade
@@ -1420,7 +1424,9 @@ def api_cargos_diretos(request):
                 'valor_unitario': valor_unitario,
                 'pontos_totais': pontos_total,
                 'gastos_totais': gasto_total,
-                'grafo': cargo.grafo or ''  # Include grafo field for hierarchical ordering
+                'grafo': cargo.grafo or '',  # Include grafo field for hierarchical ordering
+                'is_manual': cargo.usuario is not None,  # ✅ MARCAR SE É CARGO MANUAL
+                'manual_id': cargo.id if cargo.usuario is not None else None  # ✅ ID PARA REMOÇÃO
             })
         
         logger.info(f"Dados formatados: {len(result)} registros processados")
@@ -1706,15 +1712,18 @@ def listar_simulacoes(request):
     user = request.user
     tipo_usuario = obter_tipo_usuario(user)
     
-    # Se for gerente, pode ver simulações próprias + enviadas para análise + rejeitadas
+    # LOG DE DEBUG PARA VERIFICAR DETECÇÃO DE GERENTE
+    print(f"🐛 DEBUG: Usuário: {user.username} ({user.email})")
+    print(f"🐛 DEBUG: Tipo detectado: {tipo_usuario}")
+    print(f"🐛 DEBUG: É superuser: {user.is_superuser}")
+    print(f"🐛 DEBUG: Grupos do usuário: {[g.name for g in user.groups.all()]}")
+    
+    # Se for gerente, pode ver TODAS as simulações do sistema
     if tipo_usuario == 'gerente':
-        simulacoes_proprias = SimulacaoSalva.objects.filter(usuario=user)
-        simulacoes_analise = SimulacaoSalva.objects.filter(
-            status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
-            visivel_para_gerentes=True
-        ).exclude(usuario=user)
-        simulacoes = simulacoes_proprias.union(simulacoes_analise).order_by('-atualizado_em')
+        print(f"🐛 DEBUG: GERENTE DETECTADO! Carregando TODAS as simulações")
+        simulacoes = SimulacaoSalva.objects.all().order_by('-atualizado_em')
     else:
+        print(f"🐛 DEBUG: Usuário normal. Carregando apenas simulações próprias")
         # Usuários normais veem apenas suas próprias simulações
         simulacoes = SimulacaoSalva.objects.filter(usuario=user)
     
@@ -1747,8 +1756,9 @@ def listar_simulacoes(request):
     return JsonResponse({
         'simulacoes': data,
         'total': len(data),
-        'limite': 5,
-        'user_type': tipo_usuario
+        'limite': None if tipo_usuario == 'gerente' else 5,
+        'user_type': tipo_usuario,
+        'is_gerente': tipo_usuario == 'gerente'
     })
 
 @login_required
@@ -1834,17 +1844,8 @@ def carregar_simulacao(request, simulacao_id):
         
         # Lógica de permissões baseada no tipo de usuário
         if tipo_usuario == 'gerente':
-            # Gerentes podem carregar simulações próprias + enviadas para análise
-            try:
-                # Primeiro tenta carregar simulação própria
-                simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
-            except SimulacaoSalva.DoesNotExist:
-                # Se não for própria, verifica se é uma simulação enviada para análise ou rejeitada
-                simulacao = SimulacaoSalva.objects.get(
-                    id=simulacao_id,
-                    status__in=['enviada_analise', 'rejeitada', 'rejeitada_editada'],
-                    visivel_para_gerentes=True
-                )
+            # Gerentes podem carregar QUALQUER simulação
+            simulacao = SimulacaoSalva.objects.get(id=simulacao_id)
         else:
             # Usuários normais só podem carregar simulações próprias
             simulacao = SimulacaoSalva.objects.get(id=simulacao_id, usuario=user)
@@ -3065,4 +3066,294 @@ def excluir_todas_notificacoes(request):
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f'Erro ao excluir todas as notificações: {str(e)}')
+        return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def adicionar_cargo(request):
+    """
+    Endpoint para adicionar um novo cargo à estrutura.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Obter dados do JSON
+        import json
+        data = json.loads(request.body)
+        
+        # Validar campos obrigatórios
+        required_fields = ['sigla_unidade', 'tipo_cargo', 'denominacao', 'categoria', 'nivel', 'quantidade']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Campo obrigatório ausente: {field}'
+                }, status=400)
+        
+        # Obter dados dos campos
+        sigla_unidade = data['sigla_unidade'].strip()
+        tipo_cargo = data['tipo_cargo'].strip()
+        denominacao = data['denominacao'].strip()
+        categoria = int(data['categoria'])
+        nivel = int(data['nivel'])
+        quantidade = int(data['quantidade'])
+        
+        # Validações específicas
+        if categoria < 1 or categoria > 4:
+            return JsonResponse({
+                'success': False,
+                'error': 'Categoria deve estar entre 1 e 4'
+            }, status=400)
+            
+        if nivel < 1 or nivel > 18:
+            return JsonResponse({
+                'success': False,
+                'error': 'Nível deve estar entre 1 e 18'
+            }, status=400)
+            
+        if quantidade < 1:
+            return JsonResponse({
+                'success': False,
+                'error': 'Quantidade deve ser pelo menos 1'
+            }, status=400)
+        
+        # Buscar uma unidade existente com a mesma sigla para pegar informações base
+        unidade_base = UnidadeCargo.objects.filter(sigla_unidade=sigla_unidade).first()
+        
+        if not unidade_base:
+            return JsonResponse({
+                'success': False,
+                'error': f'Não foi encontrada unidade com sigla: {sigla_unidade}'
+            }, status=400)
+        
+        # Buscar dados do cargo SIORG para obter pontos e valor
+        cargo_siorg = CargoSIORG.objects.filter(
+            cargo__icontains=f"{tipo_cargo} {categoria}"
+        ).first()
+        
+        pontos_unitario = 0
+        valor_unitario = 0
+        if cargo_siorg:
+            # Extrair pontos do campo valor (formato: X.XX/Y.YY pts)
+            valor_str = cargo_siorg.valor
+            if '/' in valor_str and 'pts' in valor_str:
+                try:
+                    pontos_parte = valor_str.split('/')[1].replace('pts', '').strip()
+                    pontos_unitario = float(pontos_parte)
+                except:
+                    pontos_unitario = 0
+            
+            valor_unitario = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+        
+        # Calcular valores totais
+        pontos_total = pontos_unitario * quantidade
+        valor_total = valor_unitario * quantidade
+        
+        # Gerar um grafo único para o cargo adicionado manualmente
+        import uuid
+        grafo_unico = f"MANUAL_{sigla_unidade}_{tipo_cargo}_{categoria}_{nivel}_{uuid.uuid4().hex[:8]}"
+        
+        # Criar o novo cargo ASSOCIADO AO USUÁRIO
+        novo_cargo = UnidadeCargo.objects.create(
+            nivel_hierarquico=unidade_base.nivel_hierarquico,
+            tipo_unidade=unidade_base.tipo_unidade,
+            denominacao_unidade=unidade_base.denominacao_unidade,
+            codigo_unidade=unidade_base.codigo_unidade,
+            sigla_unidade=sigla_unidade,
+            categoria_unidade=unidade_base.categoria_unidade,
+            orgao_entidade=unidade_base.orgao_entidade,
+            tipo_cargo=tipo_cargo,
+            denominacao=denominacao,
+            categoria=categoria,
+            nivel=nivel,
+            quantidade=quantidade,
+            sigla=sigla_unidade,
+            grafo=grafo_unico,
+            pontos_total=pontos_total,
+            valor_total=valor_total,
+            usuario=request.user  # ✅ ASSOCIAR AO USUÁRIO ATUAL
+        )
+        
+        logger.info(f"Novo cargo criado: {novo_cargo.denominacao} (ID: {novo_cargo.id}) por usuário {request.user.username}")
+        
+        # Retornar dados do cargo criado
+        return JsonResponse({
+            'success': True,
+            'cargo': {
+                'id': novo_cargo.id,
+                'sigla': novo_cargo.sigla,
+                'tipo_cargo': novo_cargo.tipo_cargo,
+                'denominacao': novo_cargo.denominacao,
+                'categoria': novo_cargo.categoria,
+                'nivel': novo_cargo.nivel,
+                'quantidade': novo_cargo.quantidade,
+                'pontos': pontos_unitario,  # Pontos unitários para o frontend
+                'valor_unitario': valor_unitario,  # Valor unitário para o frontend
+                'pontos_total': novo_cargo.pontos_total,
+                'valor_total': novo_cargo.valor_total,
+                'grafo': novo_cargo.grafo,
+                'is_manual': True,  # ✅ MARCAR COMO CARGO MANUAL
+                'manual_id': novo_cargo.id  # ✅ ID PARA REMOÇÃO
+            },
+            'message': 'Cargo adicionado com sucesso!'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Dados JSON inválidos'
+        }, status=400)
+        
+    except ValueError as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Erro de validação: {str(e)}'
+        }, status=400)
+        
+    except Exception as e:
+        logger.error(f"Erro ao adicionar cargo: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def mesclar_simulacoes(request):
+    """
+    API para mesclar múltiplas simulações (disponível apenas para gerentes)
+    """
+    from .models import obter_tipo_usuario
+    
+    try:
+        # Verificar se o usuário é gerente
+        if obter_tipo_usuario(request.user) != 'gerente':
+            return JsonResponse({'erro': 'Apenas gerentes podem mesclar simulações'}, status=403)
+        
+        data = json.loads(request.body)
+        simulacoes_ids = data.get('simulacoes_ids', [])
+        nome_mesclagem = data.get('nome_mesclagem', '').strip()
+        descricao_mesclagem = data.get('descricao_mesclagem', '').strip()
+        metodo_mesclagem = data.get('metodo_mesclagem', 'somar')  # 'somar', 'substituir', 'media'
+        
+        # Validações
+        if not simulacoes_ids or len(simulacoes_ids) < 2:
+            return JsonResponse({'erro': 'É necessário selecionar pelo menos 2 simulações para mesclar'}, status=400)
+        
+        if not nome_mesclagem:
+            return JsonResponse({'erro': 'Nome da mesclagem é obrigatório'}, status=400)
+        
+        # Buscar as simulações
+        simulacoes = SimulacaoSalva.objects.filter(id__in=simulacoes_ids)
+        
+        if len(simulacoes) != len(simulacoes_ids):
+            return JsonResponse({'erro': 'Uma ou mais simulações não foram encontradas'}, status=404)
+        
+        # Verificar se já existe uma simulação com o mesmo nome para o usuário
+        if SimulacaoSalva.objects.filter(usuario=request.user, nome=nome_mesclagem).exists():
+            return JsonResponse({'erro': f'Já existe uma simulação com o nome "{nome_mesclagem}"'}, status=400)
+        
+        # Mesclar os dados das simulações
+        dados_mesclados = []
+        unidades_bases = set()
+        nomes_simulacoes = []
+        
+        # Coletar dados de todas as simulações
+        for simulacao in simulacoes:
+            nomes_simulacoes.append(simulacao.nome)
+            if simulacao.unidade_base:
+                unidades_bases.add(simulacao.unidade_base)
+            
+            # Adicionar dados da simulação aos dados mesclados
+            for item in simulacao.dados_estrutura:
+                dados_mesclados.append(item.copy())
+        
+        # Aplicar estratégia de mesclagem baseada no método selecionado
+        if metodo_mesclagem == 'somar':
+            # Agrupar por chave única (denominacao + categoria + nivel) e somar quantidades
+            dados_agrupados = {}
+            
+            for item in dados_mesclados:
+                chave = f"{item.get('denominacao', '')}_{item.get('categoria', '')}_{item.get('nivel', '')}"
+                
+                if chave in dados_agrupados:
+                    # Somar quantidades e recalcular pontos
+                    dados_agrupados[chave]['quantidade'] += item.get('quantidade', 0)
+                    dados_agrupados[chave]['pontos'] = dados_agrupados[chave]['quantidade'] * item.get('valor_unitario', 0)
+                else:
+                    dados_agrupados[chave] = item.copy()
+            
+            dados_finais = list(dados_agrupados.values())
+            
+        elif metodo_mesclagem == 'substituir':
+            # A última simulação sobrescreve as anteriores (baseado na ordem dos IDs)
+            dados_finais = simulacoes.last().dados_estrutura.copy()
+            
+        elif metodo_mesclagem == 'media':
+            # Calcular média das quantidades para cargos duplicados
+            dados_agrupados = {}
+            contador_cargos = {}
+            
+            for item in dados_mesclados:
+                chave = f"{item.get('denominacao', '')}_{item.get('categoria', '')}_{item.get('nivel', '')}"
+                
+                if chave in dados_agrupados:
+                    dados_agrupados[chave]['quantidade'] += item.get('quantidade', 0)
+                    contador_cargos[chave] += 1
+                else:
+                    dados_agrupados[chave] = item.copy()
+                    contador_cargos[chave] = 1
+            
+            # Calcular médias
+            for chave, item in dados_agrupados.items():
+                item['quantidade'] = round(item['quantidade'] / contador_cargos[chave])
+                item['pontos'] = item['quantidade'] * item.get('valor_unitario', 0)
+            
+            dados_finais = list(dados_agrupados.values())
+        
+        else:
+            dados_finais = dados_mesclados
+        
+        # Determinar unidade base principal
+        unidade_base_principal = list(unidades_bases)[0] if unidades_bases else ''
+        
+        # Criar descrição automática se não fornecida
+        if not descricao_mesclagem:
+            descricao_mesclagem = f"Mesclagem de {len(simulacoes)} simulações: {', '.join(nomes_simulacoes[:3])}"
+            if len(nomes_simulacoes) > 3:
+                descricao_mesclagem += f" e mais {len(nomes_simulacoes) - 3} simulações"
+            descricao_mesclagem += f". Método: {metodo_mesclagem}."
+        
+        # Criar nova simulação mesclada
+        simulacao_mesclada = SimulacaoSalva.objects.create(
+            usuario=request.user,
+            nome=nome_mesclagem,
+            descricao=descricao_mesclagem,
+            dados_estrutura=dados_finais,
+            unidade_base=unidade_base_principal,
+            status='rascunho'
+        )
+        
+        return JsonResponse({
+            'sucesso': True,
+            'simulacao_mesclada': {
+                'id': simulacao_mesclada.id,
+                'nome': simulacao_mesclada.nome,
+                'descricao': simulacao_mesclada.descricao,
+                'total_registros': len(dados_finais),
+                'unidade_base': unidade_base_principal,
+                'simulacoes_origem': nomes_simulacoes,
+                'metodo_mesclagem': metodo_mesclagem
+            },
+            'mensagem': f'Simulações mescladas com sucesso! {len(dados_finais)} registros na nova simulação.'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Dados JSON inválidos'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao mesclar simulações: {str(e)}")
         return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)

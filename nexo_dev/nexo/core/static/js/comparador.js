@@ -799,26 +799,42 @@ document.addEventListener('DOMContentLoaded', function() {
     data.forEach((item, index) => {
       const row = document.createElement('tr');
       
+      // Adicionar classe especial para cargos manuais
+      const isManual = item.is_manual === true;
+      if (isManual) {
+        row.classList.add('cargo-manual');
+      }
+      
       // Calcular pontos totais
       const pontosTotais = parseFloat(item.pontos || 0) * parseInt(item.quantidade || 1);
       
+      // Definir cor de fundo baseada no tipo de cargo
+      const bgColor = isManual ? '#e8f5e8' : '#fff8e1';  // Verde claro para manuais
+      
+      // Definir se o botão de delete deve ser visível
+      const deleteButton = isManual ? 
+        `<button class="btn btn-sm btn-danger delete-cargo-manual" data-index="${index}" data-manual-id="${item.manual_id || item.id}" title="Remover cargo adicionado">
+          <i class="fas fa-times"></i> Remover
+        </button>` : 
+        `<button class="btn btn-sm btn-outline-danger delete-cargo" data-index="${index}" title="Excluir cargo">
+          <i class="fas fa-trash"></i>
+        </button>`;
+      
       row.innerHTML = `
-        <td class="editable-cell"><input type="text" class="form-control form-control-sm" data-field="sigla" data-index="${index}" value="${formatValue(item.sigla)}" style="background-color:#fff8e1; border:none; width:100%;"></td>
-        <td class="editable-cell">
-          <select class="form-select form-select-sm" data-field="tipo_cargo" data-index="${index}" style="background-color:#fff8e1; border:none; width:100%;">
+        <td class="editable-cell ${isManual ? 'manual-cell' : ''}"><input type="text" class="form-control form-control-sm" data-field="sigla" data-index="${index}" value="${formatValue(item.sigla)}" style="background-color:${bgColor}; border:none; width:100%;"></td>
+        <td class="editable-cell ${isManual ? 'manual-cell' : ''}">
+          <select class="form-select form-select-sm" data-field="tipo_cargo" data-index="${index}" style="background-color:${bgColor}; border:none; width:100%;">
             <option value="FCE" ${item.tipo_cargo === 'FCE' ? 'selected' : ''}>FCE</option>
             <option value="CCE" ${item.tipo_cargo === 'CCE' ? 'selected' : ''}>CCE</option>
           </select>
         </td>
-        <td class="editable-cell col-denom"><input type="text" class="form-control form-control-sm" data-field="denominacao" data-index="${index}" value="${formatValue(item.denominacao)}" style="background-color:#fff8e1; border:none; width:100%;"></td>
-        <td class="editable-cell"><input type="number" min="1" max="3" data-field="categoria" data-index="${index}" value="${formatValue(item.categoria)}" style="background-color:#fff8e1; border:none; width:100%;"></td>
-        <td class="editable-cell"><input type="number" min="1" max="18" data-field="nivel" data-index="${index}" value="${formatValue(item.nivel)}" style="background-color:#fff8e1; border:none; width:100%;"></td>
-        <td class="editable-cell"><input type="number" min="1" data-field="quantidade" data-index="${index}" value="${formatValue(item.quantidade)}" style="background-color:#fff8e1; border:none; width:100%;"></td>
-        <td id="pontos-${index}">${formatValue(pontosTotais)}</td>
+        <td class="editable-cell col-denom ${isManual ? 'manual-cell' : ''}"><input type="text" class="form-control form-control-sm" data-field="denominacao" data-index="${index}" value="${formatValue(item.denominacao)}" style="background-color:${bgColor}; border:none; width:100%;"></td>
+        <td class="editable-cell ${isManual ? 'manual-cell' : ''}"><input type="number" min="1" max="4" data-field="categoria" data-index="${index}" value="${formatValue(item.categoria)}" style="background-color:${bgColor}; border:none; width:100%;"></td>
+        <td class="editable-cell ${isManual ? 'manual-cell' : ''}"><input type="number" min="1" max="18" data-field="nivel" data-index="${index}" value="${formatValue(item.nivel)}" style="background-color:${bgColor}; border:none; width:100%;"></td>
+        <td class="editable-cell ${isManual ? 'manual-cell' : ''}"><input type="number" min="1" data-field="quantidade" data-index="${index}" value="${formatValue(item.quantidade)}" style="background-color:${bgColor}; border:none; width:100%;"></td>
+        <td id="pontos-${index}" class="${isManual ? 'manual-cell' : ''}">${formatValue(pontosTotais)}</td>
         <td class="text-center">
-          <button class="btn btn-sm btn-outline-danger delete-cargo" data-index="${index}" title="Excluir cargo">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${deleteButton}
         </td>
       `;
       
@@ -2413,71 +2429,22 @@ document.addEventListener('DOMContentLoaded', function() {
     XLSX.writeFile(wb, filename);
   }
 
-  // Função para adicionar uma nova linha na tabela editável
-  function addNewCargoRow() {
-    // Obter a sigla da unidade atual selecionada
-    let siglaUnidade = '';
-    if (unitSelect.value) {
-      if (typeof $ !== 'undefined' && $.fn.select2) {
-        // Se estiver usando Select2, obter o texto selecionado
-        const selectedOption = $(unitSelect).find(':selected');
-        if (selectedOption.length) {
-          // Extrair a sigla da opção selecionada (assumindo que está no formato "SIGLA - Nome")
-          const fullText = selectedOption.text();
-          const match = fullText.match(/^([A-Za-z0-9]+)/);
-          if (match && match[1]) {
-            siglaUnidade = match[1];
-          }
-        }
-      } else {
-        // Se não estiver usando Select2, usar o texto da opção selecionada
-        const selectedOption = unitSelect.options[unitSelect.selectedIndex];
-        if (selectedOption) {
-          const fullText = selectedOption.text;
-          const match = fullText.match(/^([A-Za-z0-9]+)/);
-          if (match && match[1]) {
-            siglaUnidade = match[1];
-          }
-        }
-      }
-    }
-    
-    const newItem = {
-      sigla: siglaUnidade,
-      tipo_cargo: 'FCE',
-      denominacao: '',
-      categoria: 1,
-      nivel: 1,
-      quantidade: 1,
-      pontos: 0,
-      valor_unitario: 0
-    };
-    
-    // Adiciona ao array editado e recalcula paginação
-    editedData.push(newItem);
-    // Atualiza a primeira página para incluir o novo item
-    currentPage = Math.ceil(editedData.length / itemsPerPage);
-    renderPage();
-  }
-
-  // Configura o botão 'Adicionar Cargo'
-  function setupAddNewButton() {
-    const btn = document.getElementById('addCargoBtn');
-    if (btn) {
-      btn.addEventListener('click', function() {
-        addNewCargoRow();
-        setupEditableFields();
-        setupDeleteButtons();
-      });
-    }
-  }
+  // FUNCIONALIDADE ADICIONAR CARGO REMOVIDA
 
   // Configura botões de excluir em cada linha
   function setupDeleteButtons() {
+    // Botões de delete normais (cargos do banco)
     const deleteBtns = document.querySelectorAll('.delete-cargo');
     deleteBtns.forEach(btn => {
       btn.removeEventListener('click', onDeleteCargo);
       btn.addEventListener('click', onDeleteCargo);
+    });
+    
+    // Botões de delete para cargos manuais
+    const deleteManualBtns = document.querySelectorAll('.delete-cargo-manual');
+    deleteManualBtns.forEach(btn => {
+      btn.removeEventListener('click', onDeleteCargoManual);
+      btn.addEventListener('click', onDeleteCargoManual);
     });
   }
 
@@ -2490,9 +2457,40 @@ document.addEventListener('DOMContentLoaded', function() {
       updatePointsReport();
     }
   }
+  
+  function onDeleteCargoManual() {
+    const idx = parseInt(this.dataset.index);
+    const manualId = this.dataset.manualId;
+    
+    if (!isNaN(idx) && idx > -1) {
+      const item = editedData[idx];
+      
+      // Confirmar remoção
+      if (confirm(`Deseja remover o cargo "${item.denominacao}" que foi adicionado manualmente?`)) {
+        // Remover dos dados editados
+        editedData.splice(idx, 1);
+        
+        // Remover também dos dados completos se existir
+        if (completeEditedData.length > 0) {
+          const completeIndex = completeEditedData.findIndex(cargo => 
+            cargo.manual_id === manualId || cargo.id === manualId
+          );
+          if (completeIndex !== -1) {
+            completeEditedData.splice(completeIndex, 1);
+          }
+        }
+        
+        console.log(`✅ Cargo manual removido: ${item.denominacao} (ID: ${manualId})`);
+        
+        // Atualizar interface
+        renderPage();
+        updateDiffReport();
+        updatePointsReport();
+      }
+    }
+  }
 
-  // Inicializa o botão de adicionar e excluir cargos
-  setupAddNewButton();
+  // FUNCIONALIDADE DE ADICIONAR CARGO FOI REMOVIDA
 
   // Adiciona evento de "input" para todos os campos editáveis
   document.addEventListener('DOMContentLoaded', function() {
@@ -3021,6 +3019,180 @@ document.addEventListener('DOMContentLoaded', function() {
       diferencasCompletas: diferencasCompletas
     };
   };
+  /**
+   * Configura a funcionalidade de adicionar novo cargo
+   */
+  function setupAdicionarCargo() {
+    const adicionarCargoBtn = document.getElementById('adicionarCargoBtn');
+    const modal = document.getElementById('modalAdicionarCargo');
+    const confirmarBtn = document.getElementById('confirmarAdicionarCargo');
+    const nivelSelect = document.getElementById('nivelCargo');
+    
+    // Verificar se os elementos existem
+    if (!adicionarCargoBtn || !modal || !confirmarBtn || !nivelSelect) {
+      console.log('⚠️ Elementos do modal de adicionar cargo não encontrados');
+      return;
+    }
+    
+    // Preencher o select de níveis (1-18)
+    for (let i = 1; i <= 18; i++) {
+      const option = document.createElement('option');
+      option.value = i.toString();
+      option.textContent = i.toString();
+      nivelSelect.appendChild(option);
+    }
+    
+    // Evento para abrir o modal
+    adicionarCargoBtn.addEventListener('click', function() {
+      // Limpar formulário
+      document.getElementById('formAdicionarCargo').reset();
+      
+      // Preencher sigla da unidade se uma estiver selecionada
+      const unitSelect = document.getElementById('unitSelect');
+      if (unitSelect && unitSelect.value) {
+        const selectedText = unitSelect.options[unitSelect.selectedIndex].text;
+        const siglaMatch = selectedText.match(/\(([^)]+)\)/);
+        if (siglaMatch) {
+          document.getElementById('siglaUnidade').value = siglaMatch[1];
+        }
+      }
+      
+      // Esconder alerta
+      const alerta = document.getElementById('alertaAdicionarCargo');
+      alerta.classList.add('d-none');
+      
+      // Abrir modal usando Bootstrap 5
+      const modalInstance = new bootstrap.Modal(modal);
+      modalInstance.show();
+    });
+    
+    // Evento para confirmar adição
+    confirmarBtn.addEventListener('click', function() {
+      adicionarNovoCargo();
+    });
+    
+    console.log('✅ Funcionalidade de adicionar cargo configurada');
+  }
+  
+  /**
+   * Adiciona um novo cargo via API
+   */
+  async function adicionarNovoCargo() {
+    const alerta = document.getElementById('alertaAdicionarCargo');
+    const confirmarBtn = document.getElementById('confirmarAdicionarCargo');
+    
+    // Mostrar loading
+    confirmarBtn.disabled = true;
+    confirmarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+    
+    try {
+      // Obter dados do formulário
+      const dadosFormulario = {
+        sigla_unidade: document.getElementById('siglaUnidade').value.trim().toUpperCase(),
+        tipo_cargo: document.getElementById('tipoCargo').value,
+        denominacao: document.getElementById('denominacaoCargo').value.trim(),
+        categoria: document.getElementById('categoriaCargo').value,
+        nivel: document.getElementById('nivelCargo').value,
+        quantidade: document.getElementById('quantidadeCargo').value
+      };
+      
+      // Validações client-side
+      const erros = [];
+      if (!dadosFormulario.sigla_unidade) erros.push('Sigla da unidade é obrigatória');
+      if (!dadosFormulario.tipo_cargo) erros.push('Tipo de cargo é obrigatório');
+      if (!dadosFormulario.denominacao) erros.push('Denominação é obrigatória');
+      if (!dadosFormulario.categoria) erros.push('Categoria é obrigatória');
+      if (!dadosFormulario.nivel) erros.push('Nível é obrigatório');
+      if (!dadosFormulario.quantidade || dadosFormulario.quantidade < 1) erros.push('Quantidade deve ser pelo menos 1');
+      
+      // Validação específica de categoria
+      const categoriaNum = parseInt(dadosFormulario.categoria);
+      if (categoriaNum < 1 || categoriaNum > 4) erros.push('Categoria deve estar entre 1 e 4');
+      
+      if (erros.length > 0) {
+        mostrarAlerta('danger', 'Erros de validação:<br>' + erros.join('<br>'));
+        return;
+      }
+      
+      // Fazer requisição para a API
+      const response = await fetch('/api/adicionar-cargo/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': window.CSRF_TOKEN || getCookie('csrftoken')
+        },
+        body: JSON.stringify(dadosFormulario)
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Sucesso!
+        mostrarAlerta('success', result.message || 'Cargo adicionado com sucesso!');
+        
+        // Adicionar o cargo aos dados locais
+        const novoCargo = {
+          id: result.cargo.id,
+          sigla: result.cargo.sigla,
+          tipo_cargo: result.cargo.tipo_cargo,
+          denominacao: result.cargo.denominacao,
+          categoria: result.cargo.categoria,
+          nivel: result.cargo.nivel,
+          quantidade: result.cargo.quantidade,
+          pontos: result.cargo.pontos || 0,
+          valor_unitario: result.cargo.valor_unitario || 0,
+          is_manual: true,  // Marcar como cargo manual
+          manual_id: result.cargo.id  // ID único para remoção
+        };
+        
+        // Adicionar aos dados editados (e completos se aplicável)
+        editedData.push(novoCargo);
+        if (completeEditedData.length > 0) {
+          completeEditedData.push(novoCargo);
+        }
+        
+        // Atualizar interface
+        console.log('✅ Novo cargo adicionado:', novoCargo);
+        
+        // Fechar modal após 2 segundos
+        setTimeout(() => {
+          const modal = document.getElementById('modalAdicionarCargo');
+          const modalInstance = bootstrap.Modal.getInstance(modal);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+          
+          // Recarregar a página atual para mostrar o novo cargo
+          renderPage();
+          updatePointsReport();
+          updateDiffReport();
+        }, 2000);
+        
+      } else {
+        // Erro da API
+        const errorMsg = result.error || 'Erro desconhecido ao adicionar cargo';
+        mostrarAlerta('danger', errorMsg);
+      }
+      
+    } catch (error) {
+      console.error('Erro ao adicionar cargo:', error);
+      mostrarAlerta('danger', 'Erro de comunicação com o servidor');
+    } finally {
+      // Restaurar botão
+      confirmarBtn.disabled = false;
+      confirmarBtn.innerHTML = '<i class="fas fa-plus"></i> Adicionar Cargo';
+    }
+    
+    function mostrarAlerta(tipo, mensagem) {
+      alerta.className = `alert alert-${tipo}`;
+      alerta.innerHTML = mensagem;
+      alerta.classList.remove('d-none');
+    }
+  }
+  
+  // Configurar funcionalidade após carregar DOM
+  setupAdicionarCargo();
+
 });
 
 // Adicionar estilos para os campos editáveis e destacar valores atualizados
@@ -3061,6 +3233,46 @@ style.textContent = `
   .diff-changed {
     color: #fd7e14;
     font-weight: bold;
+  }
+  
+  /* Estilos para cargos manuais */
+  .cargo-manual {
+    border-left: 4px solid #28a745 !important;
+    background-color: #f8fff8 !important;
+  }
+  
+  .manual-cell {
+    background-color: #e8f5e8 !important;
+    border: 1px solid #c3e6cb !important;
+    border-radius: 3px;
+  }
+  
+  .manual-cell input,
+  .manual-cell select {
+    background-color: #e8f5e8 !important;
+    border: 1px solid #c3e6cb !important;
+  }
+  
+  .manual-cell input:focus,
+  .manual-cell select:focus {
+    background-color: #ffffff !important;
+    border: 2px solid #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+  }
+  
+  .delete-cargo-manual {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  .delete-cargo-manual:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+    transform: scale(1.05);
   }
 `;
 document.head.appendChild(style);

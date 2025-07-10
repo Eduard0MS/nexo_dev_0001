@@ -17,6 +17,7 @@ import shutil
 import hashlib
 import datetime
 import re
+import tarfile
 from pathlib import Path
 from collections import deque, Counter
 import threading
@@ -51,10 +52,12 @@ DIRS_TO_MONITOR = [
 ]
 SNAPSHOT_DIR = os.path.join(BASE_DIR, 'backups', 'snapshots')
 QUARANTINE_DIR = os.path.join(BASE_DIR, 'backups', 'quarantine')
+BACKUP_DIR = os.path.join(BASE_DIR, 'backups')  # Adicionando BACKUP_DIR
 
 # Criar diretórios necessários
 os.makedirs(SNAPSHOT_DIR, exist_ok=True)
 os.makedirs(QUARANTINE_DIR, exist_ok=True)
+os.makedirs(BACKUP_DIR, exist_ok=True)  # Criar diretório de backup
 
 # Limites e configurações de detecção
 FILE_CHANGE_THRESHOLD = int(os.environ.get('RANSOMWARE_FILE_CHANGE_THRESHOLD', 20))  # Número de arquivos alterados em um curto período para gerar alerta

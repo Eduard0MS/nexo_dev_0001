@@ -25,7 +25,9 @@ from .models import (
     SimulacaoSalva, 
     TipoUsuario, 
     SolicitacaoSimulacao, 
-    NotificacaoSimulacao
+    NotificacaoSimulacao,
+    SolicitacaoRealocacao,
+    SolicitacaoPermuta
 )
 from .utils import processa_planilhas, processa_organograma, estrutura_json_organograma, processa_json_organograma, gerar_anexo_simulacao
 import os

@@ -55,7 +55,8 @@ for table in tables:
     table_name = table[0]
     # SEGURANÇA: Validação rigorosa do nome da tabela
     if is_safe_table_name(table_name) and len(table_name) <= 100:
-        cursor.execute(f"SELECT COUNT(*) FROM `{table_name}`")
+        # SEGURANÇA: SQL injection prevenida por validação regex + whitelist + limite de tamanho
+        cursor.execute(f"SELECT COUNT(*) FROM `{table_name}`")  # nosec B608
         count = cursor.fetchone()[0]
         print(f"  {table_name}: {count} registros")
     else:

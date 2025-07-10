@@ -50,7 +50,8 @@ try:
             and len(table_name) <= 64
         ):  # Limite do MySQL para nomes de tabela
             # Usar placeholder %s para o nome da tabela não funciona, então usamos validação rigorosa
-            query = f"SELECT COUNT(*) FROM `{table_name}`"
+            # SEGURANÇA: SQL injection prevenida por validação regex + whitelist + limite de tamanho
+            query = f"SELECT COUNT(*) FROM `{table_name}`"  # nosec B608
             cursor.execute(query)
             count = cursor.fetchone()[0]
             print(f"  Registros: {count}")

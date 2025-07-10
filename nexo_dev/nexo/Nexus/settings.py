@@ -156,9 +156,8 @@ elif os.getenv("DATABASE_URL"):
     # Configuração para CI/CD (GitHub Actions)
     log_once("DEBUG: Usando configurações de CI/CD (PostgreSQL)")
     import dj_database_url
-    DATABASES = {
-        "default": dj_database_url.parse(os.getenv("DATABASE_URL"))
-    }
+
+    DATABASES = {"default": dj_database_url.parse(os.getenv("DATABASE_URL"))}
 else:
     log_once("DEBUG: Usando configurações de DESENVOLVIMENTO (MySQL)")
     DATABASES = {

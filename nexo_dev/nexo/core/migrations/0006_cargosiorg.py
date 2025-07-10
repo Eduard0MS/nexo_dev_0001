@@ -6,24 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0005_perfil'),
+        ("core", "0005_perfil"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CargoSIORG',
+            name="CargoSIORG",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cargo', models.CharField(max_length=255, verbose_name='Cargo')),
-                ('nivel', models.CharField(max_length=50, verbose_name='Nível')),
-                ('quantidade', models.IntegerField(verbose_name='Quantidade')),
-                ('valor', models.CharField(max_length=50, verbose_name='Valor')),
-                ('data_atualizacao', models.DateTimeField(auto_now=True, verbose_name='Data de Atualização')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("cargo", models.CharField(max_length=255, verbose_name="Cargo")),
+                ("nivel", models.CharField(max_length=50, verbose_name="Nível")),
+                ("quantidade", models.IntegerField(verbose_name="Quantidade")),
+                ("valor", models.CharField(max_length=50, verbose_name="Valor")),
+                (
+                    "data_atualizacao",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Data de Atualização"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Cargo SIORG',
-                'verbose_name_plural': 'Cargos SIORG',
-                'ordering': ['cargo'],
+                "verbose_name": "Cargo SIORG",
+                "verbose_name_plural": "Cargos SIORG",
+                "ordering": ["cargo"],
             },
         ),
     ]

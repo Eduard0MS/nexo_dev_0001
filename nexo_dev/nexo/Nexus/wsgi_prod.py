@@ -9,12 +9,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Defina a variável de ambiente para indicar ambiente de produção
-os.environ.setdefault('DJANGO_ENVIRONMENT', 'production')
+os.environ.setdefault("DJANGO_ENVIRONMENT", "production")
 
 # Defina o módulo de configurações Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Nexus.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Nexus.settings")
 
 from django.core.wsgi import get_wsgi_application
 
-# Aplicação WSGI para produção 
-application = get_wsgi_application() 
+# Aplicação WSGI para produção
+application = get_wsgi_application()

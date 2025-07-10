@@ -3,8 +3,8 @@ from django.contrib import admin
 
 
 class CoreConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'core'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "core"
 
     def ready(self):
         """
@@ -19,7 +19,7 @@ class CoreConfig(AppConfig):
 
         # 1) Verifica se o banco está disponível e se a tabela django_site existe
         try:
-            with connections['default'].cursor() as cursor:
+            with connections["default"].cursor() as cursor:
                 cursor.execute("SHOW TABLES LIKE 'django_site'")
                 if not cursor.fetchone():
                     return
@@ -34,29 +34,29 @@ class CoreConfig(AppConfig):
         except ImportError:
             return
 
-        client_id = os.environ.get('GOOGLE_CLIENT_ID')
-        secret    = os.environ.get('GOOGLE_CLIENT_SECRET')
+        client_id = os.environ.get("GOOGLE_CLIENT_ID")
+        secret = os.environ.get("GOOGLE_CLIENT_SECRET")
         if not client_id or not secret:
             return
 
         # 3) Garante que o Site existe
         site_obj, _ = Site.objects.get_or_create(
-            id=getattr(settings, 'SITE_ID', 1),
+            id=getattr(settings, "SITE_ID", 1),
             defaults={
-                'domain': '127.0.0.1:8000' if settings.DEBUG else 'example.com',
-                'name':   'Nexo Local Development' if settings.DEBUG else 'Nexo',
-            }
+                "domain": "127.0.0.1:8000" if settings.DEBUG else "example.com",
+                "name": "Nexo Local Development" if settings.DEBUG else "Nexo",
+            },
         )
 
         # 4) Cria/atualiza o SocialApp do Google
-        apps_qs = SocialApp.objects.filter(provider='google')
+        apps_qs = SocialApp.objects.filter(provider="google")
         if not apps_qs.exists():
             app = SocialApp.objects.create(
-                provider='google',
-                name='Google OAuth',
+                provider="google",
+                name="Google OAuth",
                 client_id=client_id,
                 secret=secret,
-                key='',
+                key="",
             )
             app.sites.add(site_obj)
             return
@@ -78,7 +78,7 @@ class CoreConfig(AppConfig):
             primary.secret = secret
             updated = True
         if updated:
-            primary.name = 'Google OAuth'
+            primary.name = "Google OAuth"
             primary.save()
 
         # Garante associação ao site

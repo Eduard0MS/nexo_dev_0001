@@ -45,4 +45,4 @@ if not created:
 microsoft_app.sites.add(site)
 
 print("Site configurado:", site)
-print("Aplicativo social Microsoft configurado:", microsoft_app) 
+print("Aplicativo social Microsoft configurado:", microsoft_app)

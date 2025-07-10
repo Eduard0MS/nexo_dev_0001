@@ -6,24 +6,64 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0016_remove_relatorioorgaoscentrais_relatorio_and_more'),
+        ("core", "0016_remove_relatorioorgaoscentrais_relatorio_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RelatorioGratificacoesPlan1',
+            name="RelatorioGratificacoesPlan1",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data_importacao', models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Importação')),
-                ('tipo_orgao', models.CharField(choices=[('central', 'Órgãos Centrais'), ('setorial', 'Órgãos Setoriais')], max_length=20, verbose_name='Tipo de Órgão')),
-                ('nivel_cargo', models.CharField(max_length=50, verbose_name='Nível do Cargo')),
-                ('valor_maximo_gsiste', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Valor Máximo da GSISTE')),
-                ('efeitos_financeiros_data', models.CharField(blank=True, max_length=100, verbose_name='Efeitos Financeiros a partir de')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "data_importacao",
+                    models.DateTimeField(
+                        auto_now_add=True, null=True, verbose_name="Data de Importação"
+                    ),
+                ),
+                (
+                    "tipo_orgao",
+                    models.CharField(
+                        choices=[
+                            ("central", "Órgãos Centrais"),
+                            ("setorial", "Órgãos Setoriais"),
+                        ],
+                        max_length=20,
+                        verbose_name="Tipo de Órgão",
+                    ),
+                ),
+                (
+                    "nivel_cargo",
+                    models.CharField(max_length=50, verbose_name="Nível do Cargo"),
+                ),
+                (
+                    "valor_maximo_gsiste",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=10,
+                        verbose_name="Valor Máximo da GSISTE",
+                    ),
+                ),
+                (
+                    "efeitos_financeiros_data",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        verbose_name="Efeitos Financeiros a partir de",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Gratificação por Órgão (Plan1)',
-                'verbose_name_plural': 'Gratificações por Órgão (Plan1)',
-                'ordering': ['tipo_orgao', 'nivel_cargo'],
+                "verbose_name": "Gratificação por Órgão (Plan1)",
+                "verbose_name_plural": "Gratificações por Órgão (Plan1)",
+                "ordering": ["tipo_orgao", "nivel_cargo"],
             },
         ),
     ]

@@ -49,7 +49,7 @@ try:
         )
         google_app.sites.add(site)
         print(f"Criado novo aplicativo Google com ID: {google_app.id}")
-        
+
         # 5. Criar novo aplicativo Microsoft
         microsoft_app = SocialApp.objects.create(
             provider="microsoft",

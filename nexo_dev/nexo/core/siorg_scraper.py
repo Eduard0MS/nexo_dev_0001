@@ -7,6 +7,7 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
+
 def scrape_siorg():
     """
     Função para fazer scraping dos dados do SIORG e salvar no banco de dados.
@@ -14,7 +15,7 @@ def scrape_siorg():
     try:
         # Limpa os dados existentes
         CargoSIORG.objects.all().delete()
-        
+
         cargos_processados = 0
 
         # Processando CCE
@@ -154,7 +155,7 @@ def scrape_siorg():
                     nivel=unitario,  # O nível agora é o valor unitário
                     quantidade=1,  # Quantidade padrão, pode ser atualizada depois
                     valor=valor,
-                    unitario=Decimal(unitario)  # Convertendo para Decimal
+                    unitario=Decimal(unitario),  # Convertendo para Decimal
                 )
                 cargos_processados += 1
             except Exception as e:
@@ -168,26 +169,20 @@ def scrape_siorg():
                     nivel=unitario,  # O nível agora é o valor unitário
                     quantidade=1,  # Quantidade padrão, pode ser atualizada depois
                     valor=valor,
-                    unitario=Decimal(unitario)  # Convertendo para Decimal
+                    unitario=Decimal(unitario),  # Convertendo para Decimal
                 )
                 cargos_processados += 1
             except Exception as e:
                 logger.error(f"Erro ao processar cargo {cargo}: {str(e)}")
 
         if cargos_processados == 0:
-            return {
-                'success': False,
-                'message': 'Nenhum cargo processado.'
-            }
-        
+            return {"success": False, "message": "Nenhum cargo processado."}
+
         return {
-            'success': True,
-            'message': f'Processados {cargos_processados} cargos com sucesso'
+            "success": True,
+            "message": f"Processados {cargos_processados} cargos com sucesso",
         }
-        
+
     except Exception as e:
         logger.error(f"Erro ao processar os dados: {str(e)}")
-        return {
-            'success': False,
-            'message': f'Erro ao processar os dados: {str(e)}'
-        } 
+        return {"success": False, "message": f"Erro ao processar os dados: {str(e)}"}

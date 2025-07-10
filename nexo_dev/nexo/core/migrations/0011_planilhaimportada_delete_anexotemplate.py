@@ -8,27 +8,53 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0010_remove_simulation_usuario_anexotemplate_and_more'),
+        ("core", "0010_remove_simulation_usuario_anexotemplate_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PlanilhaImportada',
+            name="PlanilhaImportada",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=255, verbose_name='Nome')),
-                ('arquivo', models.FileField(upload_to='planilhas_importadas/', verbose_name='Arquivo da Planilha')),
-                ('data_importacao', models.DateTimeField(auto_now_add=True, verbose_name='Data de Importação')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Usuário')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=255, verbose_name="Nome")),
+                (
+                    "arquivo",
+                    models.FileField(
+                        upload_to="planilhas_importadas/",
+                        verbose_name="Arquivo da Planilha",
+                    ),
+                ),
+                (
+                    "data_importacao",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Data de Importação"
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Usuário",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Planilha Importada',
-                'verbose_name_plural': 'Planilhas Importadas',
-                'ordering': ['-data_importacao'],
+                "verbose_name": "Planilha Importada",
+                "verbose_name_plural": "Planilhas Importadas",
+                "ordering": ["-data_importacao"],
             },
         ),
         migrations.DeleteModel(
-            name='AnexoTemplate',
+            name="AnexoTemplate",
         ),
     ]

@@ -6,13 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0022_simulacaosalva_status_simulacaosalva_tipo_usuario_and_more'),
+        ("core", "0022_simulacaosalva_status_simulacaosalva_tipo_usuario_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='status',
-            field=models.CharField(choices=[('rascunho', 'Rascunho'), ('enviada_analise', 'Enviada para Análise'), ('aprovada', 'Aprovada'), ('rejeitada', 'Rejeitada'), ('rejeitada_editada', 'Rejeitada (Editada)')], default='rascunho', max_length=20, verbose_name='Status'),
+            model_name="simulacaosalva",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("rascunho", "Rascunho"),
+                    ("enviada_analise", "Enviada para Análise"),
+                    ("aprovada", "Aprovada"),
+                    ("rejeitada", "Rejeitada"),
+                    ("rejeitada_editada", "Rejeitada (Editada)"),
+                ],
+                default="rascunho",
+                max_length=20,
+                verbose_name="Status",
+            ),
         ),
     ]

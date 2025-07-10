@@ -7,6 +7,8 @@ from dotenv import load_dotenv, find_dotenv
 
 # ╭────────────────── utilitário .env ──────────────────╮
 _ENV_LOADED = False
+
+
 def log_once(message: str):
     cache = getattr(sys.modules[__name__], "_PRINTED_MESSAGES", set())
     if message not in cache:
@@ -14,7 +16,9 @@ def log_once(message: str):
         cache.add(message)
         sys.modules[__name__]._PRINTED_MESSAGES = cache
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 def load_env_safely():
     global _ENV_LOADED
@@ -40,18 +44,19 @@ def load_env_safely():
 
     log_once("Arquivo .env não encontrado ou não pôde ser carregado!")
 
+
 load_env_safely()
 # ╰───────────────────────────────────────────────────────╯
 
 # ─────── Ambiente ───────
-ENVIRONMENT   = os.getenv("DJANGO_ENVIRONMENT", "development")
+ENVIRONMENT = os.getenv("DJANGO_ENVIRONMENT", "development")
 IS_PRODUCTION = ENVIRONMENT == "production"
 log_once(f"DEBUG: Ambiente atual = {ENVIRONMENT}")
 log_once(f"DEBUG: IS_PRODUCTION = {IS_PRODUCTION}")
 
 # ─────── Segurança básica ───────
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-...")
-DEBUG      = not IS_PRODUCTION
+DEBUG = not IS_PRODUCTION
 ALLOWED_HOSTS = (
     os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
     if IS_PRODUCTION
@@ -82,25 +87,25 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 SITE_ID = 1
 
 # ─────── URLs de auth ───────
-LOGIN_URL          = "/login_direct/"
+LOGIN_URL = "/login_direct/"
 LOGIN_REDIRECT_URL = "/home/"
 LOGOUT_REDIRECT_URL = "/login_direct/"
 
 # ─────── Segurança HTTPS (produção) ───────
 if IS_PRODUCTION:
-    SECURE_SSL_REDIRECT          = True
-    SECURE_PROXY_SSL_HEADER      = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE        = True
-    CSRF_COOKIE_SECURE           = True
-    SECURE_HSTS_SECONDS          = 31_536_000
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31_536_000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD          = True
-    SECURE_CONTENT_TYPE_NOSNIFF  = True
-    SECURE_BROWSER_XSS_FILTER    = True
-    X_FRAME_OPTIONS              = "DENY"
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
 
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY    = True
+CSRF_COOKIE_HTTPONLY = True
 
 # ─────── Middleware & URLs ───────
 MIDDLEWARE = [
@@ -139,24 +144,24 @@ if IS_PRODUCTION:
     log_once("DEBUG: Usando configurações de PRODUÇÃO")
     DATABASES = {
         "default": {
-            "ENGINE":   os.getenv("DB_ENGINE",   "django.db.backends.postgresql"),
-            "NAME":     os.getenv("DB_NAME",     "nexus_prod"),
-            "USER":     os.getenv("DB_USER",     ""),
+            "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+            "NAME": os.getenv("DB_NAME", "nexus_prod"),
+            "USER": os.getenv("DB_USER", ""),
             "PASSWORD": os.getenv("DB_PASSWORD", ""),
-            "HOST":     os.getenv("DB_HOST",     "localhost"),
-            "PORT":     os.getenv("DB_PORT",     "5432"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
 else:
     log_once("DEBUG: Usando configurações de DESENVOLVIMENTO")
     DATABASES = {
         "default": {
-            "ENGINE":   "django.db.backends.mysql",
-            "NAME":     "nexo_dev",
-            "USER":     "root",
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": "nexo_dev",
+            "USER": "root",
             "PASSWORD": "1802Edu0#*#",
-            "HOST":     "127.0.0.1",
-            "PORT":     "3306",
+            "HOST": "127.0.0.1",
+            "PORT": "3306",
         }
     }
 
@@ -181,9 +186,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ─────── Localização ───────
 LANGUAGE_CODE = "pt-br"
-TIME_ZONE     = "America/Sao_Paulo"
-USE_I18N      = True
-USE_TZ        = True
+TIME_ZONE = "America/Sao_Paulo"
+USE_I18N = True
+USE_TZ = True
 
 # Configurações de arquivos estáticos
 STATIC_URL = "static/"
@@ -191,40 +196,40 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Configurações de mídia
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Configurações do allauth
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_UNIQUE_EMAIL = True
 # ╭────────── Estáticos & mídia ──────────╮
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = "/var/www/nexo_static"
 
-MEDIA_URL  = "/media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 # ╰───────────────────────────────────────╯
 
 # ─────── allauth ───────
-ACCOUNT_EMAIL_REQUIRED            = True
-ACCOUNT_USERNAME_REQUIRED         = False
-ACCOUNT_AUTHENTICATION_METHOD     = "email"
-ACCOUNT_EMAIL_VERIFICATION        = "mandatory"
-ACCOUNT_UNIQUE_EMAIL              = True
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
-SOCIALACCOUNT_EMAIL_REQUIRED    = True
-SOCIALACCOUNT_AUTO_SIGNUP       = True
-SOCIALACCOUNT_LOGIN_ON_GET      = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
-SOCIALACCOUNT_QUERY_EMAIL       = True
-SOCIALACCOUNT_PROVIDERS         = {}
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_PROVIDERS = {}
 
-ACCOUNT_ADAPTER       = "allauth.account.adapter.DefaultAccountAdapter"
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "core.adapters.CustomSocialAccountAdapter"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -242,16 +247,16 @@ if IS_PRODUCTION:
         },
         "handlers": {
             "file": {
-                "level":    "ERROR",
-                "class":    "logging.FileHandler",
+                "level": "ERROR",
+                "class": "logging.FileHandler",
                 "filename": BASE_DIR / "logs/django-errors.log",
-                "formatter":"verbose",
+                "formatter": "verbose",
             },
         },
         "loggers": {
             "django": {
                 "handlers": ["file"],
-                "level":    "ERROR",
+                "level": "ERROR",
                 "propagate": True,
             },
         },

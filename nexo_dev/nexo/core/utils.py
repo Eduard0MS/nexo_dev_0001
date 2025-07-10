@@ -8,15 +8,16 @@ from .models import PlanilhaImportada
 from collections import defaultdict
 from openpyxl.styles import Alignment
 
+
 def processa_planilhas(file_hierarquia, file_estrutura_viva):
     # Leitura da planilha de hierarquia
-    if file_hierarquia.name.endswith('.csv'):
+    if file_hierarquia.name.endswith(".csv"):
         df_hierarquia = pd.read_csv(file_hierarquia, encoding="utf-8")
     else:
         df_hierarquia = pd.read_excel(file_hierarquia)
 
     # Leitura da planilha de estrutura viva
-    if file_estrutura_viva.name.endswith('.csv'):
+    if file_estrutura_viva.name.endswith(".csv"):
         df_estrutura_viva = pd.read_csv(file_estrutura_viva, encoding="utf-8")
     else:
         df_estrutura_viva = pd.read_excel(file_estrutura_viva)
@@ -29,10 +30,16 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
 
     # Processar a planilha de estrutura viva sem alterar os demais dados
     if "Código Unidade" not in df_estrutura_viva.columns:
-        raise KeyError("A coluna 'Código Unidade' não foi encontrada na planilha de estrutura viva.")
-    df_estrutura_viva["Código Unidade"] = df_estrutura_viva["Código Unidade"].astype(str).str.strip()
+        raise KeyError(
+            "A coluna 'Código Unidade' não foi encontrada na planilha de estrutura viva."
+        )
+    df_estrutura_viva["Código Unidade"] = (
+        df_estrutura_viva["Código Unidade"].astype(str).str.strip()
+    )
     if "Categoria" in df_estrutura_viva.columns:
-        df_estrutura_viva["Categoria"] = df_estrutura_viva["Categoria"].fillna(0).astype(int)
+        df_estrutura_viva["Categoria"] = (
+            df_estrutura_viva["Categoria"].fillna(0).astype(int)
+        )
     if "Nível" in df_estrutura_viva.columns:
         df_estrutura_viva["Nível"] = df_estrutura_viva["Nível"].fillna(0).astype(int)
 
@@ -57,7 +64,7 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
         hierarquia_info[codigo] = {
             "grafo": grafo_val,
             "nivel_hierarquico": nivel_hierarquico,
-            "deno_unidade": unidade.strip()
+            "deno_unidade": unidade.strip(),
         }
 
     # Cria uma cópia dos dados originais da planilha de estrutura viva
@@ -73,7 +80,7 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
     df_resultado["Deno Unidade"] = df_resultado["Código Unidade"].map(
         lambda code: hierarquia_info.get(code, {}).get("deno_unidade", "")
     )
-    
+
     # Garantir que todas as colunas necessárias existam
     colunas_padrao = {
         "Tipo Unidade": "",
@@ -86,19 +93,20 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
         "Categoria": 0,
         "Nível": 0,
         "Quantidade": 0,
-        "Sigla": ""
+        "Sigla": "",
     }
-    
+
     for coluna, valor_padrao in colunas_padrao.items():
         if coluna not in df_resultado.columns:
             df_resultado[coluna] = valor_padrao
-    
+
     # IMPORTANTE: Filtra apenas os registros que possuem um Grafo válido
     # Esses são os registros que realmente fazem parte da estrutura do ministério
     df_resultado = df_resultado[df_resultado["Grafo"].str.strip() != ""]
     print(f"Total de registros após filtragem: {len(df_resultado)}")
-            
+
     return df_resultado
+
 
 def processa_organograma():
     """
@@ -108,94 +116,100 @@ def processa_organograma():
     # Buscar todos os cargos SIORG para referência de valores
     cargos_siorg = {
         f"{cargo.cargo}": {
-            'valor': Decimal(cargo.valor.replace('R$ ', '').replace('.', '').replace(',', '.')),
-            'unitario': cargo.unitario
+            "valor": Decimal(
+                cargo.valor.replace("R$ ", "").replace(".", "").replace(",", ".")
+            ),
+            "unitario": cargo.unitario,
         }
         for cargo in CargoSIORG.objects.all()
     }
 
     # Buscar todas as unidades - filtrando apenas as que têm grafo válido
-    unidades = UnidadeCargo.objects.exclude(grafo__exact='').exclude(grafo__isnull=True)
-    
+    unidades = UnidadeCargo.objects.exclude(grafo__exact="").exclude(grafo__isnull=True)
+
     print(f"Total de unidades com grafo válido: {unidades.count()}")
-    
+
     # Estrutura para armazenar o organograma
     organograma = {}
-    
+
     # Primeiro passo: agrupar unidades por código de grafo
     unidades_por_grafo = {}
     for unidade in unidades:
-        if not unidade.grafo or unidade.grafo.strip() == '':
+        if not unidade.grafo or unidade.grafo.strip() == "":
             continue
-        
-        codigo_atual = unidade.grafo.split('-')[-1]
+
+        codigo_atual = unidade.grafo.split("-")[-1]
         if codigo_atual not in unidades_por_grafo:
             unidades_por_grafo[codigo_atual] = []
         unidades_por_grafo[codigo_atual].append(unidade)
-    
+
     # Segundo passo: processar cada grupo de unidades
     for codigo_atual, grupo_unidades in unidades_por_grafo.items():
         # Ordenar unidades pelo nível do cargo (decrescente)
         grupo_unidades.sort(key=lambda x: x.nivel, reverse=True)
-        
+
         # Usar a unidade com o cargo de maior nível
         unidade_principal = grupo_unidades[0]
-        niveis = unidade_principal.grafo.split('-')
-        
+        niveis = unidade_principal.grafo.split("-")
+
         # Informações do cargo
         cargo_info = {
-            'tipo': unidade_principal.tipo_cargo,
-            'categoria': unidade_principal.categoria,
-            'nivel': unidade_principal.nivel,
-            'quantidade': unidade_principal.quantidade
+            "tipo": unidade_principal.tipo_cargo,
+            "categoria": unidade_principal.categoria,
+            "nivel": unidade_principal.nivel,
+            "quantidade": unidade_principal.quantidade,
         }
-        
+
         # Calcular valor do cargo
         cargo_key = f"{unidade_principal.tipo_cargo} {unidade_principal.categoria} {unidade_principal.nivel:02d}"
         if cargo_key in cargos_siorg:
-            cargo_info['valor'] = cargos_siorg[cargo_key]['valor']
-            cargo_info['pontos'] = cargos_siorg[cargo_key]['unitario']
+            cargo_info["valor"] = cargos_siorg[cargo_key]["valor"]
+            cargo_info["pontos"] = cargos_siorg[cargo_key]["unitario"]
         else:
-            cargo_info['valor'] = Decimal('0.00')
-            cargo_info['pontos'] = Decimal('0.00')
-        
+            cargo_info["valor"] = Decimal("0.00")
+            cargo_info["pontos"] = Decimal("0.00")
+
         # Criar ou atualizar entrada no organograma
         if codigo_atual not in organograma:
             organograma[codigo_atual] = {
-                'codigo': codigo_atual,
-                'denominacao': unidade_principal.denominacao_unidade,
-                'nivel_hierarquico': unidade_principal.nivel_hierarquico,
-                'cargos': [],
-                'subordinados': [],
-                'pai': niveis[-2] if len(niveis) > 1 else None
+                "codigo": codigo_atual,
+                "denominacao": unidade_principal.denominacao_unidade,
+                "nivel_hierarquico": unidade_principal.nivel_hierarquico,
+                "cargos": [],
+                "subordinados": [],
+                "pai": niveis[-2] if len(niveis) > 1 else None,
             }
-        
+
         # Adicionar todos os cargos do mesmo código
         for unidade in grupo_unidades:
             cargo_info = {
-                'tipo': unidade.tipo_cargo,
-                'categoria': unidade.categoria,
-                'nivel': unidade.nivel,
-                'quantidade': unidade.quantidade
+                "tipo": unidade.tipo_cargo,
+                "categoria": unidade.categoria,
+                "nivel": unidade.nivel,
+                "quantidade": unidade.quantidade,
             }
-            
+
             cargo_key = f"{unidade.tipo_cargo} {unidade.categoria} {unidade.nivel:02d}"
             if cargo_key in cargos_siorg:
-                cargo_info['valor'] = cargos_siorg[cargo_key]['valor']
-                cargo_info['pontos'] = cargos_siorg[cargo_key]['unitario']
+                cargo_info["valor"] = cargos_siorg[cargo_key]["valor"]
+                cargo_info["pontos"] = cargos_siorg[cargo_key]["unitario"]
             else:
-                cargo_info['valor'] = Decimal('0.00')
-                cargo_info['pontos'] = Decimal('0.00')
-                
-            organograma[codigo_atual]['cargos'].append(cargo_info)
-        
+                cargo_info["valor"] = Decimal("0.00")
+                cargo_info["pontos"] = Decimal("0.00")
+
+            organograma[codigo_atual]["cargos"].append(cargo_info)
+
         # Estabelecer relações hierárquicas
         if len(niveis) > 1:
             pai = niveis[-2]
-            if pai in organograma and codigo_atual not in organograma[pai]['subordinados']:
-                organograma[pai]['subordinados'].append(codigo_atual)
-    
+            if (
+                pai in organograma
+                and codigo_atual not in organograma[pai]["subordinados"]
+            ):
+                organograma[pai]["subordinados"].append(codigo_atual)
+
     return organograma
+
 
 def estrutura_json_organograma():
     """
@@ -204,57 +218,62 @@ def estrutura_json_organograma():
     """
     from .models import UnidadeCargo, CargoSIORG
     from decimal import Decimal
-    
+
     # Buscar todos os cargos SIORG para referência de valores
     cargos_siorg = {
         f"{cargo.cargo}": {
-            'valor': Decimal(cargo.valor.replace('R$ ', '').replace('.', '').replace(',', '.')),
-            'unitario': cargo.unitario
+            "valor": Decimal(
+                cargo.valor.replace("R$ ", "").replace(".", "").replace(",", ".")
+            ),
+            "unitario": cargo.unitario,
         }
         for cargo in CargoSIORG.objects.all()
     }
-    
+
     # Buscar todas as unidades com grafo válido
-    unidades = UnidadeCargo.objects.exclude(grafo__exact='').exclude(grafo__isnull=True)
-    
+    unidades = UnidadeCargo.objects.exclude(grafo__exact="").exclude(grafo__isnull=True)
+
     # Lista para armazenar todas as unidades processadas
     unidades_processadas = []
-    
+
     # Processar cada unidade
     for unidade in unidades:
         # Calcular valores do cargo
         cargo_key = f"{unidade.tipo_cargo} {unidade.categoria} {unidade.nivel:02d}"
-        cargo_siorg = cargos_siorg.get(cargo_key, {'valor': Decimal('0'), 'unitario': Decimal('0')})
-        
-        valor_unitario = cargo_siorg['valor']
-        pontos = cargo_siorg['unitario']
-        
+        cargo_siorg = cargos_siorg.get(
+            cargo_key, {"valor": Decimal("0"), "unitario": Decimal("0")}
+        )
+
+        valor_unitario = cargo_siorg["valor"]
+        pontos = cargo_siorg["unitario"]
+
         # Calcular totais
         quantidade = unidade.quantidade or 0
         gasto_total = valor_unitario * quantidade
         pontos_total = pontos * quantidade
-        
+
         # Estrutura da unidade
         dados_unidade = {
-            'tipo_unidade': unidade.tipo_unidade,
-            'denominacao_unidade': unidade.denominacao_unidade,
-            'codigo_unidade': unidade.codigo_unidade,
-            'sigla': unidade.sigla_unidade,
-            'tipo_cargo': unidade.tipo_cargo,
-            'denominacao': unidade.denominacao,
-            'categoria': unidade.categoria,
-            'nivel': unidade.nivel,
-            'quantidade': quantidade,
-            'grafo': unidade.grafo,
-            'valor_unitario': float(valor_unitario),
-            'pontos': float(pontos),
-            'gasto_total': float(gasto_total),
-            'pontos_total': float(pontos_total)
+            "tipo_unidade": unidade.tipo_unidade,
+            "denominacao_unidade": unidade.denominacao_unidade,
+            "codigo_unidade": unidade.codigo_unidade,
+            "sigla": unidade.sigla_unidade,
+            "tipo_cargo": unidade.tipo_cargo,
+            "denominacao": unidade.denominacao,
+            "categoria": unidade.categoria,
+            "nivel": unidade.nivel,
+            "quantidade": quantidade,
+            "grafo": unidade.grafo,
+            "valor_unitario": float(valor_unitario),
+            "pontos": float(pontos),
+            "gasto_total": float(gasto_total),
+            "pontos_total": float(pontos_total),
         }
-        
+
         unidades_processadas.append(dados_unidade)
-    
+
     return unidades_processadas
+
 
 def processa_json_organograma(json_data):
     """
@@ -264,77 +283,86 @@ def processa_json_organograma(json_data):
     from .models import CargoSIORG
     from decimal import Decimal
     import json
-    
+
     # Carregar dados do SIORG para referência
     cargos_siorg = {
         f"{cargo.cargo}": {
-            'valor': Decimal(cargo.valor.replace('R$ ', '').replace('.', '').replace(',', '.')),
-            'unitario': cargo.unitario
+            "valor": Decimal(
+                cargo.valor.replace("R$ ", "").replace(".", "").replace(",", ".")
+            ),
+            "unitario": cargo.unitario,
         }
         for cargo in CargoSIORG.objects.all()
     }
-    
+
     def calcula_valores_unidade(unidade_data):
         """Calcula os valores totais de uma unidade"""
         cargo_key = f"{unidade_data.get('tipo_cargo', '')} {unidade_data.get('categoria', '')} {unidade_data.get('nivel', ''):02d}"
-        cargo_info = cargos_siorg.get(cargo_key, {'valor': Decimal('0'), 'unitario': Decimal('0')})
-        
-        quantidade = unidade_data.get('quantidade', 0)
-        valor_total = cargo_info['valor'] * quantidade
-        pontos_total = cargo_info['unitario'] * quantidade
-        
+        cargo_info = cargos_siorg.get(
+            cargo_key, {"valor": Decimal("0"), "unitario": Decimal("0")}
+        )
+
+        quantidade = unidade_data.get("quantidade", 0)
+        valor_total = cargo_info["valor"] * quantidade
+        pontos_total = cargo_info["unitario"] * quantidade
+
         return {
-            'valor_total': float(valor_total),
-            'pontos_total': float(pontos_total),
-            'valor_unitario': float(cargo_info['valor']),
-            'pontos_unitario': float(cargo_info['unitario'])
+            "valor_total": float(valor_total),
+            "pontos_total": float(pontos_total),
+            "valor_unitario": float(cargo_info["valor"]),
+            "pontos_unitario": float(cargo_info["unitario"]),
         }
-    
+
     def processa_unidade(unidade_data):
         """Processa uma unidade e seus subordinados recursivamente"""
         valores = calcula_valores_unidade(unidade_data)
-        
+
         dados_unidade = {
-            'id': unidade_data.get('id'),
-            'codigo': unidade_data.get('codigo_unidade'),
-            'nome': unidade_data.get('denominacao_unidade'),
-            'sigla': unidade_data.get('sigla_unidade', ''),
-            'cargo': {
-                'tipo': unidade_data.get('tipo_cargo', ''),
-                'categoria': unidade_data.get('categoria', 0),
-                'nivel': unidade_data.get('nivel', 0),
-                'quantidade': unidade_data.get('quantidade', 0),
-                'valor_unitario': valores['valor_unitario'],
-                'pontos_unitario': valores['pontos_unitario']
+            "id": unidade_data.get("id"),
+            "codigo": unidade_data.get("codigo_unidade"),
+            "nome": unidade_data.get("denominacao_unidade"),
+            "sigla": unidade_data.get("sigla_unidade", ""),
+            "cargo": {
+                "tipo": unidade_data.get("tipo_cargo", ""),
+                "categoria": unidade_data.get("categoria", 0),
+                "nivel": unidade_data.get("nivel", 0),
+                "quantidade": unidade_data.get("quantidade", 0),
+                "valor_unitario": valores["valor_unitario"],
+                "pontos_unitario": valores["pontos_unitario"],
             },
-            'valores': {
-                'valor_total': valores['valor_total'],
-                'pontos_total': valores['pontos_total']
+            "valores": {
+                "valor_total": valores["valor_total"],
+                "pontos_total": valores["pontos_total"],
             },
-            'children': []
+            "children": [],
         }
-        
+
         # Processar unidades subordinadas
-        for subordinado in unidade_data.get('subordinados', []):
+        for subordinado in unidade_data.get("subordinados", []):
             sub_dados = processa_unidade(subordinado)
-            dados_unidade['children'].append(sub_dados)
+            dados_unidade["children"].append(sub_dados)
             # Somar valores dos subordinados
-            dados_unidade['valores']['valor_total'] += sub_dados['valores']['valor_total']
-            dados_unidade['valores']['pontos_total'] += sub_dados['valores']['pontos_total']
-        
+            dados_unidade["valores"]["valor_total"] += sub_dados["valores"][
+                "valor_total"
+            ]
+            dados_unidade["valores"]["pontos_total"] += sub_dados["valores"][
+                "pontos_total"
+            ]
+
         return dados_unidade
-    
+
     # Processar todo o organograma
     try:
         if isinstance(json_data, str):
             dados = json.loads(json_data)
         else:
             dados = json_data
-            
+
         return processa_unidade(dados)
     except Exception as e:
         print(f"Erro ao processar JSON do organograma: {str(e)}")
         return None
+
 
 def _prepare_data_for_excel(data_list):
     """
@@ -344,87 +372,92 @@ def _prepare_data_for_excel(data_list):
     Higher level positions (e.g., FCE 1.15) come before lower levels (e.g., FCE 1.14).
     """
     processed_list = []
-    
+
     # First, create a complete hierarchical structure
     # Group by area first
     areas_dict = {}
     for item in data_list:
-        area = item.get('area', 'N/A')
+        area = item.get("area", "N/A")
         if area not in areas_dict:
             areas_dict[area] = []
         areas_dict[area].append(item)
-    
+
     # Sort areas alphabetically, but SAGE (if exists) should come first as it's usually the top level
     sorted_areas = sorted(areas_dict.keys())
-    if 'SAGE' in sorted_areas:
-        sorted_areas.remove('SAGE')
-        sorted_areas.insert(0, 'SAGE')
-    
+    if "SAGE" in sorted_areas:
+        sorted_areas.remove("SAGE")
+        sorted_areas.insert(0, "SAGE")
+
     # Process each area
     for area_key in sorted_areas:
         items_in_area = areas_dict[area_key]
-        
+
         # Sort items within area by hierarchy
         def get_hierarchical_sort_key(item):
             # Safely convert nivel and categoria to int with fallback
             try:
-                nivel_raw = item.get('nivel', 0)
-                nivel = int(nivel_raw) if nivel_raw not in ('', None, 'None') else 0
+                nivel_raw = item.get("nivel", 0)
+                nivel = int(nivel_raw) if nivel_raw not in ("", None, "None") else 0
             except (ValueError, TypeError):
                 nivel = 0
-            
+
             try:
-                categoria_raw = item.get('categoria', 0)
-                categoria = int(categoria_raw) if categoria_raw not in ('', None, 'None') else 0
+                categoria_raw = item.get("categoria", 0)
+                categoria = (
+                    int(categoria_raw) if categoria_raw not in ("", None, "None") else 0
+                )
             except (ValueError, TypeError):
                 categoria = 0
-                
-            tipo_cargo = item.get('tipo_cargo', '')
-            denominacao = item.get('denominacao', '')
-            
+
+            tipo_cargo = item.get("tipo_cargo", "")
+            denominacao = item.get("denominacao", "")
+
             # Primary sort: by nivel DESCENDING (15 before 14)
             # Secondary sort: by categoria ASCENDING (1 before 3)
             # Tertiary sort: by cargo type (CCE before FCE alphabetically)
             # Quaternary sort: by denominacao
             return (-nivel, categoria, tipo_cargo, denominacao)
-        
+
         # Sort items
         items_sorted = sorted(items_in_area, key=get_hierarchical_sort_key)
-        
+
         # Add items to processed list
         for item in items_sorted:
-            categoria_str = str(item.get('categoria', ''))
-            nivel_str = str(item.get('nivel', ''))
-            tipo_cargo = item.get('tipo_cargo', '')
-            
+            categoria_str = str(item.get("categoria", ""))
+            nivel_str = str(item.get("nivel", ""))
+            tipo_cargo = item.get("tipo_cargo", "")
+
             # Get quantity - ensure it's an integer
-            quantidade_raw = item.get('quantidade', 1)
+            quantidade_raw = item.get("quantidade", 1)
             try:
                 quantidade = int(quantidade_raw) if quantidade_raw else 1
             except (ValueError, TypeError):
                 quantidade = 1
-            
+
             # Format cargo string
             if categoria_str and nivel_str and tipo_cargo:
-                cargo_formatado = f"{tipo_cargo} {categoria_str}.{nivel_str.zfill(2)}".strip()
+                cargo_formatado = (
+                    f"{tipo_cargo} {categoria_str}.{nivel_str.zfill(2)}".strip()
+                )
             else:
                 cargo_formatado = tipo_cargo
-            
+
             # Clean up the formatted cargo string
             if cargo_formatado == ".":
                 cargo_formatado = ""
             elif cargo_formatado.startswith(" ."):
                 cargo_formatado = cargo_formatado[2:]
-            
+
             row_data = {
-                'area': area_key,
-                'quantidade': quantidade,  # Use the converted integer
-                'denominacao': item.get('denominacao', ''),
-                'cargo_formatado': cargo_formatado
+                "area": area_key,
+                "quantidade": quantidade,  # Use the converted integer
+                "denominacao": item.get("denominacao", ""),
+                "cargo_formatado": cargo_formatado,
             }
             processed_list.append(row_data)
-    
+
     return processed_list
+
 
 def gerar_anexo_simulacao(data_atual, data_nova):
     """
@@ -437,18 +470,22 @@ def gerar_anexo_simulacao(data_atual, data_nova):
     except PlanilhaImportada.DoesNotExist:
         raise FileNotFoundError("Nenhuma planilha ativa encontrada no sistema.")
     except PlanilhaImportada.MultipleObjectsReturned:
-        raise ValueError("Múltiplas planilhas ativas encontradas. Por favor, defina apenas uma como ativa.")
+        raise ValueError(
+            "Múltiplas planilhas ativas encontradas. Por favor, defina apenas uma como ativa."
+        )
 
     try:
         # Load the workbook, trying with keep_vba=False first
-        workbook = openpyxl.load_workbook(planilha_ativa.arquivo.path, keep_vba=False, data_only=False)
+        workbook = openpyxl.load_workbook(
+            planilha_ativa.arquivo.path, keep_vba=False, data_only=False
+        )
     except Exception as e:
         raise ValueError(f"Erro ao carregar o template da planilha: {str(e)}")
 
     sheet_name = "ComparativoEstruturas"
     if sheet_name not in workbook.sheetnames:
         raise ValueError(f"Aba '{sheet_name}' não encontrada no template.")
-    
+
     sheet = workbook[sheet_name]
 
     # 1. Clear content of rows 5 to 327, handling merged cells
@@ -457,7 +494,7 @@ def gerar_anexo_simulacao(data_atual, data_nova):
             for col_index in range(1, sheet.max_column + 1):
                 if col_index <= sheet.max_column:
                     cell = sheet.cell(row=row_index, column=col_index)
-                    
+
                     # Check if the cell is part of a merged cell range
                     is_merged = False
                     for merged_range in sheet.merged_cells.ranges:
@@ -466,7 +503,7 @@ def gerar_anexo_simulacao(data_atual, data_nova):
                             range_to_unmerge_str = str(merged_range)
                             sheet.unmerge_cells(range_to_unmerge_str)
                             break
-                    
+
                     try:
                         cell.value = None
                     except AttributeError:
@@ -480,59 +517,60 @@ def gerar_anexo_simulacao(data_atual, data_nova):
     processed_nova = _prepare_data_for_excel(data_nova)
 
     # Define alignments
-    align_left = Alignment(horizontal='left', vertical='center')
-    align_center = Alignment(horizontal='center', vertical='center')
+    align_left = Alignment(horizontal="left", vertical="center")
+    align_center = Alignment(horizontal="center", vertical="center")
 
     current_data_row = 8  # Data starts at row 8
 
     # Populate "Estrutura Atual" (Columns A-D, i.e., 1-4)
     for item_row_data in processed_atual:
         cell_A = sheet.cell(row=current_data_row, column=1)
-        cell_A.value = item_row_data['area']
+        cell_A.value = item_row_data["area"]
         cell_A.alignment = align_left
 
         cell_B = sheet.cell(row=current_data_row, column=2)
-        cell_B.value = item_row_data['quantidade']
+        cell_B.value = item_row_data["quantidade"]
         cell_B.alignment = align_center
 
         cell_C = sheet.cell(row=current_data_row, column=3)
-        cell_C.value = item_row_data['denominacao']
+        cell_C.value = item_row_data["denominacao"]
         cell_C.alignment = align_left
 
         cell_D = sheet.cell(row=current_data_row, column=4)
-        cell_D.value = item_row_data['cargo_formatado']
+        cell_D.value = item_row_data["cargo_formatado"]
         cell_D.alignment = align_left
-        
+
         current_data_row += 1
-    
+
     current_data_row = 8  # Reset for "Estrutura Nova"
-    
+
     # Populate "Estrutura Nova" (Columns F-I, i.e., 6-9)
     for item_row_data in processed_nova:
         cell_F = sheet.cell(row=current_data_row, column=6)
-        cell_F.value = item_row_data['area']
+        cell_F.value = item_row_data["area"]
         cell_F.alignment = align_left
 
         cell_G = sheet.cell(row=current_data_row, column=7)
-        cell_G.value = item_row_data['quantidade']
+        cell_G.value = item_row_data["quantidade"]
         cell_G.alignment = align_center
 
         cell_H = sheet.cell(row=current_data_row, column=8)
-        cell_H.value = item_row_data['denominacao']
+        cell_H.value = item_row_data["denominacao"]
         cell_H.alignment = align_left
 
         cell_I = sheet.cell(row=current_data_row, column=9)
-        cell_I.value = item_row_data['cargo_formatado']
+        cell_I.value = item_row_data["cargo_formatado"]
         cell_I.alignment = align_left
-        
+
         current_data_row += 1
 
     # Save to a BytesIO stream
     excel_stream = BytesIO()
     workbook.save(excel_stream)
     excel_stream.seek(0)  # Rewind the stream to the beginning
-    
+
     return excel_stream
+
 
 # Make sure to add openpyxl to requirements.txt
 # Example: openpyxl>=3.0.0

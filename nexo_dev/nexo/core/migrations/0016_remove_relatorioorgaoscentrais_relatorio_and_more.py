@@ -6,38 +6,44 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0015_relatorio_relatorioefetivo_relatoriogratificacoes_and_more'),
+        ("core", "0015_relatorio_relatorioefetivo_relatoriogratificacoes_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='relatorioorgaoscentrais',
-            name='relatorio',
+            model_name="relatorioorgaoscentrais",
+            name="relatorio",
         ),
         migrations.RemoveField(
-            model_name='relatorioefetivo',
-            name='relatorio',
+            model_name="relatorioefetivo",
+            name="relatorio",
         ),
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='relatorio',
+            model_name="relatoriogratificacoes",
+            name="relatorio",
         ),
         migrations.AddField(
-            model_name='relatorioefetivo',
-            name='data_importacao',
-            field=models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Importação'),
+            model_name="relatorioefetivo",
+            name="data_importacao",
+            field=models.DateTimeField(
+                auto_now_add=True, null=True, verbose_name="Data de Importação"
+            ),
         ),
         migrations.AddField(
-            model_name='relatoriogratificacoes',
-            name='data_importacao',
-            field=models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Importação'),
+            model_name="relatoriogratificacoes",
+            name="data_importacao",
+            field=models.DateTimeField(
+                auto_now_add=True, null=True, verbose_name="Data de Importação"
+            ),
         ),
         migrations.AddField(
-            model_name='relatorioorgaoscentrais',
-            name='data_importacao',
-            field=models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Importação'),
+            model_name="relatorioorgaoscentrais",
+            name="data_importacao",
+            field=models.DateTimeField(
+                auto_now_add=True, null=True, verbose_name="Data de Importação"
+            ),
         ),
         migrations.DeleteModel(
-            name='Relatorio',
+            name="Relatorio",
         ),
     ]

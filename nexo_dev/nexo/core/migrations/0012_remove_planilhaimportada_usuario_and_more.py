@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0011_planilhaimportada_delete_anexotemplate'),
+        ("core", "0011_planilhaimportada_delete_anexotemplate"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='planilhaimportada',
-            name='usuario',
+            model_name="planilhaimportada",
+            name="usuario",
         ),
         migrations.AddField(
-            model_name='planilhaimportada',
-            name='ativo',
-            field=models.BooleanField(default=False, verbose_name='Planilha Ativa'),
+            model_name="planilhaimportada",
+            name="ativo",
+            field=models.BooleanField(default=False, verbose_name="Planilha Ativa"),
         ),
     ]

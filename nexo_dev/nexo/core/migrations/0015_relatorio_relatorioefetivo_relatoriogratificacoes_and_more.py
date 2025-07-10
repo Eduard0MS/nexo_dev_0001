@@ -8,103 +8,364 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0014_alter_simulacaosalva_options_and_more'),
+        ("core", "0014_alter_simulacaosalva_options_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Relatorio',
+            name="Relatorio",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=255, verbose_name='Nome do Relatório')),
-                ('tipo', models.CharField(choices=[('gratificacoes', 'Gratificações e Lotações'), ('orgaos', 'Órgãos Centrais e Setoriais'), ('efetivo', 'Efetivo de Funcionários'), ('facilities', 'Facilities Assistente ADM'), ('outro', 'Outro')], max_length=20, verbose_name='Tipo de Relatório')),
-                ('arquivo', models.FileField(upload_to='relatorios/', verbose_name='Arquivo Excel')),
-                ('descricao', models.TextField(blank=True, null=True, verbose_name='Descrição')),
-                ('data_upload', models.DateTimeField(auto_now_add=True, verbose_name='Data de Upload')),
-                ('processado', models.BooleanField(default=False, verbose_name='Processado')),
-                ('data_processamento', models.DateTimeField(blank=True, null=True, verbose_name='Data de Processamento')),
-                ('usuario_upload', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='Usuário que fez o Upload')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nome",
+                    models.CharField(max_length=255, verbose_name="Nome do Relatório"),
+                ),
+                (
+                    "tipo",
+                    models.CharField(
+                        choices=[
+                            ("gratificacoes", "Gratificações e Lotações"),
+                            ("orgaos", "Órgãos Centrais e Setoriais"),
+                            ("efetivo", "Efetivo de Funcionários"),
+                            ("facilities", "Facilities Assistente ADM"),
+                            ("outro", "Outro"),
+                        ],
+                        max_length=20,
+                        verbose_name="Tipo de Relatório",
+                    ),
+                ),
+                (
+                    "arquivo",
+                    models.FileField(
+                        upload_to="relatorios/", verbose_name="Arquivo Excel"
+                    ),
+                ),
+                (
+                    "descricao",
+                    models.TextField(blank=True, null=True, verbose_name="Descrição"),
+                ),
+                (
+                    "data_upload",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Data de Upload"
+                    ),
+                ),
+                (
+                    "processado",
+                    models.BooleanField(default=False, verbose_name="Processado"),
+                ),
+                (
+                    "data_processamento",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Data de Processamento"
+                    ),
+                ),
+                (
+                    "usuario_upload",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Usuário que fez o Upload",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Relatório',
-                'verbose_name_plural': 'Relatórios',
-                'ordering': ['-data_upload'],
+                "verbose_name": "Relatório",
+                "verbose_name_plural": "Relatórios",
+                "ordering": ["-data_upload"],
             },
         ),
         migrations.CreateModel(
-            name='RelatorioEfetivo',
+            name="RelatorioEfetivo",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('qt', models.IntegerField(verbose_name='QT')),
-                ('nome_completo', models.CharField(max_length=255, verbose_name='Nome Completo')),
-                ('funcao', models.CharField(max_length=255, verbose_name='Função')),
-                ('unidade_macro', models.CharField(blank=True, max_length=100, verbose_name='Unidade Macro')),
-                ('horario', models.CharField(blank=True, max_length=100, verbose_name='Horário')),
-                ('bloco_andar', models.CharField(blank=True, max_length=100, verbose_name='Bloco/Andar')),
-                ('relatorio', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dados_efetivo', to='core.relatorio')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("qt", models.IntegerField(verbose_name="QT")),
+                (
+                    "nome_completo",
+                    models.CharField(max_length=255, verbose_name="Nome Completo"),
+                ),
+                ("funcao", models.CharField(max_length=255, verbose_name="Função")),
+                (
+                    "unidade_macro",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Unidade Macro"
+                    ),
+                ),
+                (
+                    "horario",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Horário"
+                    ),
+                ),
+                (
+                    "bloco_andar",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Bloco/Andar"
+                    ),
+                ),
+                (
+                    "relatorio",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dados_efetivo",
+                        to="core.relatorio",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Dados de Efetivo',
-                'verbose_name_plural': 'Dados de Efetivo',
-                'ordering': ['qt', 'nome_completo'],
+                "verbose_name": "Dados de Efetivo",
+                "verbose_name_plural": "Dados de Efetivo",
+                "ordering": ["qt", "nome_completo"],
             },
         ),
         migrations.CreateModel(
-            name='RelatorioGratificacoes',
+            name="RelatorioGratificacoes",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_servidor', models.CharField(max_length=255, verbose_name='Nome do Servidor')),
-                ('matricula_siape', models.CharField(max_length=50, verbose_name='Matrícula SIAPE')),
-                ('cpf', models.CharField(max_length=14, verbose_name='CPF')),
-                ('data_nascimento', models.DateField(blank=True, null=True, verbose_name='Data de Nascimento')),
-                ('idade', models.IntegerField(blank=True, null=True, verbose_name='Idade')),
-                ('sexo', models.CharField(blank=True, max_length=10, verbose_name='Sexo')),
-                ('situacao_funcional', models.CharField(blank=True, max_length=100, verbose_name='Situação Funcional')),
-                ('cargo', models.CharField(blank=True, max_length=255, verbose_name='Cargo')),
-                ('nivel', models.CharField(blank=True, max_length=50, verbose_name='Nível')),
-                ('gsiste', models.CharField(blank=True, max_length=100, verbose_name='Gsiste')),
-                ('gsiste_nivel', models.CharField(blank=True, max_length=50, verbose_name='Gsiste Nível')),
-                ('funcao', models.CharField(blank=True, max_length=255, verbose_name='Função')),
-                ('nivel_funcao', models.CharField(blank=True, max_length=50, verbose_name='Nível da Função')),
-                ('atividade_funcao', models.CharField(blank=True, max_length=255, verbose_name='Atividade da Função')),
-                ('jornada_trabalho', models.CharField(blank=True, max_length=50, verbose_name='Jornada de Trabalho')),
-                ('unidade_lotacao', models.CharField(blank=True, max_length=255, verbose_name='Unidade de Lotação')),
-                ('secretaria_lotacao', models.CharField(blank=True, max_length=255, verbose_name='Secretaria da Lotação')),
-                ('uf', models.CharField(blank=True, max_length=2, verbose_name='UF')),
-                ('uorg_exercicio', models.CharField(blank=True, max_length=100, verbose_name='UORG de Exercício')),
-                ('unidade_exercicio', models.CharField(blank=True, max_length=255, verbose_name='Unidade de Exercício')),
-                ('coordenacao', models.CharField(blank=True, max_length=255, verbose_name='Coordenação')),
-                ('diretoria', models.CharField(blank=True, max_length=255, verbose_name='Diretoria')),
-                ('secretaria', models.CharField(blank=True, max_length=255, verbose_name='Secretaria')),
-                ('orgao_origem', models.CharField(blank=True, max_length=255, verbose_name='Órgão Origem')),
-                ('email_institucional', models.EmailField(blank=True, max_length=254, verbose_name='e-Mail Institucional')),
-                ('siape_titular_chefe', models.CharField(blank=True, max_length=50, verbose_name='Siape do Titular Chefe')),
-                ('cpf_titular_chefe', models.CharField(blank=True, max_length=14, verbose_name='CPF do Titular do Chefe')),
-                ('siape_substituto', models.CharField(blank=True, max_length=50, verbose_name='Siape do Substituto')),
-                ('cpf_substituto', models.CharField(blank=True, max_length=14, verbose_name='CPF do Substituto')),
-                ('relatorio', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dados_gratificacoes', to='core.relatorio')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nome_servidor",
+                    models.CharField(max_length=255, verbose_name="Nome do Servidor"),
+                ),
+                (
+                    "matricula_siape",
+                    models.CharField(max_length=50, verbose_name="Matrícula SIAPE"),
+                ),
+                ("cpf", models.CharField(max_length=14, verbose_name="CPF")),
+                (
+                    "data_nascimento",
+                    models.DateField(
+                        blank=True, null=True, verbose_name="Data de Nascimento"
+                    ),
+                ),
+                (
+                    "idade",
+                    models.IntegerField(blank=True, null=True, verbose_name="Idade"),
+                ),
+                (
+                    "sexo",
+                    models.CharField(blank=True, max_length=10, verbose_name="Sexo"),
+                ),
+                (
+                    "situacao_funcional",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Situação Funcional"
+                    ),
+                ),
+                (
+                    "cargo",
+                    models.CharField(blank=True, max_length=255, verbose_name="Cargo"),
+                ),
+                (
+                    "nivel",
+                    models.CharField(blank=True, max_length=50, verbose_name="Nível"),
+                ),
+                (
+                    "gsiste",
+                    models.CharField(blank=True, max_length=100, verbose_name="Gsiste"),
+                ),
+                (
+                    "gsiste_nivel",
+                    models.CharField(
+                        blank=True, max_length=50, verbose_name="Gsiste Nível"
+                    ),
+                ),
+                (
+                    "funcao",
+                    models.CharField(blank=True, max_length=255, verbose_name="Função"),
+                ),
+                (
+                    "nivel_funcao",
+                    models.CharField(
+                        blank=True, max_length=50, verbose_name="Nível da Função"
+                    ),
+                ),
+                (
+                    "atividade_funcao",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Atividade da Função"
+                    ),
+                ),
+                (
+                    "jornada_trabalho",
+                    models.CharField(
+                        blank=True, max_length=50, verbose_name="Jornada de Trabalho"
+                    ),
+                ),
+                (
+                    "unidade_lotacao",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Unidade de Lotação"
+                    ),
+                ),
+                (
+                    "secretaria_lotacao",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Secretaria da Lotação"
+                    ),
+                ),
+                ("uf", models.CharField(blank=True, max_length=2, verbose_name="UF")),
+                (
+                    "uorg_exercicio",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="UORG de Exercício"
+                    ),
+                ),
+                (
+                    "unidade_exercicio",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Unidade de Exercício"
+                    ),
+                ),
+                (
+                    "coordenacao",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Coordenação"
+                    ),
+                ),
+                (
+                    "diretoria",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Diretoria"
+                    ),
+                ),
+                (
+                    "secretaria",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Secretaria"
+                    ),
+                ),
+                (
+                    "orgao_origem",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Órgão Origem"
+                    ),
+                ),
+                (
+                    "email_institucional",
+                    models.EmailField(
+                        blank=True, max_length=254, verbose_name="e-Mail Institucional"
+                    ),
+                ),
+                (
+                    "siape_titular_chefe",
+                    models.CharField(
+                        blank=True, max_length=50, verbose_name="Siape do Titular Chefe"
+                    ),
+                ),
+                (
+                    "cpf_titular_chefe",
+                    models.CharField(
+                        blank=True,
+                        max_length=14,
+                        verbose_name="CPF do Titular do Chefe",
+                    ),
+                ),
+                (
+                    "siape_substituto",
+                    models.CharField(
+                        blank=True, max_length=50, verbose_name="Siape do Substituto"
+                    ),
+                ),
+                (
+                    "cpf_substituto",
+                    models.CharField(
+                        blank=True, max_length=14, verbose_name="CPF do Substituto"
+                    ),
+                ),
+                (
+                    "relatorio",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dados_gratificacoes",
+                        to="core.relatorio",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Dados de Gratificações',
-                'verbose_name_plural': 'Dados de Gratificações',
-                'ordering': ['nome_servidor'],
+                "verbose_name": "Dados de Gratificações",
+                "verbose_name_plural": "Dados de Gratificações",
+                "ordering": ["nome_servidor"],
             },
         ),
         migrations.CreateModel(
-            name='RelatorioOrgaosCentrais',
+            name="RelatorioOrgaosCentrais",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tipo_orgao', models.CharField(choices=[('central', 'Central'), ('setorial', 'Setorial')], max_length=20, verbose_name='Tipo de Órgão')),
-                ('nivel_cargo', models.CharField(max_length=50, verbose_name='Nível do Cargo')),
-                ('valor_maximo', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Valor Máximo da GSISTE')),
-                ('efeitos_financeiros_data', models.CharField(blank=True, max_length=100, verbose_name='Efeitos Financeiros a partir de')),
-                ('relatorio', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dados_orgaos', to='core.relatorio')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "tipo_orgao",
+                    models.CharField(
+                        choices=[("central", "Central"), ("setorial", "Setorial")],
+                        max_length=20,
+                        verbose_name="Tipo de Órgão",
+                    ),
+                ),
+                (
+                    "nivel_cargo",
+                    models.CharField(max_length=50, verbose_name="Nível do Cargo"),
+                ),
+                (
+                    "valor_maximo",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=10,
+                        verbose_name="Valor Máximo da GSISTE",
+                    ),
+                ),
+                (
+                    "efeitos_financeiros_data",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        verbose_name="Efeitos Financeiros a partir de",
+                    ),
+                ),
+                (
+                    "relatorio",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dados_orgaos",
+                        to="core.relatorio",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Dados de Órgãos',
-                'verbose_name_plural': 'Dados de Órgãos',
-                'ordering': ['tipo_orgao', 'nivel_cargo'],
+                "verbose_name": "Dados de Órgãos",
+                "verbose_name_plural": "Dados de Órgãos",
+                "ordering": ["tipo_orgao", "nivel_cargo"],
             },
         ),
     ]

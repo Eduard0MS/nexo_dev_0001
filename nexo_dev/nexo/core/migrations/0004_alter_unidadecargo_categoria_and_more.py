@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0003_alter_unidadecargo_categoria'),
+        ("core", "0003_alter_unidadecargo_categoria"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='unidadecargo',
-            name='categoria',
-            field=models.IntegerField(verbose_name='Categoria'),
+            model_name="unidadecargo",
+            name="categoria",
+            field=models.IntegerField(verbose_name="Categoria"),
         ),
         migrations.AlterField(
-            model_name='unidadecargo',
-            name='nivel',
-            field=models.IntegerField(verbose_name='Nível'),
+            model_name="unidadecargo",
+            name="nivel",
+            field=models.IntegerField(verbose_name="Nível"),
         ),
     ]

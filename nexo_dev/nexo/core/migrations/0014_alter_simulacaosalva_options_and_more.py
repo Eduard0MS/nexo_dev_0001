@@ -8,48 +8,58 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0013_simulacaosalva'),
+        ("core", "0013_simulacaosalva"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='simulacaosalva',
-            options={'ordering': ['-criado_em'], 'verbose_name': 'Simulação Salva', 'verbose_name_plural': 'Simulações Salvas'},
+            name="simulacaosalva",
+            options={
+                "ordering": ["-criado_em"],
+                "verbose_name": "Simulação Salva",
+                "verbose_name_plural": "Simulações Salvas",
+            },
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='atualizado_em',
-            field=models.DateTimeField(auto_now=True, verbose_name='Atualizado em'),
+            model_name="simulacaosalva",
+            name="atualizado_em",
+            field=models.DateTimeField(auto_now=True, verbose_name="Atualizado em"),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='criado_em',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Criado em'),
+            model_name="simulacaosalva",
+            name="criado_em",
+            field=models.DateTimeField(auto_now_add=True, verbose_name="Criado em"),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='dados_estrutura',
-            field=models.JSONField(verbose_name='Dados da Estrutura'),
+            model_name="simulacaosalva",
+            name="dados_estrutura",
+            field=models.JSONField(verbose_name="Dados da Estrutura"),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='descricao',
-            field=models.TextField(blank=True, null=True, verbose_name='Descrição'),
+            model_name="simulacaosalva",
+            name="descricao",
+            field=models.TextField(blank=True, null=True, verbose_name="Descrição"),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='nome',
-            field=models.CharField(max_length=255, verbose_name='Nome da Simulação'),
+            model_name="simulacaosalva",
+            name="nome",
+            field=models.CharField(max_length=255, verbose_name="Nome da Simulação"),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='unidade_base',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Unidade Base'),
+            model_name="simulacaosalva",
+            name="unidade_base",
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name="Unidade Base"
+            ),
         ),
         migrations.AlterField(
-            model_name='simulacaosalva',
-            name='usuario',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Usuário'),
+            model_name="simulacaosalva",
+            name="usuario",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Usuário",
+            ),
         ),
     ]

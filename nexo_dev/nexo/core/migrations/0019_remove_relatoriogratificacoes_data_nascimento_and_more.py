@@ -6,25 +6,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0018_remove_relatoriogratificacoes_cpf_and_more'),
+        ("core", "0018_remove_relatoriogratificacoes_cpf_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='data_nascimento',
+            model_name="relatoriogratificacoes",
+            name="data_nascimento",
         ),
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='idade',
+            model_name="relatoriogratificacoes",
+            name="idade",
         ),
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='sexo',
+            model_name="relatoriogratificacoes",
+            name="sexo",
         ),
         migrations.AlterField(
-            model_name='relatoriogratificacoesplan1',
-            name='tipo_orgao',
-            field=models.CharField(choices=[('central', 'Órgãos Centrais'), ('setorial', 'Órgãos Setoriais'), ('limites', 'Limites GSISTE')], max_length=20, verbose_name='Tipo de Órgão'),
+            model_name="relatoriogratificacoesplan1",
+            name="tipo_orgao",
+            field=models.CharField(
+                choices=[
+                    ("central", "Órgãos Centrais"),
+                    ("setorial", "Órgãos Setoriais"),
+                    ("limites", "Limites GSISTE"),
+                ],
+                max_length=20,
+                verbose_name="Tipo de Órgão",
+            ),
         ),
     ]

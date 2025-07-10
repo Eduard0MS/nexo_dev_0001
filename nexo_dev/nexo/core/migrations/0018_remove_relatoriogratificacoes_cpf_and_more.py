@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0017_relatoriogratificacoesplan1'),
+        ("core", "0017_relatoriogratificacoesplan1"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='cpf',
+            model_name="relatoriogratificacoes",
+            name="cpf",
         ),
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='cpf_substituto',
+            model_name="relatoriogratificacoes",
+            name="cpf_substituto",
         ),
         migrations.RemoveField(
-            model_name='relatoriogratificacoes',
-            name='cpf_titular_chefe',
+            model_name="relatoriogratificacoes",
+            name="cpf_titular_chefe",
         ),
     ]

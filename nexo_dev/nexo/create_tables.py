@@ -3,7 +3,7 @@ import django
 from django.db import connection
 
 # Configurar o ambiente Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Nexus.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Nexus.settings")
 django.setup()
 
 # SQL para criar a tabela CargoSIORG
@@ -23,4 +23,4 @@ try:
         cursor.execute(sql)
         print("Tabela CargoSIORG criada com sucesso!")
 except Exception as e:
-    print(f"Erro ao criar a tabela: {str(e)}") 
+    print(f"Erro ao criar a tabela: {str(e)}")

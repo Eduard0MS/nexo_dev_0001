@@ -6,17 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0019_remove_relatoriogratificacoes_data_nascimento_and_more'),
+        ("core", "0019_remove_relatoriogratificacoes_data_nascimento_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='relatorioefetivo',
-            options={'ordering': ['ordem_planilha'], 'verbose_name': 'Dados de Efetivo', 'verbose_name_plural': 'Dados de Efetivo'},
+            name="relatorioefetivo",
+            options={
+                "ordering": ["ordem_planilha"],
+                "verbose_name": "Dados de Efetivo",
+                "verbose_name_plural": "Dados de Efetivo",
+            },
         ),
         migrations.AddField(
-            model_name='relatorioefetivo',
-            name='ordem_planilha',
-            field=models.IntegerField(default=0, help_text='Posição original na planilha', verbose_name='Ordem na Planilha'),
+            model_name="relatorioefetivo",
+            name="ordem_planilha",
+            field=models.IntegerField(
+                default=0,
+                help_text="Posição original na planilha",
+                verbose_name="Ordem na Planilha",
+            ),
         ),
     ]

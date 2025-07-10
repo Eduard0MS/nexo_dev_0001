@@ -177,123 +177,34 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
         
-        # Testar conexão SSH primeiro
-        echo "🔍 Testando conexão SSH..."
-        ssh -i ~/.ssh/id_rsa -o ConnectTimeout=10 ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} "echo 'SSH conectado com sucesso!'"
+        # Adicionar host conhecido
+        echo "10.209.15.176 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDfftwQ1zdCLlUWdh0nfPZKsIaL/2EfD7pN7gtDpSEf8xD2uO1WrvFYAQw9p36zz9a3VpUo4jv27mFi4JR13WM/WLFkwuw/Jtb3CqURqCfWO1QRTm/YckKREW9fYEEz/uJYt/H216tTLM3+lN21MH5/v8Ak8MUIPM+YSKuuqrVPHHg8H6Ck6euYkInIXOg49Vk93zxJ2U9bF6OqVyx2rX+zxLXvjFrjD14kR8DFmAdJcFkGQMl5rECv97aTcl0eDAbCWQb+kvNm9a/RhKBYhXoFZcdONg9LvHTBKGBslh+tp2PqH0N/NtyYSt6iMfKvd5VWmN2BR3hX4QIUXiRzMycf2nq+k8K3vVUFnng0OiF4wdqdsOJ0hBiEWejckelezb/zSgHFfYcVUAEVGoU6itQAlInXOG0CLRtL4zVaqquDl3VU2t6klQSK816i4c00zHMV6DlLv4qA9HoT6he913xnQKZ/E2Ug7vnhYN6m9USHWGV7HMnI2EwpUs2z8KejhdU=" >> ~/.ssh/known_hosts
         
-        # Executar deploy via SSH
-        ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOL'
-          # Função para log com timestamp
-          log() {
-            echo "$(date '+%H:%M:%S') - $1"
-          }
-          
-          # Parar em caso de erro mas com logs
-          set -e
-          trap 'log "❌ ERRO na linha $LINENO"' ERR
-          
-          log "🚀 Iniciando deploy automático..."
-          
-          # Verificar se diretório existe
-          log "📁 Verificando diretório do repositório..."
-          if [ ! -d "/home/eduardo/Documentos/nexo/nexo_dev_0001" ]; then
-            log "❌ Diretório do repositório não encontrado!"
-            exit 1
-          fi
-          
-          cd /home/eduardo/Documentos/nexo/nexo_dev_0001
-          log "✅ Navegado para: $(pwd)"
-          
-          # Verificar se é repositório git
-          if [ ! -d ".git" ]; then
-            log "❌ Não é um repositório Git!"
-            exit 1
-          fi
-          
-          log "📥 Fazendo backup da versão atual..."
-          cp -r nexo_dev/nexo ../backup_$(date +%Y%m%d_%H%M%S) || log "⚠️ Backup falhou, continuando..."
-          
-          log "🔄 Atualizando código do GitHub..."
-          git fetch origin || { log "❌ git fetch falhou"; exit 1; }
-          git reset --hard origin/main || { log "❌ git reset falhou"; exit 1; }
-          log "✅ Código atualizado com sucesso"
-          
-          # Verificar se diretório Django existe
-          log "📁 Verificando diretório Django..."
-          if [ ! -d "nexo_dev/nexo" ]; then
-            log "❌ Diretório Django não encontrado!"
-            exit 1
-          fi
-          
-          cd nexo_dev/nexo
-          log "✅ Navegado para Django: $(pwd)"
-          
-          # Verificar se manage.py existe
-          if [ ! -f "manage.py" ]; then
-            log "❌ manage.py não encontrado!"
-            exit 1
-          fi
-          
-          # Verificar se venv existe
-          log "📦 Verificando ambiente virtual..."
-          if [ ! -f "/home/eduardo/Documentos/nexo/venv/bin/activate" ]; then
-            log "❌ Ambiente virtual não encontrado!"
-            exit 1
-          fi
-          
-          source /home/eduardo/Documentos/nexo/venv/bin/activate
-          log "✅ Ambiente virtual ativado"
-          
-          # Verificar requirements.txt
-          if [ ! -f "requirements.txt" ]; then
-            log "❌ requirements.txt não encontrado!"
-            exit 1
-          fi
-          
-          log "⬇️ Instalando/atualizando dependências..."
-          pip install -r requirements.txt || { log "❌ pip install falhou"; exit 1; }
-          log "✅ Dependências instaladas"
-          
-          log "🗃️ Executando migrações do banco..."
-          python manage.py migrate --noinput || { log "❌ migrate falhou"; exit 1; }
-          log "✅ Migrações executadas"
-          
-          log "📋 Coletando arquivos estáticos..."
-          python manage.py collectstatic --noinput || { log "❌ collectstatic falhou"; exit 1; }
-          log "✅ Arquivos estáticos coletados"
-          
-          log "🔄 Reiniciando serviços..."
-          sudo systemctl restart gunicorn_nexo || { log "❌ restart gunicorn falhou"; exit 1; }
-          log "✅ Gunicorn reiniciado"
-          
-          log "⏱️ Aguardando serviço inicializar..."
-          sleep 5
-          
-          log "✅ Verificando status do serviço..."
-          if sudo systemctl is-active gunicorn_nexo > /dev/null; then
-            log "✅ Gunicorn está ativo"
-          else
-            log "❌ Gunicorn não está ativo!"
-            sudo systemctl status gunicorn_nexo --no-pager -l
-            exit 1
-          fi
-          
-          log "🏥 Verificando saúde da aplicação..."
-          if curl -f http://localhost:8000 >/dev/null 2>&1; then
-            log "✅ Aplicação respondendo em localhost:8000"
-          elif curl -f http://127.0.0.1:8000 >/dev/null 2>&1; then
-            log "✅ Aplicação respondendo em 127.0.0.1:8000"
-          else
-            log "⚠️ Aplicação não responde, mas pode estar inicializando..."
-          fi
-          
-          log "📊 Status final dos serviços..."
-          sudo systemctl status gunicorn_nexo --no-pager -l
-          
-          log "🎉 Deploy concluído com sucesso!"
-        EOL
+        # Script de deploy simples e direto
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=30 eduardo@10.209.15.176 '
+          echo "=== DEPLOY AUTOMÁTICO INICIADO ===" &&
+          cd /home/eduardo/Documentos/nexo/nexo_dev_0001 &&
+          echo "📍 Diretório atual: $(pwd)" &&
+          git fetch origin &&
+          git reset --hard origin/main &&
+          echo "✅ Código atualizado" &&
+          cd nexo_dev/nexo &&
+          echo "📍 Django: $(pwd)" &&
+          source /home/eduardo/Documentos/nexo/venv/bin/activate &&
+          echo "✅ Venv ativado" &&
+          pip install -r requirements.txt --quiet &&
+          echo "✅ Dependências instaladas" &&
+          python manage.py migrate --noinput &&
+          echo "✅ Migrações executadas" &&
+          python manage.py collectstatic --noinput &&
+          echo "✅ Static files coletados" &&
+          sudo systemctl restart gunicorn_nexo &&
+          echo "✅ Gunicorn reiniciado" &&
+          sleep 3 &&
+          sudo systemctl is-active gunicorn_nexo &&
+          echo "🎉 DEPLOY CONCLUÍDO COM SUCESSO!"
+        '
 
     - name: Upload deployment artifact
       uses: actions/upload-artifact@v4

@@ -1,0 +1,152 @@
+name: CI/CD Pipeline - Self-Hosted
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  DJANGO_SETTINGS_MODULE: 'Nexus.settings'
+
+jobs:
+  test:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r nexo_dev/nexo/requirements.txt
+        pip install pytest pytest-django coverage flake8 black
+
+    - name: Create .env file for testing
+      run: |
+        cd nexo_dev/nexo
+        cat > .env << EOF
+        DEBUG=True
+        SECRET_KEY=test-secret-key-for-ci
+        DATABASE_URL=mysql://root:1802Edu0#*#@127.0.0.1:3306/nexo_dev
+        ALLOWED_HOSTS=localhost,127.0.0.1
+        EOF
+
+    - name: Run linting with flake8
+      run: |
+        cd nexo_dev/nexo
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check code formatting with Black
+      run: |
+        cd nexo_dev/nexo
+        black --check --diff .
+
+    - name: Run Django migrations
+      run: |
+        cd nexo_dev/nexo
+        python manage.py migrate --noinput
+
+    - name: Collect static files
+      run: |
+        cd nexo_dev/nexo
+        python manage.py collectstatic --noinput
+
+    - name: Run Django tests with coverage
+      run: |
+        cd nexo_dev/nexo
+        coverage run --source='.' manage.py test
+        coverage report
+
+  security:
+    runs-on: self-hosted
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+
+    - name: Run Bandit security linter
+      run: |
+        cd nexo_dev/nexo
+        bandit -r . --severity-level medium
+
+    - name: Check for known security vulnerabilities
+      run: |
+        cd nexo_dev/nexo
+        safety check
+
+  deploy:
+    runs-on: self-hosted
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Deploy to production
+      run: |
+        echo "🚀 Iniciando deploy local..."
+        
+        # Já estamos na VM local, deploy direto!
+        cd nexo_dev/nexo
+        
+        echo "📦 Ativando ambiente virtual..."
+        source /home/eduardo/Documentos/nexo/venv/bin/activate
+        
+        echo "⬇️ Instalando/atualizando dependências..."
+        pip install -r requirements.txt --quiet
+        
+        echo "🗃️ Executando migrações..."
+        python manage.py migrate --noinput
+        
+        echo "📋 Coletando arquivos estáticos..."
+        python manage.py collectstatic --noinput
+        
+        echo "🔄 Reiniciando Gunicorn..."
+        sudo systemctl restart gunicorn_nexo
+        
+        echo "✅ Verificando status..."
+        sleep 3
+        sudo systemctl is-active gunicorn_nexo
+        
+        echo "🎉 DEPLOY LOCAL CONCLUÍDO!"
+
+  notify:
+    runs-on: self-hosted
+    needs: [test, security, deploy]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.deploy.result == 'success'
+      run: |
+        echo "🎉 DEPLOY AUTOMÁTICO LOCAL CONCLUÍDO COM SUCESSO!"
+        echo "✅ Testes passaram"
+        echo "✅ Verificações de segurança aprovadas" 
+        echo "✅ Deploy local realizado"
+        echo "🌐 Aplicação atualizada e rodando"
+
+    - name: Notify on failure
+      if: needs.test.result == 'failure' || needs.security.result == 'failure' || needs.deploy.result == 'failure'
+      run: |
+        echo "❌ FALHA NO PIPELINE CI/CD LOCAL!"
+        if [ "${{ needs.test.result }}" = "failure" ]; then
+          echo "❌ Testes falharam"
+        fi
+        if [ "${{ needs.security.result }}" = "failure" ]; then
+          echo "❌ Verificações de segurança falharam"
+        fi
+        if [ "${{ needs.deploy.result }}" = "failure" ]; then
+          echo "❌ Deploy falhou"
+        fi 

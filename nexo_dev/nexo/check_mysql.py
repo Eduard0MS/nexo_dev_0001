@@ -8,11 +8,13 @@ from django.conf import settings
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Nexus.settings")
 django.setup()
 
+
 # Função para validar nome de tabela de forma segura
 def is_safe_table_name(table_name):
     """Valida se o nome da tabela contém apenas caracteres seguros."""
     # Permite apenas letras, números, underscore - padrão MySQL
-    return bool(re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table_name))
+    return bool(re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table_name))
+
 
 # Configurações do MySQL
 mysql_config = {
@@ -32,7 +34,7 @@ try:
     # Listar todas as tabelas
     cursor.execute("SHOW TABLES")
     tables = cursor.fetchall()
-    
+
     # Criar lista de nomes de tabelas válidas para segurança
     valid_table_names = [table[0] for table in tables]
 
@@ -42,9 +44,11 @@ try:
         print(f"- {table_name}")
 
         # SEGURANÇA: Validação rigorosa do nome da tabela
-        if (table_name in valid_table_names and 
-            is_safe_table_name(table_name) and 
-            len(table_name) <= 64):  # Limite do MySQL para nomes de tabela
+        if (
+            table_name in valid_table_names
+            and is_safe_table_name(table_name)
+            and len(table_name) <= 64
+        ):  # Limite do MySQL para nomes de tabela
             # Usar placeholder %s para o nome da tabela não funciona, então usamos validação rigorosa
             query = f"SELECT COUNT(*) FROM `{table_name}`"
             cursor.execute(query)

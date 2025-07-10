@@ -15,11 +15,13 @@ from django.db import connection
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
 
+
 # Função para validar nome de tabela de forma segura
 def is_safe_table_name(table_name):
     """Valida se o nome da tabela contém apenas caracteres seguros."""
     # Permite apenas letras, números, underscore - padrão SQLite
-    return bool(re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table_name))
+    return bool(re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table_name))
+
 
 # Inspecionar aplicativos sociais com ORM
 print("=== DETALHES DOS APLICATIVOS SOCIAIS VIA ORM ===")

@@ -985,17 +985,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const nivel = parseInt(item.nivel);
     const quantidade = parseInt(item.quantidade || 1);
     
-    console.log(`Recalculando valores para o item ${index}: tipo=${tipoCargo}, categoria=${categoria}, nivel=${nivel}, quantidade=${quantidade}`);
-    
     // Buscar os valores de pontos e valor unitário na tabela de cargos
     const cargoSIORG = buscarCargoSIORG(tipoCargo, categoria, nivel);
     
     if (cargoSIORG) {
-      console.log(`Valores recalculados para o item ${index}:`, cargoSIORG, `Pontos totais: ${cargoSIORG.pontos * quantidade}`);
-      
       // Atualizar pontos e valor unitário no objeto de dados
       item.pontos = cargoSIORG.pontos;
       item.valor_unitario = cargoSIORG.valor_unitario;
+      
+      // IMPORTANTE: Atualizar também nos dados completos se existirem
+      if (window.completeEditedData && window.completeEditedData[index]) {
+        window.completeEditedData[index].pontos = cargoSIORG.pontos;
+        window.completeEditedData[index].valor_unitario = cargoSIORG.valor_unitario;
+      }
       
       // Calcular valores totais - garantir que são números válidos
       const pontosTotais = parseFloat(item.pontos) * quantidade;
@@ -1025,12 +1027,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       return true; // Indicar que a atualização foi bem-sucedida
     } else {
-      console.warn(`Não foi possível encontrar valores para o cargo ${tipoCargo}, categoria ${categoria}, nível ${nivel}`);
-      
-      // Manter os valores anteriores se não encontrar valores novos
-      // Em vez de deixar como 0, manter os valores anteriores
-      console.log(`Mantendo valores anteriores: pontos=${item.pontos}`);
-      
       // Calcular com os valores existentes
       const pontosTotais = parseFloat(item.pontos || 0) * quantidade;
       
@@ -1069,158 +1065,39 @@ document.addEventListener('DOMContentLoaded', function() {
    * @returns {Object|null} - Objeto com valores de pontos e valor unitário, ou null se não encontrado
    */
   function buscarCargoSIORG(tipoCargo, categoria, nivel) {
-    console.log(`Buscando valores para cargo: ${tipoCargo} ${categoria} ${nivel}`);
-    
     // Verificar se os dados de cargos estão disponíveis
     if (!window.organogramaData || !Array.isArray(window.organogramaData.core_cargosiorg)) {
-      console.error('Dados de cargos não disponíveis');
       return null;
     }
     
-    // Formatar a string de cargo para busca exata: "FCE 2 13" por exemplo
-    const cargoExato = `${tipoCargo} ${categoria} ${nivel}`.trim();
-    console.log('Buscando cargo exato:', cargoExato);
+    // Formatar nível com zero à esquerda se < 10
+    const nivelFormatado = parseInt(nivel) < 10 ? nivel.toString().padStart(2, '0') : nivel.toString();
     
-    // Tentar múltiplas representações do nível (para lidar com "7", "07", etc.)
-    const nivelStr = nivel.toString();
-    const nivelZeroPadded = nivel < 10 ? `0${nivel}` : nivel.toString();
+    // Formatar a string de cargo para busca exata: "FCE 2 07" ou "FCE 2 15"
+    const cargoExato = `${tipoCargo} ${categoria} ${nivelFormatado}`.trim();
     
-    console.log(`Tentando formatos alternativos para nível: "${nivelStr}" e "${nivelZeroPadded}"`);
+    console.log(`🔍 Buscando SIORG: ${tipoCargo} ${categoria} ${nivel} -> formatado: ${cargoExato}`);
     
-    // Imprimir os primeiros cargos disponíveis para debug (limitar a 10 para não sobrecarregar o console)
-    console.log('Primeiros cargos disponíveis:', window.organogramaData.core_cargosiorg.slice(0, 10).map(c => c.cargo));
-    
-    // Converter arrays para formatos comparáveis
-    const buscaFCEFormatos = [
-      `${tipoCargo} ${categoria} ${nivel}`.toUpperCase(),
-      `${tipoCargo} ${categoria} ${nivelZeroPadded}`.toUpperCase(),
-      `${tipoCargo}${categoria}${nivel}`.toUpperCase(),
-      `${tipoCargo}${categoria}${nivelZeroPadded}`.toUpperCase(),
-      `${tipoCargo} ${categoria}-${nivel}`.toUpperCase(),
-      `${tipoCargo} ${categoria}-${nivelZeroPadded}`.toUpperCase()
-    ];
-    
-    console.log('Formatos de busca:', buscaFCEFormatos);
-    
-    // Buscar o cargo que corresponda a qualquer um dos formatos
+    // Buscar o cargo que corresponda exatamente
     const cargoEncontrado = window.organogramaData.core_cargosiorg.find(c => {
       if (!c.cargo) return false;
-      
-      const cargoFormatado = c.cargo.trim().toUpperCase();
-      
-      // Verificar se o cargo corresponde a algum dos formatos de busca
-      const correspondencia = buscaFCEFormatos.some(formato => cargoFormatado.includes(formato));
-      
-      if (correspondencia) {
-        console.log('Correspondência encontrada:', c);
-        return true;
-      }
-      
-      return false;
+      return c.cargo.trim() === cargoExato;
     });
     
     if (cargoEncontrado) {
-      console.log('Cargo encontrado:', cargoEncontrado);
-      // Converter valor de R$ X.XXX,XX para número
+      console.log(`✅ Cargo encontrado:`, cargoEncontrado);
       const valorUnitario = converterMoedaParaNumero(cargoEncontrado.valor);
       const pontos = parseFloat(cargoEncontrado.unitario) || 0;
       
-      console.log(`Valores extraídos: pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
       return {
+        id: cargoEncontrado.id,
+        cargo: cargoEncontrado.cargo,
         pontos: pontos,
         valor_unitario: valorUnitario
       };
     }
     
-    // Busca alternativa - verificar por partes separadas
-    console.log('Tentando busca por partes separadas');
-    const cargoAlternativo = window.organogramaData.core_cargosiorg.find(c => {
-      if (!c.cargo) return false;
-      
-      const cargoStr = c.cargo.trim().toUpperCase();
-      const partes = cargoStr.split(/[\s\-_]+/); // Separar por espaço, hífen ou underscore
-      
-      if (partes.length < 3) return false;
-      
-      const tipoCorresponde = partes[0] === tipoCargo.toUpperCase();
-      const categoriaCorresponde = partes[1] === categoria.toString();
-      
-      // Para o nível, precisamos verificar se é exatamente o que buscamos
-      // ou se está em formato diferente (com zero à esquerda ou não)
-      let nivelCorresponde = false;
-      const terceiroElemento = partes[2];
-      
-      // Buscar por nível exato ou com zero à esquerda
-      if (terceiroElemento === nivelStr || terceiroElemento === nivelZeroPadded) {
-        nivelCorresponde = true;
-      } 
-      // Se o terceiro elemento tem mais caracteres, verificar se começa com o nível
-      else if (terceiroElemento.startsWith(nivelStr) || terceiroElemento.startsWith(nivelZeroPadded)) {
-        // Verificar se o restante é apenas caracteres não numéricos
-        const restante = terceiroElemento.substring(nivelStr.length);
-        if (!/^\d+/.test(restante)) {
-          nivelCorresponde = true;
-        }
-      }
-      
-      const resultado = tipoCorresponde && categoriaCorresponde && nivelCorresponde;
-      
-      if (resultado) {
-        console.log('Correspondência por partes encontrada:', c);
-      }
-      
-      return resultado;
-    });
-    
-    if (cargoAlternativo) {
-      console.log('Cargo encontrado (formato alternativo):', cargoAlternativo);
-      // Converter valor de R$ X.XXX,XX para número
-      const valorUnitario = converterMoedaParaNumero(cargoAlternativo.valor);
-      const pontos = parseFloat(cargoAlternativo.unitario) || 0;
-      
-      console.log(`Valores extraídos (alt): pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
-      return {
-        pontos: pontos,
-        valor_unitario: valorUnitario
-      };
-    }
-    
-    // Busca mais genérica apenas por tipo e categoria
-    console.log('Tentando busca mais genérica por tipo e categoria');
-    const cargoGenerico = window.organogramaData.core_cargosiorg
-      .filter(c => c.cargo && c.cargo.trim().toUpperCase().startsWith(`${tipoCargo} ${categoria}`.toUpperCase()))
-      .sort((a, b) => {
-        // Ordenar para encontrar o mais próximo do nível desejado
-        const nivelA = extrairNivel(a.cargo, nivel);
-        const nivelB = extrairNivel(b.cargo, nivel);
-        
-        // Calcular diferença absoluta ao nível desejado
-        const difA = Math.abs(nivelA - nivel);
-        const difB = Math.abs(nivelB - nivel);
-        
-        return difA - difB; // Menor diferença primeiro
-      });
-    
-    if (cargoGenerico.length > 0) {
-      const melhorCorrespondencia = cargoGenerico[0];
-      console.log('Melhor correspondência de cargo genérico:', melhorCorrespondencia);
-      
-      // Converter valor de R$ X.XXX,XX para número
-      const valorUnitario = converterMoedaParaNumero(melhorCorrespondencia.valor);
-      const pontos = parseFloat(melhorCorrespondencia.unitario) || 0;
-      
-      console.log(`Valores extraídos (genérico): pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
-      return {
-        pontos: pontos,
-        valor_unitario: valorUnitario
-      };
-    }
-    
-    // Nenhuma correspondência encontrada
-    console.warn(`ATENÇÃO: Nenhum cargo encontrado para: ${tipoCargo} ${categoria} ${nivel}`);
+    console.log(`❌ Cargo não encontrado: ${cargoExato}`);
     return null;
   }
   
@@ -1440,8 +1317,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!item.sigla) return;
         
         const area = item.sigla.trim();
-        // Criar uma chave única que inclui área, tipo_cargo e denominação
-        const chaveUnica = `${area}|${item.tipo_cargo}|${item.denominacao}`;
+        // Criar uma chave única que inclui APENAS área e denominação (não tipo_cargo)
+        const chaveUnica = `${area}|${item.denominacao}`;
         
         if (!areaGroups[chaveUnica]) {
           areaGroups[chaveUnica] = {
@@ -1461,10 +1338,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!item.sigla) return;
         
         const area = item.sigla.trim();
-        // Criar uma chave única que inclui área, tipo_cargo e denominação
-        const chaveUnica = `${area}|${item.tipo_cargo}|${item.denominacao}`;
+        // Criar uma chave única que inclui APENAS área e denominação (não tipo_cargo)
+        const chaveUnica = `${area}|${item.denominacao}`;
         
-        // Criar um novo grupo se a combinação não existir
+        // Encontrar grupo existente ou criar novo
         if (!areaGroups[chaveUnica]) {
           areaGroups[chaveUnica] = {
             sigla: area,
@@ -1475,6 +1352,8 @@ document.addEventListener('DOMContentLoaded', function() {
             itensEditados: []
           };
         }
+        // ATUALIZAR o tipo_cargo do grupo com o valor editado
+        areaGroups[chaveUnica].tipo_cargo = item.tipo_cargo;
         areaGroups[chaveUnica].itensEditados.push(item);
       });
       
@@ -1549,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', function() {
           totalPontosGeral += pontosEditados;
           totalPontosOriginais += pontosOriginais;
           
-          // Obter a denominação para exibição
+          // Obter a denominação para exibição (sempre usar o tipo_cargo atual do grupo)
           let denominacaoArea = `${areaData.denominacao || ''} - ${area}`;
           if (areaData.tipo_cargo) {
             denominacaoArea = `${areaData.tipo_cargo} - ${areaData.denominacao || ''} - ${area}`;

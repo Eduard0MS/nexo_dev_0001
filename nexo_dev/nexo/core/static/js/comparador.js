@@ -9,7 +9,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("Inicializando página do comparador");
+  
   
   // Elementos DOM
   const unitSelect = document.getElementById('unitSelect');
@@ -985,17 +985,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const nivel = parseInt(item.nivel);
     const quantidade = parseInt(item.quantidade || 1);
     
-    console.log(`Recalculando valores para o item ${index}: tipo=${tipoCargo}, categoria=${categoria}, nivel=${nivel}, quantidade=${quantidade}`);
-    
     // Buscar os valores de pontos e valor unitário na tabela de cargos
     const cargoSIORG = buscarCargoSIORG(tipoCargo, categoria, nivel);
     
     if (cargoSIORG) {
-      console.log(`Valores recalculados para o item ${index}:`, cargoSIORG, `Pontos totais: ${cargoSIORG.pontos * quantidade}`);
-      
       // Atualizar pontos e valor unitário no objeto de dados
       item.pontos = cargoSIORG.pontos;
       item.valor_unitario = cargoSIORG.valor_unitario;
+      
+      // IMPORTANTE: Atualizar também nos dados completos se existirem
+      if (window.completeEditedData && window.completeEditedData[index]) {
+        window.completeEditedData[index].pontos = cargoSIORG.pontos;
+        window.completeEditedData[index].valor_unitario = cargoSIORG.valor_unitario;
+      }
       
       // Calcular valores totais - garantir que são números válidos
       const pontosTotais = parseFloat(item.pontos) * quantidade;
@@ -1025,12 +1027,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       return true; // Indicar que a atualização foi bem-sucedida
     } else {
-      console.warn(`Não foi possível encontrar valores para o cargo ${tipoCargo}, categoria ${categoria}, nível ${nivel}`);
-      
-      // Manter os valores anteriores se não encontrar valores novos
-      // Em vez de deixar como 0, manter os valores anteriores
-      console.log(`Mantendo valores anteriores: pontos=${item.pontos}`);
-      
       // Calcular com os valores existentes
       const pontosTotais = parseFloat(item.pontos || 0) * quantidade;
       
@@ -1069,158 +1065,39 @@ document.addEventListener('DOMContentLoaded', function() {
    * @returns {Object|null} - Objeto com valores de pontos e valor unitário, ou null se não encontrado
    */
   function buscarCargoSIORG(tipoCargo, categoria, nivel) {
-    console.log(`Buscando valores para cargo: ${tipoCargo} ${categoria} ${nivel}`);
-    
     // Verificar se os dados de cargos estão disponíveis
     if (!window.organogramaData || !Array.isArray(window.organogramaData.core_cargosiorg)) {
-      console.error('Dados de cargos não disponíveis');
       return null;
     }
     
-    // Formatar a string de cargo para busca exata: "FCE 2 13" por exemplo
-    const cargoExato = `${tipoCargo} ${categoria} ${nivel}`.trim();
-    console.log('Buscando cargo exato:', cargoExato);
+    // Formatar nível com zero à esquerda se < 10
+    const nivelFormatado = parseInt(nivel) < 10 ? nivel.toString().padStart(2, '0') : nivel.toString();
     
-    // Tentar múltiplas representações do nível (para lidar com "7", "07", etc.)
-    const nivelStr = nivel.toString();
-    const nivelZeroPadded = nivel < 10 ? `0${nivel}` : nivel.toString();
+    // Formatar a string de cargo para busca exata: "FCE 2 07" ou "FCE 2 15"
+    const cargoExato = `${tipoCargo} ${categoria} ${nivelFormatado}`.trim();
     
-    console.log(`Tentando formatos alternativos para nível: "${nivelStr}" e "${nivelZeroPadded}"`);
+    console.log(`🔍 Buscando SIORG: ${tipoCargo} ${categoria} ${nivel} -> formatado: ${cargoExato}`);
     
-    // Imprimir os primeiros cargos disponíveis para debug (limitar a 10 para não sobrecarregar o console)
-    console.log('Primeiros cargos disponíveis:', window.organogramaData.core_cargosiorg.slice(0, 10).map(c => c.cargo));
-    
-    // Converter arrays para formatos comparáveis
-    const buscaFCEFormatos = [
-      `${tipoCargo} ${categoria} ${nivel}`.toUpperCase(),
-      `${tipoCargo} ${categoria} ${nivelZeroPadded}`.toUpperCase(),
-      `${tipoCargo}${categoria}${nivel}`.toUpperCase(),
-      `${tipoCargo}${categoria}${nivelZeroPadded}`.toUpperCase(),
-      `${tipoCargo} ${categoria}-${nivel}`.toUpperCase(),
-      `${tipoCargo} ${categoria}-${nivelZeroPadded}`.toUpperCase()
-    ];
-    
-    console.log('Formatos de busca:', buscaFCEFormatos);
-    
-    // Buscar o cargo que corresponda a qualquer um dos formatos
+    // Buscar o cargo que corresponda exatamente
     const cargoEncontrado = window.organogramaData.core_cargosiorg.find(c => {
       if (!c.cargo) return false;
-      
-      const cargoFormatado = c.cargo.trim().toUpperCase();
-      
-      // Verificar se o cargo corresponde a algum dos formatos de busca
-      const correspondencia = buscaFCEFormatos.some(formato => cargoFormatado.includes(formato));
-      
-      if (correspondencia) {
-        console.log('Correspondência encontrada:', c);
-        return true;
-      }
-      
-      return false;
+      return c.cargo.trim() === cargoExato;
     });
     
     if (cargoEncontrado) {
-      console.log('Cargo encontrado:', cargoEncontrado);
-      // Converter valor de R$ X.XXX,XX para número
+      console.log(`✅ Cargo encontrado:`, cargoEncontrado);
       const valorUnitario = converterMoedaParaNumero(cargoEncontrado.valor);
       const pontos = parseFloat(cargoEncontrado.unitario) || 0;
       
-      console.log(`Valores extraídos: pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
       return {
+        id: cargoEncontrado.id,
+        cargo: cargoEncontrado.cargo,
         pontos: pontos,
         valor_unitario: valorUnitario
       };
     }
     
-    // Busca alternativa - verificar por partes separadas
-    console.log('Tentando busca por partes separadas');
-    const cargoAlternativo = window.organogramaData.core_cargosiorg.find(c => {
-      if (!c.cargo) return false;
-      
-      const cargoStr = c.cargo.trim().toUpperCase();
-      const partes = cargoStr.split(/[\s\-_]+/); // Separar por espaço, hífen ou underscore
-      
-      if (partes.length < 3) return false;
-      
-      const tipoCorresponde = partes[0] === tipoCargo.toUpperCase();
-      const categoriaCorresponde = partes[1] === categoria.toString();
-      
-      // Para o nível, precisamos verificar se é exatamente o que buscamos
-      // ou se está em formato diferente (com zero à esquerda ou não)
-      let nivelCorresponde = false;
-      const terceiroElemento = partes[2];
-      
-      // Buscar por nível exato ou com zero à esquerda
-      if (terceiroElemento === nivelStr || terceiroElemento === nivelZeroPadded) {
-        nivelCorresponde = true;
-      } 
-      // Se o terceiro elemento tem mais caracteres, verificar se começa com o nível
-      else if (terceiroElemento.startsWith(nivelStr) || terceiroElemento.startsWith(nivelZeroPadded)) {
-        // Verificar se o restante é apenas caracteres não numéricos
-        const restante = terceiroElemento.substring(nivelStr.length);
-        if (!/^\d+/.test(restante)) {
-          nivelCorresponde = true;
-        }
-      }
-      
-      const resultado = tipoCorresponde && categoriaCorresponde && nivelCorresponde;
-      
-      if (resultado) {
-        console.log('Correspondência por partes encontrada:', c);
-      }
-      
-      return resultado;
-    });
-    
-    if (cargoAlternativo) {
-      console.log('Cargo encontrado (formato alternativo):', cargoAlternativo);
-      // Converter valor de R$ X.XXX,XX para número
-      const valorUnitario = converterMoedaParaNumero(cargoAlternativo.valor);
-      const pontos = parseFloat(cargoAlternativo.unitario) || 0;
-      
-      console.log(`Valores extraídos (alt): pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
-      return {
-        pontos: pontos,
-        valor_unitario: valorUnitario
-      };
-    }
-    
-    // Busca mais genérica apenas por tipo e categoria
-    console.log('Tentando busca mais genérica por tipo e categoria');
-    const cargoGenerico = window.organogramaData.core_cargosiorg
-      .filter(c => c.cargo && c.cargo.trim().toUpperCase().startsWith(`${tipoCargo} ${categoria}`.toUpperCase()))
-      .sort((a, b) => {
-        // Ordenar para encontrar o mais próximo do nível desejado
-        const nivelA = extrairNivel(a.cargo, nivel);
-        const nivelB = extrairNivel(b.cargo, nivel);
-        
-        // Calcular diferença absoluta ao nível desejado
-        const difA = Math.abs(nivelA - nivel);
-        const difB = Math.abs(nivelB - nivel);
-        
-        return difA - difB; // Menor diferença primeiro
-      });
-    
-    if (cargoGenerico.length > 0) {
-      const melhorCorrespondencia = cargoGenerico[0];
-      console.log('Melhor correspondência de cargo genérico:', melhorCorrespondencia);
-      
-      // Converter valor de R$ X.XXX,XX para número
-      const valorUnitario = converterMoedaParaNumero(melhorCorrespondencia.valor);
-      const pontos = parseFloat(melhorCorrespondencia.unitario) || 0;
-      
-      console.log(`Valores extraídos (genérico): pontos=${pontos}, valor_unitario=${valorUnitario}`);
-      
-      return {
-        pontos: pontos,
-        valor_unitario: valorUnitario
-      };
-    }
-    
-    // Nenhuma correspondência encontrada
-    console.warn(`ATENÇÃO: Nenhum cargo encontrado para: ${tipoCargo} ${categoria} ${nivel}`);
+    console.log(`❌ Cargo não encontrado: ${cargoExato}`);
     return null;
   }
   
@@ -1440,8 +1317,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!item.sigla) return;
         
         const area = item.sigla.trim();
-        // Criar uma chave única que inclui área, tipo_cargo e denominação
-        const chaveUnica = `${area}|${item.tipo_cargo}|${item.denominacao}`;
+        // Criar uma chave única que inclui APENAS área e denominação (não tipo_cargo)
+        const chaveUnica = `${area}|${item.denominacao}`;
         
         if (!areaGroups[chaveUnica]) {
           areaGroups[chaveUnica] = {
@@ -1461,10 +1338,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!item.sigla) return;
         
         const area = item.sigla.trim();
-        // Criar uma chave única que inclui área, tipo_cargo e denominação
-        const chaveUnica = `${area}|${item.tipo_cargo}|${item.denominacao}`;
+        // Criar uma chave única que inclui APENAS área e denominação (não tipo_cargo)
+        const chaveUnica = `${area}|${item.denominacao}`;
         
-        // Criar um novo grupo se a combinação não existir
+        // Encontrar grupo existente ou criar novo
         if (!areaGroups[chaveUnica]) {
           areaGroups[chaveUnica] = {
             sigla: area,
@@ -1475,6 +1352,8 @@ document.addEventListener('DOMContentLoaded', function() {
             itensEditados: []
           };
         }
+        // ATUALIZAR o tipo_cargo do grupo com o valor editado
+        areaGroups[chaveUnica].tipo_cargo = item.tipo_cargo;
         areaGroups[chaveUnica].itensEditados.push(item);
       });
       
@@ -1549,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', function() {
           totalPontosGeral += pontosEditados;
           totalPontosOriginais += pontosOriginais;
           
-          // Obter a denominação para exibição
+          // Obter a denominação para exibição (sempre usar o tipo_cargo atual do grupo)
           let denominacaoArea = `${areaData.denominacao || ''} - ${area}`;
           if (areaData.tipo_cargo) {
             denominacaoArea = `${areaData.tipo_cargo} - ${areaData.denominacao || ''} - ${area}`;
@@ -2594,7 +2473,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (target.closest('#editableTable') && 
           (target.hasAttribute('data-field') || target.tagName === 'SELECT')) {
         setTimeout(function() {
-          console.log('Campo editado, atualizando relatório...');
           updatePointsReport();
         }, 300);
       }
@@ -2602,13 +2480,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Forçar inicialização do relatório após o DOM estar pronto
     setTimeout(function() {
-      console.log('Inicializando relatório de pontos...');
       updatePointsReport();
     }, 1000);
   });
 
   function getTableData(tableId) {
-    console.log(`Attempting to get data from table with ID: ${tableId}`);
     const tableElement = document.getElementById(tableId); // Changed from getElementById(tableId) to a more descriptive name
     
     if (!tableElement) {
@@ -2618,24 +2494,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const tbodyElement = tableElement.querySelector('tbody'); // Changed from querySelector('tbody') to a more descriptive name
     if (!tbodyElement) {
-        console.warn(`No tbody found in table with ID '${tableId}'. Table HTML:`, tableElement.innerHTML);
         // Fallback: If no tbody, try to get rows directly from table if it's a simple table
         // This might not be robust if headers are not in thead
         const directRows = tableElement.querySelectorAll('tr');
         if (directRows.length > 1) { // Assuming first row might be header
-             console.log(`Found ${directRows.length} rows directly in table '${tableId}', attempting to process.`);
              // Process directRows, skipping first if it's likely a header
         } else {
             return [];
         }
-    } else {
-        console.log(`Found tbody in table '${tableId}'. Processing rows...`);
-    }
+    } 
 
     const data = [];
     // Use tbodyElement if found, otherwise fallback to tableElement for rows (less ideal)
     const rows = tbodyElement ? tbodyElement.querySelectorAll('tr') : tableElement.querySelectorAll('tr');
-    console.log(`Found ${rows.length} rows in table '${tableId}'.`);
 
     rows.forEach((row, rowIndex) => {
         const cells = row.querySelectorAll('td');
@@ -2649,14 +2520,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 nivel: cells[4]?.textContent.trim(),
                 // quantidade: cells[5]?.textContent.trim(), // Assuming Qtd. is the 6th cell
             };
-            // console.log(`Row ${rowIndex} data for ${tableId}:`, rowData);
             data.push(rowData);
         } else if (cells.length > 0) {
             // Log rows that don't meet the cell count criteria but are not empty
             // console.warn(`Row ${rowIndex} in ${tableId} has only ${cells.length} cells, expected at least 5. Skipping.`);
         }
     });
-    console.log(`Extracted ${data.length} data rows from table '${tableId}'.`);
     return data;
   }
 
@@ -2675,11 +2544,7 @@ document.addEventListener('DOMContentLoaded', function() {
               console.warn('Data for mapping is not an array:', dataArray);
               return [];
           }
-          
-          // Debug: verificar primeiro item antes do filtro
-          if (dataArray.length > 0) {
-              console.log("Primeiro item ANTES do filtro:", dataArray[0]);
-          }
+
           
           return dataArray
               .filter(item => {
@@ -2720,8 +2585,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   
                   // Debug: log primeiro item mapeado
                   if (index === 0) {
-                      console.log("Primeiro item DEPOIS do mapeamento:", mapped);
-                      console.log("Quantidade original:", item.quantidade, "Quantidade mapeada:", mapped.quantidade);
+
                   }
                   
                   return mapped;
@@ -2736,15 +2600,12 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
       }
       
-      console.log("Dados para anexo (Atual):", estruturaAtualDataForExcel);
-      console.log("Dados para anexo (Nova):", estruturaNovaDataForExcel);
+  
       
       // Debug: verificar se quantidade está presente
       if (estruturaAtualDataForExcel.length > 0) {
-          console.log("Exemplo de item (Atual) com quantidade:", estruturaAtualDataForExcel[0]);
       }
       if (estruturaNovaDataForExcel.length > 0) {
-          console.log("Exemplo de item (Nova) com quantidade:", estruturaNovaDataForExcel[0]);
       }
 
       try {
@@ -2845,22 +2706,17 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Função para simular o comportamento do filtro (sem fazer requisição à API)
   window.aplicarFiltroSimulacao = function(dadosSimulacao, unidadeBase) {
-    console.log('🔄 Aplicando filtro de simulação...');
-    console.log('📊 Dados recebidos:', dadosSimulacao.length, 'itens');
-    console.log('🏢 Unidade base:', unidadeBase);
     
     // CORREÇÃO: Se os dados já estão corretos (originalData != editedData), só atualizar interface
     if (window.originalData && window.editedData && 
         window.originalData.length > 0 && window.editedData.length > 0 &&
         JSON.stringify(window.originalData) !== JSON.stringify(window.editedData)) {
       
-      console.log('✅ Dados já aplicados corretamente, apenas atualizando interface...');
       
       // Só atualizar a interface sem modificar os dados
       updateInterface();
       
     } else {
-      console.log('🔄 Aplicando dados da simulação...');
       
       // Comportamento original: substituir dados (fallback)
       originalData.splice(0, originalData.length, ...dadosSimulacao);
@@ -2870,7 +2726,6 @@ document.addEventListener('DOMContentLoaded', function() {
       window.originalData = originalData;
       window.editedData = editedData;
       
-      console.log('✅ Dados substituídos - originalData:', originalData.length, 'editedData:', editedData.length);
       
       updateInterface();
     }
@@ -2894,7 +2749,6 @@ document.addEventListener('DOMContentLoaded', function() {
       setupPaginationControls();
       
       // Forçar renderização das tabelas
-      console.log('🎯 Forçando renderização...');
       populateCurrentTable(window.originalData.slice(0, itemsPerPage));
       populateEditableTable(window.editedData.slice(0, itemsPerPage));
       
@@ -2921,20 +2775,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // FORÇAR atualização dos relatórios
       setTimeout(() => {
-        console.log('🔄 Atualizando relatórios...');
         updateDiffReport();
         updatePointsReport();
-        console.log('✅ Relatórios atualizados!');
       }, 500);
     }
     
-    console.log('🎉 Filtro de simulação aplicado com sucesso!');
   };
 
   // Função para sincronizar edições com dados completos
   function syncEditedDataToComplete() {
     if (completeOriginalData.length > 0 && editedData.length > 0) {
-      console.log(`🔄 Sincronizando ${editedData.length} edições com ${completeOriginalData.length} dados completos`);
       
       // Para cada item editado, encontrar o correspondente nos dados completos e atualizar
       editedData.forEach((editedItem, editedIndex) => {
@@ -2957,7 +2807,6 @@ document.addEventListener('DOMContentLoaded', function() {
           const itemToUpdate = JSON.parse(JSON.stringify(editedItem));
           completeEditedData[completeIndex] = itemToUpdate;
           
-          console.log(`✅ Sincronizado: ${editedItem.denominacao} (${editedItem.sigla})`);
         } else {
           console.warn(`⚠️ Não encontrado nos dados completos: ${editedItem.denominacao} (${editedItem.sigla})`);
         }
@@ -2966,9 +2815,6 @@ document.addEventListener('DOMContentLoaded', function() {
       // Atualizar variável global
       window.completeEditedData = completeEditedData;
       
-      console.log(`✅ Sincronização completa! ${completeEditedData.length} itens nos dados completos`);
-    } else {
-      console.log('ℹ️ Sincronização não necessária (sem dados completos ou editados)');
     }
   }
 
@@ -2994,10 +2840,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(`🔸 isFiltered: ${isFiltered}`);
     
     if (originalData.length > 0) {
-      console.log(`🔸 Primeiro item filtrado: ${originalData[0].denominacao} (${originalData[0].sigla})`);
     }
     if (completeOriginalData.length > 0) {
-      console.log(`🔸 Primeiro item completo: ${completeOriginalData[0].denominacao} (${completeOriginalData[0].sigla})`);
     }
     
     // Verificar se há diferenças entre dados originais e editados nos dados completos
@@ -3008,7 +2852,6 @@ document.addEventListener('DOMContentLoaded', function() {
         diferencasCompletas++;
       }
     });
-    console.log(`🔸 Diferenças nos dados completos: ${diferencasCompletas} itens`);
     
     return {
       originalFiltered: originalData.length,
@@ -3030,7 +2873,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar se os elementos existem
     if (!adicionarCargoBtn || !modal || !confirmarBtn || !nivelSelect) {
-      console.log('⚠️ Elementos do modal de adicionar cargo não encontrados');
       return;
     }
     
@@ -3071,7 +2913,7 @@ document.addEventListener('DOMContentLoaded', function() {
       adicionarNovoCargo();
     });
     
-    console.log('✅ Funcionalidade de adicionar cargo configurada');
+    
   }
   
   /**
@@ -3152,7 +2994,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Atualizar interface
-        console.log('✅ Novo cargo adicionado:', novoCargo);
+        
         
         // Fechar modal após 2 segundos
         setTimeout(() => {

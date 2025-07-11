@@ -38,7 +38,6 @@
         
         // CORREÇÃO: Limpar estado de edição se não foi feito via finalizarEdicao
         if (simulacaoEmEdicao) {
-            console.log('🧹 Limpando estado de edição:', simulacaoEmEdicao.nome);
             simulacaoEmEdicao = null;
         }
     }

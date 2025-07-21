@@ -1,5 +1,7 @@
 // organograma_fixed.js - Versão Integrada com Cálculo Único de Totais
 
+console.log("🔧 DEBUG: Script organograma_fixed.js iniciando...");
+
 // Variáveis globais
 const width = 1024;
 const height = 600;
@@ -485,16 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tooltip = container.append('div')
         .attr('class', 'organograma-tooltip')
         .style('opacity', 0)
-        .style('position', 'fixed')
-        .style('pointer-events', 'none')
-        .style('z-index', 1000);
-    
-    console.log("Tooltip criado:", tooltip.node()); // Log para debug
-    // Criar o tooltip ANTES de tudo
-    tooltip = container.append('div')
-        .attr('class', 'organograma-tooltip')
-        .style('opacity', 0)
-        .style('position', 'fixed')
+        .style('position', 'absolute')
         .style('pointer-events', 'none')
         .style('z-index', 1000);
     
@@ -574,36 +567,6 @@ function update(source) {
       .remove();
   
   // AGORA CRIAR NÓS (por cima das linhas)
-  // CRIAR LINKS PRIMEIRO (para ficarem por baixo dos nós)
-  const links = g.selectAll('path.link')
-      .data(root.links(), d => d.target.id);
-  
-  const linkEnter = links.enter().append('path')
-      .attr('class', 'link')
-      .attr('d', d => {
-          const o = { x: source.x0, y: source.y0 };
-          return diagonal({ source: o, target: o });
-      })
-      .attr('fill', 'none')
-      .attr('stroke', colors.link)
-      .attr('stroke-width', 1.5)
-      .style('opacity', 0);
-  
-  linkEnter.merge(links)
-      .transition().duration(duration)
-      .attr('d', diagonal)
-      .style('opacity', 1);
-  
-  links.exit()
-      .transition().duration(duration)
-      .attr('d', d => {
-          const o = { x: source.x, y: source.y };
-          return diagonal({ source: o, target: o });
-      })
-      .style('opacity', 0)
-      .remove();
-  
-  // AGORA CRIAR NÓS (por cima das linhas)
   const nodes = g.selectAll('g.node').data(root.descendants(), d => d.id || (d.id = ++i));
   
   const nodeEnter = nodes.enter().append('g')
@@ -620,12 +583,8 @@ function update(source) {
     .on('mouseover', (event, d) => {
       console.log("Mouseover detectado no nó:", d.data.secretaria); // Log para debug
       
-      console.log("Mouseover detectado no nó:", d.data.secretaria); // Log para debug
-      
       const nodeElement = event.currentTarget;
       const { x, y, position } = calcularPosicaoTooltip(event, nodeElement);
-      
-      console.log("Posição calculada:", { x, y, position }); // Log para debug
       
       console.log("Posição calculada:", { x, y, position }); // Log para debug
       
@@ -636,37 +595,6 @@ function update(source) {
           totaisCalculados = { gastoTotal: 0, pontosTotal: 0 };
       }
       console.debug(`Exibindo valores para nó ${d.data.codigo}:`, totaisCalculados);
-
-      // Calcular porcentagem em relação ao pai para mostrar junto das unidades vinculadas
-      let porcentagemTexto = '';
-      if (d.parent && d.parent.data && d.parent.data.codigo) {
-        const totaisPai = originalValoresCache[d.parent.data.codigo];
-        if (totaisPai && totaisPai.pontosTotal > 0) {
-          // Calcular pontos totais de todos os irmãos (filhos do mesmo pai)
-          let pontosFilhos = 0;
-          if (d.parent.children) {
-            d.parent.children.forEach(irmao => {
-              const totaisIrmao = originalValoresCache[irmao.data.codigo];
-              if (totaisIrmao) {
-                pontosFilhos += totaisIrmao.pontosTotal;
-              }
-            });
-          } else if (d.parent._children) {
-            d.parent._children.forEach(irmao => {
-              const totaisIrmao = originalValoresCache[irmao.data.codigo];
-              if (totaisIrmao) {
-                pontosFilhos += totaisIrmao.pontosTotal;
-              }
-            });
-          }
-          
-          // Se temos pontos dos filhos, calcular porcentagem em relação aos filhos
-          if (pontosFilhos > 0) {
-            const percentual = ((totaisCalculados.pontosTotal / pontosFilhos) * 100).toFixed(1);
-            porcentagemTexto = ` (${percentual}%)`;
-          }
-        }
-      }
 
       // Calcular porcentagem em relação ao pai para mostrar junto das unidades vinculadas
       let porcentagemTexto = '';
@@ -723,11 +651,12 @@ function update(source) {
       const formatMoeda = valor => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
       const formatPontos = valor => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(valor);
       
-      // Primeiro definir o conteúdo do tooltip
-      // Primeiro definir o conteúdo do tooltip
+      // Primeiro definir o conteúdo do tooltip com botão de fechar
       tooltip.html(`
-        <div class="tooltip-title">${d.data.nome} ${ (d.children || d._children) ? `<span class="badge">${(d.children ? d.children.length : d._children.length)} unidade(s) vinculada(s)${porcentagemTexto}</span>` : '' }</div>
-        <div class="tooltip-title">${d.data.nome} ${ (d.children || d._children) ? `<span class="badge">${(d.children ? d.children.length : d._children.length)} unidade(s) vinculada(s)${porcentagemTexto}</span>` : '' }</div>
+        <div class="tooltip-header">
+          <div class="tooltip-title">${d.data.nome} ${ (d.children || d._children) ? `<span class="badge">${(d.children ? d.children.length : d._children.length)} unidade(s) vinculada(s)${porcentagemTexto}</span>` : '' }</div>
+          <button class="tooltip-close" onclick="hideTooltip()">&times;</button>
+        </div>
         <div class="tooltip-subtitle">Informações da Estrutura</div>
         <div class="tooltip-field">
           <span class="tooltip-label">Sigla:</span>
@@ -735,7 +664,7 @@ function update(source) {
         </div>
         <div class="tooltip-field">
           <span class="tooltip-label">Custo Total da Estrutura:</span>
-          <span class="tooltip-value">${formatMoeda(totaisCalculados.gastoTotal)}</span>
+          <span class="tooltip-value">${formatMoeda(totaisCalculados.gastoTotal)}${(!d.children && !d._children && porcentagemTexto) ? `<span class="tooltip-percentage">${porcentagemTexto}</span>` : ''}</span>
         </div>
         <div class="tooltip-field">
           <span class="tooltip-label">Pontos Totais da Estrutura:</span>
@@ -756,20 +685,7 @@ function update(source) {
              .style('top', y + 'px')
              .style('opacity', 0)
              .style('transform', 'translateX(0)')
-             .transition()
-             .duration(200)
-             .style('opacity', 1);
-      
-      console.log("Tooltip exibido"); // Log para debug
-      
-      console.log("Tooltip HTML definido, aplicando posição..."); // Log para debug
-      
-      // Depois posicionar e mostrar o tooltip
-      tooltip.attr('class', `organograma-tooltip ${position}`)
-             .style('left', x + 'px')
-             .style('top', y + 'px')
-             .style('opacity', 0)
-             .style('transform', 'translateX(0)')
+             .style('pointer-events', 'auto') // Permitir interação com o tooltip
              .transition()
              .duration(200)
              .style('opacity', 1);
@@ -782,16 +698,9 @@ function update(source) {
     .on('mouseout', (event, d) => {
       console.log("Mouseout detectado no nó:", d.data.secretaria); // Log para debug
       
-      tooltip.transition()
-             .duration(150)
-             .style('opacity', 0);
-             
-      console.log("Mouseout detectado no nó:", d.data.secretaria); // Log para debug
+      // Não esconder o tooltip automaticamente no mouseout
+      // Ele só será escondido quando o mouse entrar em outro nó ou clicar no botão fechar
       
-      tooltip.transition()
-             .duration(150)
-             .style('opacity', 0);
-             
       d3.select(event.currentTarget).select('circle')
         .transition().duration(200).attr('r', d => d.depth === 0 ? 14 : 10);
     });
@@ -892,130 +801,74 @@ function calcularPosicaoTooltip(event, nodeElement) {
   const nodeRect = nodeElement.getBoundingClientRect();
   const tooltipWidth = 320;
   const tooltipHeight = 280;
-  const spacing = 15; // Aumentar um pouco o espaçamento
-  const spacing = 15; // Aumentar um pouco o espaçamento
+  const spacing = 15;
   const container = document.getElementById('organogramaContainer');
   const containerRect = container.getBoundingClientRect();
-  const nodeCenterX = nodeRect.left + (nodeRect.width / 2);
-  const nodeCenterY = nodeRect.top + (nodeRect.height / 2);
+  
+  // Calcular posição relativa ao container do organograma
+  const nodeCenterX = nodeRect.left - containerRect.left + (nodeRect.width / 2);
+  const nodeCenterY = nodeRect.top - containerRect.top + (nodeRect.height / 2);
   
   let tooltipX, tooltipY, position = 'right';
   
   // PRIORIDADE 1: Tentar sempre à direita primeiro
-  const rightX = nodeRect.right + spacing;
+  const rightX = nodeCenterX + (nodeRect.width / 2) + spacing;
   const rightY = nodeCenterY - (tooltipHeight / 2);
   
-  // Verificar se cabe à direita (com mais tolerância)
-  if (rightX + tooltipWidth <= window.innerWidth - 20) { // 20px de margem da janela
+  // Verificar se cabe à direita dentro do container
+  if (rightX + tooltipWidth <= containerRect.width - 20) {
     tooltipX = rightX;
     tooltipY = rightY;
     position = 'right';
     
-    // Ajustar Y para não sair da tela
+    // Ajustar Y para não sair do container
     if (tooltipY < 10) {
       tooltipY = 10;
-    } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-      tooltipY = window.innerHeight - tooltipHeight - 10;
+    } else if (tooltipY + tooltipHeight > containerRect.height - 10) {
+      tooltipY = containerRect.height - tooltipHeight - 10;
     }
   }
   // PRIORIDADE 2: Se não couber à direita, tentar à esquerda
   else {
-    const leftX = nodeRect.left - tooltipWidth - spacing;
+    const leftX = nodeCenterX - (nodeRect.width / 2) - tooltipWidth - spacing;
     
-    if (leftX >= 20) { // 20px de margem da janela
-      tooltipX = leftX;
-  
-  // PRIORIDADE 1: Tentar sempre à direita primeiro
-  const rightX = nodeRect.right + spacing;
-  const rightY = nodeCenterY - (tooltipHeight / 2);
-  
-  // Verificar se cabe à direita (com mais tolerância)
-  if (rightX + tooltipWidth <= window.innerWidth - 20) { // 20px de margem da janela
-    tooltipX = rightX;
-    tooltipY = rightY;
-    position = 'right';
-    
-    // Ajustar Y para não sair da tela
-    if (tooltipY < 10) {
-      tooltipY = 10;
-    } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-      tooltipY = window.innerHeight - tooltipHeight - 10;
-    }
-  }
-  // PRIORIDADE 2: Se não couber à direita, tentar à esquerda
-  else {
-    const leftX = nodeRect.left - tooltipWidth - spacing;
-    
-    if (leftX >= 20) { // 20px de margem da janela
+    if (leftX >= 20) {
       tooltipX = leftX;
       tooltipY = nodeCenterY - (tooltipHeight / 2);
       position = 'left';
       
-      // Ajustar Y para não sair da tela
+      // Ajustar Y para não sair do container
       if (tooltipY < 10) {
         tooltipY = 10;
-      } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-        tooltipY = window.innerHeight - tooltipHeight - 10;
+      } else if (tooltipY + tooltipHeight > containerRect.height - 10) {
+        tooltipY = containerRect.height - tooltipHeight - 10;
       }
     }
     // PRIORIDADE 3: Como último recurso, posicionar acima ou abaixo
     else {
-      tooltipX = Math.max(20, Math.min(nodeCenterX - (tooltipWidth / 2), window.innerWidth - tooltipWidth - 20));
+      tooltipX = Math.max(20, Math.min(nodeCenterX - (tooltipWidth / 2), containerRect.width - tooltipWidth - 20));
       
       // Tentar posicionar acima
-      if (nodeRect.top - tooltipHeight - spacing >= 10) {
-        tooltipY = nodeRect.top - tooltipHeight - spacing;
+      if (nodeCenterY - tooltipHeight - spacing >= 10) {
+        tooltipY = nodeCenterY - tooltipHeight - spacing;
         position = 'top';
       }
       // Caso contrário, posicionar abaixo
       else {
-        tooltipY = nodeRect.bottom + spacing;
+        tooltipY = nodeCenterY + (nodeRect.height / 2) + spacing;
         position = 'bottom';
         
-        // Se não couber abaixo, forçar para caber na tela
-        if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-          tooltipY = window.innerHeight - tooltipHeight - 10;
+        // Se não couber abaixo, forçar para caber no container
+        if (tooltipY + tooltipHeight > containerRect.height - 10) {
+          tooltipY = containerRect.height - tooltipHeight - 10;
         }
       }
     }
   }
   
-  // Garantir que o tooltip nunca saia completamente da tela
-  tooltipX = Math.max(10, Math.min(tooltipX, window.innerWidth - tooltipWidth - 10));
-  tooltipY = Math.max(10, Math.min(tooltipY, window.innerHeight - tooltipHeight - 10));
-      
-      // Ajustar Y para não sair da tela
-      if (tooltipY < 10) {
-        tooltipY = 10;
-      } else if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-        tooltipY = window.innerHeight - tooltipHeight - 10;
-      }
-    }
-    // PRIORIDADE 3: Como último recurso, posicionar acima ou abaixo
-    else {
-      tooltipX = Math.max(20, Math.min(nodeCenterX - (tooltipWidth / 2), window.innerWidth - tooltipWidth - 20));
-      
-      // Tentar posicionar acima
-      if (nodeRect.top - tooltipHeight - spacing >= 10) {
-        tooltipY = nodeRect.top - tooltipHeight - spacing;
-        position = 'top';
-      }
-      // Caso contrário, posicionar abaixo
-      else {
-        tooltipY = nodeRect.bottom + spacing;
-        position = 'bottom';
-        
-        // Se não couber abaixo, forçar para caber na tela
-        if (tooltipY + tooltipHeight > window.innerHeight - 10) {
-          tooltipY = window.innerHeight - tooltipHeight - 10;
-        }
-      }
-    }
-  }
-  
-  // Garantir que o tooltip nunca saia completamente da tela
-  tooltipX = Math.max(10, Math.min(tooltipX, window.innerWidth - tooltipWidth - 10));
-  tooltipY = Math.max(10, Math.min(tooltipY, window.innerHeight - tooltipHeight - 10));
+  // Garantir que o tooltip nunca saia completamente do container
+  tooltipX = Math.max(10, Math.min(tooltipX, containerRect.width - tooltipWidth - 10));
+  tooltipY = Math.max(10, Math.min(tooltipY, containerRect.height - tooltipHeight - 10));
   
   return { x: tooltipX, y: tooltipY, position };
 }
@@ -1153,6 +1006,7 @@ const aplicarFiltros = () => {
 
 // Função para buscar dados dos cargos para a tabela
 function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, tamanhoPagina = 20) {
+    console.log("🔧 DEBUG: buscarDadosCargos foi chamada!");
     console.log(`Buscando cargos: sigla=${sigla}, tipoCargo=${tipoCargo}, nivel=${nivel}, página=${pagina}, tamanho=${tamanhoPagina}`);
     
     // Mostrar indicador de carregamento
@@ -1288,6 +1142,8 @@ function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, t
         });
 }
 
+console.log("🔧 DEBUG: Função buscarDadosCargos definida!");
+
 // Função para atualizar o estado dos botões de paginação
 function atualizarBotoesPaginacao() {
     const btnAnterior = document.getElementById('btn-pagina-anterior');
@@ -1408,12 +1264,9 @@ style.textContent = `
     font-size: 12px;
     width: 320px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
     border: 1px solid rgba(0,0,0,0.1);
     pointer-events: none;
     z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
     max-height: 300px;
     overflow-y: auto;
   }
@@ -1684,12 +1537,12 @@ function exibirErro(mensagem) {
     }
 }
 
-// Função para exibir mensagens de erro
-function exibirErro(mensagem) {
-    console.error("Erro no organograma:", mensagem);
-    if (container && container.node) {
-        const errorDiv = container.append('div')
-            .attr('class', 'alert alert-danger m-3')
-            .html(`<i class="fas fa-exclamation-circle me-2"></i>${mensagem}`);
-    }
+console.log("🔧 DEBUG: Script organograma_fixed.js carregado completamente!");
+
+// Função para esconder o tooltip
+function hideTooltip() {
+  tooltip.transition()
+         .duration(150)
+         .style('opacity', 0)
+         .style('pointer-events', 'none');
 }

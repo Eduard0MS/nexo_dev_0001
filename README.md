@@ -50,13 +50,14 @@ pip install -r requirements.txt
 ## Configuração do ambiente
 
 1. Crie um arquivo `.env` na pasta `nexo_dev/nexo` com o seguinte conteúdo:
+   Você pode usar o arquivo `.env.example` como base e definir valores seguros para as variáveis `POSTGRES_PASSWORD` e `DATABASE_URL`.
 
 ```
 # Configurações do Banco de Dados
 DB_ENGINE=django.db.backends.mysql
 DB_NAME=nexo_dev
 DB_USER=root
-DB_PASSWORD=sua_senha_mysql
+DB_PASSWORD=seu_db_password  # Definido em variáveis de ambiente
 DB_HOST=127.0.0.1
 DB_PORT=3306
 
@@ -197,6 +198,7 @@ O projeto inclui vários scripts úteis:
 - `setup_social_app.py`: Configura a aplicação social
 - `fix_indentation.py`: Corrige a indentação dos arquivos
 - `inspect_db.py`: Inspeciona o banco de dados
+- `test_sql_injection.py`: Teste de injeção SQL básico para validar proteções
 
 ## Estrutura do Projeto
 

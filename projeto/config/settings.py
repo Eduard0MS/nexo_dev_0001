@@ -61,10 +61,8 @@ def load_env_safely():
 # Chamar nossa função segura
 load_env_safely()
 
-# Debug temporário (exibe apenas uma vez)
-log_once(f"DEBUG: DB_PASSWORD = {os.environ.get('DB_PASSWORD')}")
-log_once(f"DEBUG: DB_HOST = {os.environ.get('DB_HOST')}")
-log_once(f"DEBUG: DB_NAME = {os.environ.get('DB_NAME')}")
+# Apenas indicar que variáveis de banco foram carregadas
+log_once("DEBUG: Variáveis de banco carregadas")
 
 # Definir ambiente
 ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
@@ -177,11 +175,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": "nexo_dev",
-            "USER": "root",
-            "PASSWORD": "1802Edu0#*#",
-            "HOST": "127.0.0.1",
-            "PORT": "3306",
+            "NAME": os.environ.get("DB_NAME", "nexo_dev"),
+            "USER": os.environ.get("DB_USER", "root"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("DB_PORT", "3306"),
         }
     }
 

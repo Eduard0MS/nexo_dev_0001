@@ -163,11 +163,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": "nexo_dev",
-            "USER": "root",
-            "PASSWORD": "1802Edu0#*#",
-            "HOST": "127.0.0.1",
-            "PORT": "3306",
+            "NAME": os.getenv("DB_NAME", "nexo_dev"),
+            "USER": os.getenv("DB_USER", "root"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+            "PORT": os.getenv("DB_PORT", "3306"),
         }
     }
 

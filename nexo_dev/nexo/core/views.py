@@ -2340,7 +2340,7 @@ def relatorios(request):
 def api_relatorio_pontos_gratificacoes(request):
     """
     API para dados do relatório usando a API do organograma.
-    Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)
+    Primeira tabela: Unidade, Pontos totais (sem GSISTE/GSISP por enquanto)
     """
     from django.http import HttpRequest
     import json

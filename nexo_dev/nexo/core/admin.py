@@ -261,7 +261,12 @@ class UnidadeCargoAdmin(admin.ModelAdmin):
                 file_estrutura_viva = form.cleaned_data["file_estrutura_viva"]
 
                 try:
+                    # Processar as planilhas
                     resultado = processa_planilhas(file_hierarquia, file_estrutura_viva)
+                    
+                    # Salvar os dados no banco
+                    from .utils import salvar_dados_no_banco
+                    registros_criados, erros = salvar_dados_no_banco(resultado)
 
                     # Gerar arquivo dados.json após a importação
                     try:
@@ -270,13 +275,13 @@ class UnidadeCargoAdmin(admin.ModelAdmin):
                         atualizar_dados_organograma()
                         self.message_user(
                             request,
-                            "Planilhas importadas e dados.json atualizado com sucesso! O organograma será atualizado automaticamente ao ser visualizado.",
+                            f"Planilhas importadas com sucesso! {registros_criados} registros salvos no banco. Arquivo dados.json atualizado! O organograma será atualizado automaticamente ao ser visualizado.",
                             messages.SUCCESS,
                         )
                     except Exception as e:
                         self.message_user(
                             request,
-                            f"Planilhas importadas mas erro ao gerar dados.json: {str(e)}",
+                            f"Planilhas importadas ({registros_criados} registros) mas erro ao gerar dados.json: {str(e)}",
                             messages.WARNING,
                         )
 
@@ -494,7 +499,19 @@ class PlanilhaImportadaAdmin(admin.ModelAdmin):
         if request.method == "POST":
             form = ImportarPlanilhaForm(request.POST, request.FILES)
             if form.is_valid():
-                planilha = form.save()
+                # Criar o objeto PlanilhaImportada manualmente
+                from .models import PlanilhaImportada
+                
+                # Se a planilha será ativa, desativar todas as outras
+                if form.cleaned_data.get('ativo'):
+                    PlanilhaImportada.objects.filter(ativo=True).update(ativo=False)
+                
+                planilha = PlanilhaImportada.objects.create(
+                    nome=form.cleaned_data['nome'],
+                    arquivo=form.cleaned_data['arquivo'],
+                    ativo=form.cleaned_data.get('ativo', False)
+                )
+                
                 self.message_user(
                     request,
                     f'Planilha "{planilha.nome}" importada com sucesso!',

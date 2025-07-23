@@ -1,7 +1,5 @@
 // organograma_fixed.js - Versão Integrada com Cálculo Único de Totais
 
-console.log("🔧 DEBUG: Script organograma_fixed.js iniciando...");
-
 // Variáveis globais
 const width = 1024;
 const height = 600;
@@ -607,53 +605,11 @@ function update(source) {
       // Calcular porcentagem em relação ao pai para mostrar junto das unidades vinculadas
       let porcentagemTexto = '';
       if (d.parent && d.parent.data && d.parent.data.codigo) {
-        const totaisPai = originalValoresCache[d.parent.data.codigo];
-        if (totaisPai && totaisPai.pontosTotal > 0) {
-          // Calcular pontos totais de todos os irmãos (filhos do mesmo pai)
-          let pontosFilhos = 0;
-          if (d.parent.children) {
-            d.parent.children.forEach(irmao => {
-              const totaisIrmao = originalValoresCache[irmao.data.codigo];
-              if (totaisIrmao) {
-                pontosFilhos += totaisIrmao.pontosTotal;
-              }
-            });
-          } else if (d.parent._children) {
-            d.parent._children.forEach(irmao => {
-              const totaisIrmao = originalValoresCache[irmao.data.codigo];
-              if (totaisIrmao) {
-                pontosFilhos += totaisIrmao.pontosTotal;
-              }
-            });
-          }
-          
-          // Se temos pontos dos filhos, calcular porcentagem em relação aos filhos
-          if (pontosFilhos > 0) {
-            const percentual = ((totaisCalculados.pontosTotal / pontosFilhos) * 100).toFixed(1);
-            porcentagemTexto = ` (${percentual}%)`;
-          }
+        const paiTotais = originalValoresCache[d.parent.data.codigo];
+        if (paiTotais && paiTotais.gastoTotal > 0) {
+          const porcentagem = (totaisCalculados.gastoTotal / paiTotais.gastoTotal) * 100;
+          porcentagemTexto = ` (${porcentagem.toFixed(1)}%)`;
         }
-      }
-
-      // Gerar a seção de cargos e servidores
-      let cargosHtml = '';
-      let totalServidores = 0;
-      
-      if (d.data.cargos_detalhes && d.data.cargos_detalhes.length > 0) {
-        // Calcular total de servidores
-        totalServidores = d.data.cargos_detalhes.reduce((total, cargo) => total + cargo.quantidade, 0);
-        
-        // Gerar HTML para cada cargo
-        const cargosListaHtml = d.data.cargos_detalhes
-          .map(cargo => `<div class="cargo-item">${cargo.cargo}: ${cargo.quantidade} servidor${cargo.quantidade !== 1 ? 'es' : ''}</div>`)
-          .join('');
-        
-        cargosHtml = `
-          <div class="tooltip-subtitle">Servidores (${totalServidores} total)</div>
-          <div class="cargos-lista">
-            ${cargosListaHtml}
-          </div>
-        `;
       }
 
       const formatMoeda = valor => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
@@ -1027,7 +983,6 @@ const aplicarFiltros = () => {
 
 // Função para buscar dados dos cargos para a tabela
 function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, tamanhoPagina = 20) {
-    console.log("🔧 DEBUG: buscarDadosCargos foi chamada!");
     console.log(`Buscando cargos: sigla=${sigla}, tipoCargo=${tipoCargo}, nivel=${nivel}, página=${pagina}, tamanho=${tamanhoPagina}`);
     
     // Mostrar indicador de carregamento
@@ -1162,8 +1117,6 @@ function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, t
             }
         });
 }
-
-console.log("🔧 DEBUG: Função buscarDadosCargos definida!");
 
 // Função para atualizar o estado dos botões de paginação
 function atualizarBotoesPaginacao() {
@@ -1339,6 +1292,15 @@ style.textContent = `
     border-left: none; 
   }
   
+  .tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
   .tooltip-title { 
     font-size: 14px; 
     font-weight: 600; 
@@ -1483,8 +1445,6 @@ function exibirErro(mensagem) {
             .html(`<i class="fas fa-exclamation-circle me-2"></i>${mensagem}`);
     }
 }
-
-console.log("🔧 DEBUG: Script organograma_fixed.js carregado completamente!");
 
 // Função para esconder o tooltip
 function hideTooltip() {

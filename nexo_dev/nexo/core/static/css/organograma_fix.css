@@ -73,7 +73,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   pointer-events: none;
   z-index: 1000;
-  max-width: 300px;
+  max-width: 320px;
   font-size: 12px;
   line-height: 1.4;
 }
@@ -114,9 +114,11 @@
 .tooltip-subtitle {
   font-weight: bold;
   font-size: 13px;
-  margin-top: 5px;
+  margin-top: 8px;
   margin-bottom: 5px;
   color: #4a5568;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 3px;
 }
 
 .tooltip-percentage {

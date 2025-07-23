@@ -10,11 +10,11 @@ wsgi_app = "Nexus.wsgi_prod:application"
 # Número de workers: recomendação (2 x número de núcleos) + 1
 workers = multiprocessing.cpu_count() * 2 + 1
 
-# Tipo de worker (usar gevent para melhor performance com muitas conexões)
-worker_class = "gevent"
+# Tipo de worker (usar sync padrão)
+worker_class = "sync"
 
 # Porta e binding
-bind = "0.0.0.0:8000"
+bind = "127.0.0.1:8000"
 
 # Timeout (em segundos)
 timeout = 120

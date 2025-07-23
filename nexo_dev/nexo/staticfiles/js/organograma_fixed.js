@@ -1,7 +1,5 @@
 // organograma_fixed.js - Versão Integrada com Cálculo Único de Totais
 
-console.log("🔧 DEBUG: Script organograma_fixed.js iniciando...");
-
 // Variáveis globais
 const width = 1024;
 const height = 600;
@@ -614,20 +612,6 @@ function update(source) {
         }
       }
 
-      // Gerar HTML para cargos se disponível
-      let cargosHtml = '';
-      if (d.data.cargos_detalhes && d.data.cargos_detalhes.length > 0) {
-        cargosHtml = '<div class="tooltip-subtitle">Servidores (' + d.data.cargos_detalhes.length + ' total)</div>';
-        d.data.cargos_detalhes.forEach(cargo => {
-          cargosHtml += `
-            <div class="tooltip-field">
-              <span class="tooltip-label">${cargo.denominacao || 'Cargo'}:</span>
-              <span class="tooltip-value">${cargo.quantidade || 1} servidor</span>
-            </div>
-          `;
-        });
-      }
-
       const formatMoeda = valor => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
       const formatPontos = valor => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(valor);
       
@@ -999,7 +983,6 @@ const aplicarFiltros = () => {
 
 // Função para buscar dados dos cargos para a tabela
 function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, tamanhoPagina = 20) {
-    console.log("🔧 DEBUG: buscarDadosCargos foi chamada!");
     console.log(`Buscando cargos: sigla=${sigla}, tipoCargo=${tipoCargo}, nivel=${nivel}, página=${pagina}, tamanho=${tamanhoPagina}`);
     
     // Mostrar indicador de carregamento
@@ -1134,8 +1117,6 @@ function buscarDadosCargos(sigla = '', tipoCargo = '', nivel = '', pagina = 1, t
             }
         });
 }
-
-console.log("🔧 DEBUG: Função buscarDadosCargos definida!");
 
 // Função para atualizar o estado dos botões de paginação
 function atualizarBotoesPaginacao() {
@@ -1311,6 +1292,15 @@ style.textContent = `
     border-left: none; 
   }
   
+  .tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
   .tooltip-title { 
     font-size: 14px; 
     font-weight: 600; 
@@ -1455,8 +1445,6 @@ function exibirErro(mensagem) {
             .html(`<i class="fas fa-exclamation-circle me-2"></i>${mensagem}`);
     }
 }
-
-console.log("🔧 DEBUG: Script organograma_fixed.js carregado completamente!");
 
 // Função para esconder o tooltip
 function hideTooltip() {

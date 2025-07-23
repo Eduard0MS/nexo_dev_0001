@@ -108,6 +108,91 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
     return df_resultado
 
 
+def salvar_dados_no_banco(df_resultado):
+    """
+    Salva os dados processados da planilha no banco de dados UnidadeCargo.
+    """
+    print(f"Iniciando salvamento no banco de dados...")
+    print(f"Total de registros a processar: {len(df_resultado)}")
+    
+    # Limpar dados existentes antes de importar novos
+    registros_anteriores = UnidadeCargo.objects.count()
+    if registros_anteriores > 0:
+        UnidadeCargo.objects.all().delete()
+        print(f"Removidos {registros_anteriores} registros anteriores")
+    
+    registros_criados = 0
+    erros = []
+    
+    for index, row in df_resultado.iterrows():
+        try:
+            # Garantir que todos os campos obrigatórios tenham valores válidos
+            nivel_hierarquico = int(row.get('Nível Hierárquico', 0)) if pd.notna(row.get('Nível Hierárquico')) else 0
+            tipo_unidade = str(row.get('Tipo Unidade', '')).strip() if pd.notna(row.get('Tipo Unidade')) else ''
+            denominacao_unidade = str(row.get('Deno Unidade', '')).strip() if pd.notna(row.get('Deno Unidade')) else ''
+            codigo_unidade = str(row.get('Código Unidade', '')).strip() if pd.notna(row.get('Código Unidade')) else ''
+            sigla_unidade = str(row.get('Sigla Unidade', '')).strip() if pd.notna(row.get('Sigla Unidade')) else ''
+            categoria_unidade = str(row.get('Categoria Unidade', '')).strip() if pd.notna(row.get('Categoria Unidade')) else ''
+            orgao_entidade = str(row.get('Órgão/Entidade', '')).strip() if pd.notna(row.get('Órgão/Entidade')) else ''
+            tipo_cargo = str(row.get('Tipo do Cargo', '')).strip() if pd.notna(row.get('Tipo do Cargo')) else ''
+            denominacao = str(row.get('Denominação', '')).strip() if pd.notna(row.get('Denominação')) else ''
+            complemento_denominacao = str(row.get('Complemento Denominação', '')).strip() if pd.notna(row.get('Complemento Denominação')) else ''
+            categoria = int(row.get('Categoria', 0)) if pd.notna(row.get('Categoria')) else 0
+            nivel = int(row.get('Nível', 0)) if pd.notna(row.get('Nível')) else 0
+            quantidade = int(row.get('Quantidade', 0)) if pd.notna(row.get('Quantidade')) else 0
+            grafo = str(row.get('Grafo', '')).strip() if pd.notna(row.get('Grafo')) else ''
+            sigla = str(row.get('Sigla', '')).strip() if pd.notna(row.get('Sigla')) else ''
+            
+            # Validar campos obrigatórios
+            if not codigo_unidade:
+                print(f"Registro {index + 1} ignorado - código unidade vazio")
+                continue
+                
+            if not grafo:
+                print(f"Registro {index + 1} ignorado - grafo vazio")
+                continue
+            
+            # Criar o objeto UnidadeCargo
+            unidade_cargo = UnidadeCargo(
+                nivel_hierarquico=nivel_hierarquico,
+                tipo_unidade=tipo_unidade,
+                denominacao_unidade=denominacao_unidade,
+                codigo_unidade=codigo_unidade,
+                sigla_unidade=sigla_unidade,
+                categoria_unidade=categoria_unidade,
+                orgao_entidade=orgao_entidade,
+                tipo_cargo=tipo_cargo,
+                denominacao=denominacao,
+                complemento_denominacao=complemento_denominacao,
+                categoria=categoria,
+                nivel=nivel,
+                quantidade=quantidade,
+                grafo=grafo,
+                sigla=sigla
+            )
+            
+            # Salvar o objeto
+            unidade_cargo.save()
+            registros_criados += 1
+            
+            if registros_criados % 50 == 0:
+                print(f"Processados {registros_criados} registros...")
+                
+        except Exception as e:
+            erro_msg = f"Erro na linha {index + 1}: {str(e)}"
+            erros.append(erro_msg)
+            print(f"ERRO: {erro_msg}")
+            print(f"Dados da linha: {dict(row)}")
+    
+    print(f"Salvamento concluído! {registros_criados} registros criados.")
+    if erros:
+        print(f"Total de erros: {len(erros)}")
+        for erro in erros[:5]:  # Mostrar apenas os primeiros 5 erros
+            print(f"  - {erro}")
+    
+    return registros_criados, erros
+
+
 def processa_organograma():
     """
     Processa os dados das unidades e cargos em uma estrutura de grafo organizacional.

@@ -8,24 +8,119 @@ from .models import PlanilhaImportada
 from collections import defaultdict
 from openpyxl.styles import Alignment
 
+def salvar_dados_no_banco(df_resultado):
+    """
+    Salva os dados processados da planilha no banco de dados UnidadeCargo.
+    """
+    print(f"Iniciando salvamento no banco de dados...")
+    print(f"Total de registros a processar: {len(df_resultado)}")
+    
+    # Limpar dados existentes antes de importar novos
+    registros_anteriores = UnidadeCargo.objects.count()
+    if registros_anteriores > 0:
+        UnidadeCargo.objects.all().delete()
+        print(f"Removidos {registros_anteriores} registros anteriores")
+    
+    registros_criados = 0
+    erros = []
+    
+    for index, row in df_resultado.iterrows():
+        try:
+            # Garantir que todos os campos obrigatórios tenham valores válidos
+            nivel_hierarquico = int(row.get('Nível Hierárquico', 0)) if pd.notna(row.get('Nível Hierárquico')) else 0
+            tipo_unidade = str(row.get('Tipo Unidade', '')).strip() if pd.notna(row.get('Tipo Unidade')) else ''
+            denominacao_unidade = str(row.get('Deno Unidade', '')).strip() if pd.notna(row.get('Deno Unidade')) else ''
+            codigo_unidade = str(row.get('Código Unidade', '')).strip() if pd.notna(row.get('Código Unidade')) else ''
+            sigla_unidade = str(row.get('Sigla Unidade', '')).strip() if pd.notna(row.get('Sigla Unidade')) else ''
+            categoria_unidade = str(row.get('Categoria Unidade', '')).strip() if pd.notna(row.get('Categoria Unidade')) else ''
+            orgao_entidade = str(row.get('Órgão/Entidade', '')).strip() if pd.notna(row.get('Órgão/Entidade')) else ''
+            tipo_cargo = str(row.get('Tipo do Cargo', '')).strip() if pd.notna(row.get('Tipo do Cargo')) else ''
+            denominacao = str(row.get('Denominação', '')).strip() if pd.notna(row.get('Denominação')) else ''
+            complemento_denominacao = str(row.get('Complemento Denominação', '')).strip() if pd.notna(row.get('Complemento Denominação')) else ''
+            categoria = int(row.get('Categoria', 0)) if pd.notna(row.get('Categoria')) else 0
+            nivel = int(row.get('Nível', 0)) if pd.notna(row.get('Nível')) else 0
+            quantidade = int(row.get('Quantidade', 0)) if pd.notna(row.get('Quantidade')) else 0
+            grafo = str(row.get('Grafo', '')).strip() if pd.notna(row.get('Grafo')) else ''
+            sigla = str(row.get('Sigla', '')).strip() if pd.notna(row.get('Sigla')) else ''
+            
+            # Validar campos obrigatórios
+            if not codigo_unidade:
+                print(f"Registro {index + 1} ignorado - código unidade vazio")
+                continue
+                
+            if not grafo:
+                print(f"Registro {index + 1} ignorado - grafo vazio")
+                continue
+            
+            # Criar o objeto UnidadeCargo
+            unidade_cargo = UnidadeCargo(
+                nivel_hierarquico=nivel_hierarquico,
+                tipo_unidade=tipo_unidade,
+                denominacao_unidade=denominacao_unidade,
+                codigo_unidade=codigo_unidade,
+                sigla_unidade=sigla_unidade,
+                categoria_unidade=categoria_unidade,
+                orgao_entidade=orgao_entidade,
+                tipo_cargo=tipo_cargo,
+                denominacao=denominacao,
+                complemento_denominacao=complemento_denominacao,
+                categoria=categoria,
+                nivel=nivel,
+                quantidade=quantidade,
+                grafo=grafo,
+                sigla=sigla
+            )
+            
+            # Salvar o objeto
+            unidade_cargo.save()
+            registros_criados += 1
+            
+            if registros_criados % 50 == 0:
+                print(f"Processados {registros_criados} registros...")
+                
+        except Exception as e:
+            erro_msg = f"Erro na linha {index + 1}: {str(e)}"
+            erros.append(erro_msg)
+            print(f"ERRO: {erro_msg}")
+            print(f"Dados da linha: {dict(row)}")
+    
+    print(f"Salvamento concluído! {registros_criados} registros criados.")
+    if erros:
+        print(f"Total de erros: {len(erros)}")
+        for erro in erros[:5]:  # Mostrar apenas os primeiros 5 erros
+            print(f"  - {erro}")
+    
+    return registros_criados, erros
+
 def processa_planilhas(file_hierarquia, file_estrutura_viva):
+    print(f"=== INICIANDO PROCESSAMENTO DE PLANILHAS ===")
+    print(f"Arquivo hierarquia: {file_hierarquia.name}")
+    print(f"Arquivo estrutura viva: {file_estrutura_viva.name}")
+    
     # Leitura da planilha de hierarquia
     if file_hierarquia.name.endswith('.csv'):
         df_hierarquia = pd.read_csv(file_hierarquia, encoding="utf-8")
     else:
         df_hierarquia = pd.read_excel(file_hierarquia)
+    
+    print(f"Planilha hierarquia lida: {df_hierarquia.shape}")
 
     # Leitura da planilha de estrutura viva
     if file_estrutura_viva.name.endswith('.csv'):
         df_estrutura_viva = pd.read_csv(file_estrutura_viva, encoding="utf-8")
     else:
         df_estrutura_viva = pd.read_excel(file_estrutura_viva)
+    
+    print(f"Planilha estrutura viva lida: {df_estrutura_viva.shape}")
+    print(f"Colunas estrutura viva: {list(df_estrutura_viva.columns)}")
 
     # Processar a planilha de hierarquia: remover metadados e renomear colunas
     df_hierarquia = df_hierarquia.iloc[3:].reset_index(drop=True)
     df_hierarquia.columns = ["Código", "Unidade Organizacional - Sigla"]
     df_hierarquia.dropna(inplace=True)
     df_hierarquia["Código"] = df_hierarquia["Código"].astype(str).str.strip()
+    
+    print(f"Hierarquia processada: {df_hierarquia.shape}")
 
     # Processar a planilha de estrutura viva sem alterar os demais dados
     if "Código Unidade" not in df_estrutura_viva.columns:
@@ -59,6 +154,8 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
             "nivel_hierarquico": nivel_hierarquico,
             "deno_unidade": unidade.strip()
         }
+    
+    print(f"Informações de hierarquia processadas: {len(hierarquia_info)} códigos")
 
     # Cria uma cópia dos dados originais da planilha de estrutura viva
     df_resultado = df_estrutura_viva.copy()
@@ -97,6 +194,13 @@ def processa_planilhas(file_hierarquia, file_estrutura_viva):
     # Esses são os registros que realmente fazem parte da estrutura do ministério
     df_resultado = df_resultado[df_resultado["Grafo"].str.strip() != ""]
     print(f"Total de registros após filtragem: {len(df_resultado)}")
+    
+    # Salvar dados no banco
+    registros_criados, erros = salvar_dados_no_banco(df_resultado)
+    
+    print(f"=== PROCESSAMENTO CONCLUÍDO ===")
+    print(f"Registros criados no banco: {registros_criados}")
+    print(f"Erros encontrados: {len(erros)}")
             
     return df_resultado
 

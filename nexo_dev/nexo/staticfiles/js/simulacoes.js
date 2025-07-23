@@ -12,6 +12,8 @@
     let simulacoesCarregadas = [];
     let simulacaoAtual = null;
     let tipoUsuario = 'externo'; // Será definido pela API
+    let simulacaoEmEdicao = null; // CORREÇÃO: Mover para escopo global
+    let timeoutAutoSave = null; // CORREÇÃO: Adicionar timeout global
     
     // Função para limpar o contexto de simulação atual
     function limparContextoSimulacao() {
@@ -19,6 +21,25 @@
             console.log('🧹 Limpando contexto da simulação:', simulacaoAtual.nome);
         }
         simulacaoAtual = null;
+        
+        // CORREÇÃO: Limpar banner de edição se existir
+        const bannerEdicao = document.getElementById('edicao-banner');
+        if (bannerEdicao) {
+            bannerEdicao.remove();
+            console.log('🧹 Banner de edição removido');
+        }
+        
+        // CORREÇÃO: Cancelar timeout de auto-save pendente
+        if (typeof timeoutAutoSave !== 'undefined' && timeoutAutoSave) {
+            clearTimeout(timeoutAutoSave);
+            timeoutAutoSave = null;
+            console.log('🧹 Timeout de auto-save cancelado');
+        }
+        
+        // CORREÇÃO: Limpar estado de edição se não foi feito via finalizarEdicao
+        if (simulacaoEmEdicao) {
+            simulacaoEmEdicao = null;
+        }
     }
     
     // Função para carregar o tipo de usuário na inicialização
@@ -28,7 +49,8 @@
             if (response.ok) {
                 const data = await response.json();
                 tipoUsuario = data.user_type || 'externo';
-                console.log('👤 Tipo de usuário carregado:', tipoUsuario);
+                const isGerente = data.is_gerente || false;
+                console.log('👤 Tipo de usuário carregado:', tipoUsuario, '| É gerente:', isGerente);
                 
                 // Configurar interface baseada no tipo de usuário
                 configurarInterfacePorTipo();
@@ -36,6 +58,7 @@
         } catch (error) {
             console.warn('Erro ao carregar tipo de usuário:', error);
             tipoUsuario = 'externo';
+            configurarInterfacePorTipo(); // Configurar mesmo se der erro
         }
     }
     
@@ -65,11 +88,8 @@
             if (carregarTexto) {
                 console.log('📝 Alterando texto do botão para "Mesclar Simulações"');
                 carregarTexto.textContent = 'Mesclar Simulações';
-                carregarTexto.style.fontWeight = 'bold'; 
-                carregarTexto.style.color = '#ff6600';
-                carregarTexto.style.backgroundColor = '#ffeecc';
-                carregarTexto.style.padding = '2px 4px';
-                carregarTexto.style.borderRadius = '3px';
+                carregarTexto.style.fontWeight = 'bold'; // Forçar mudança visual
+                carregarTexto.style.color = '#0066cc'; // Cor azul para destacar
             } else {
                 console.error('❌ Elemento carregarSimulacaoTexto NÃO ENCONTRADO!');
             }
@@ -93,11 +113,8 @@
             // Manter texto original para outros usuários
             if (carregarTexto) {
                 carregarTexto.textContent = 'Carregar Simulação';
-                carregarTexto.style.fontWeight = '';
-                carregarTexto.style.color = '';
-                carregarTexto.style.backgroundColor = '';
-                carregarTexto.style.padding = '';
-                carregarTexto.style.borderRadius = '';
+                carregarTexto.style.fontWeight = ''; // Resetar estilo
+                carregarTexto.style.color = ''; // Resetar cor
             }
             if (modalTitulo) {
                 modalTitulo.textContent = 'Carregar Simulação';
@@ -106,19 +123,16 @@
             console.log('✅ Interface configurada para', tipoUsuario);
         }
         
-        // Forçar uma nova verificação após 2 segundos (caso os elementos ainda não existam)
+        // Forçar uma nova verificação após 1 segundo (caso os elementos ainda não existam)
         setTimeout(() => {
             const carregarTextoAgain = document.getElementById('carregarSimulacaoTexto');
             if (carregarTextoAgain && tipoUsuario === 'gerente') {
-                console.log('🔄 Verificação após 2s - forçando alteração do texto');
+                console.log('🔄 Verificação após 1s - forçando alteração do texto');
                 carregarTextoAgain.textContent = 'Mesclar Simulações';
                 carregarTextoAgain.style.fontWeight = 'bold';
-                carregarTextoAgain.style.color = '#ff6600';
-                carregarTextoAgain.style.backgroundColor = '#ffeecc';
-                carregarTextoAgain.style.padding = '2px 4px';
-                carregarTextoAgain.style.borderRadius = '3px';
+                carregarTextoAgain.style.color = '#0066cc';
             }
-        }, 2000);
+        }, 1000);
     }
     
     // Inicialização
@@ -126,7 +140,44 @@
         setupEventListeners();
         carregarTipoUsuario();
         carregarNotificacoes();
+        
+        // VERIFICAÇÃO FORÇADA A CADA 2 SEGUNDOS PARA DEBUG
+        setInterval(() => {
+            forcarVerificacaoGerente();
+        }, 2000);
     });
+    
+    // Função para forçar verificação se é gerente e alterar texto
+    async function forcarVerificacaoGerente() {
+        try {
+            const response = await fetch('/api/simulacoes/');
+            if (response.ok) {
+                const data = await response.json();
+                const isGerente = data.is_gerente || data.user_type === 'gerente';
+                
+                if (isGerente) {
+                    const carregarTexto = document.getElementById('carregarSimulacaoTexto');
+                    const modalTitulo = document.getElementById('modalCarregarTitulo');
+                    
+                    if (carregarTexto && carregarTexto.textContent !== 'Mesclar Simulações') {
+                        console.log('🚨 FORÇANDO alteração para Mesclar Simulações!');
+                        carregarTexto.textContent = 'Mesclar Simulações';
+                        carregarTexto.style.fontWeight = 'bold';
+                        carregarTexto.style.color = '#ff6600';
+                        carregarTexto.style.backgroundColor = '#ffeecc';
+                        carregarTexto.style.padding = '2px 4px';
+                        carregarTexto.style.borderRadius = '3px';
+                    }
+                    
+                    if (modalTitulo && modalTitulo.textContent !== 'Mesclar Simulações') {
+                        modalTitulo.textContent = 'Mesclar Simulações';
+                    }
+                }
+            }
+        } catch (error) {
+            // Silencioso para não spammar o console
+        }
+    }
     
     // Configurar event listeners
     function setupEventListeners() {
@@ -176,35 +227,46 @@
             if (response.ok) {
                 const data = await response.json();
                 const total = data.total || 0;
+                const isGerente = data.is_gerente || false;
                 
-                // Atualizar o texto informativo no modal
+                // Atualizar o texto informativo no modal baseado no tipo de usuário
                 const modalLabel = document.getElementById('modalSalvarSimulacaoLabel');
-                modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total}/5 simulações salvas)</small>`;
                 
-                // Mostrar aviso se está próximo do limite
-                if (total >= 4) {
-                    const alertDiv = document.getElementById('alertaSalvar');
-                    const mensagem = total === 4 
-                        ? '⚠️ Atenção: Esta será sua última simulação (5/5). Para salvar mais, delete uma existente.'
-                        : '🚫 Limite atingido! Você já tem 5 simulações. Delete uma existente para criar uma nova.';
+                if (isGerente) {
+                    modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total} simulações salvas - sem limite)</small>`;
                     
-                    mostrarAlerta(alertDiv, total === 4 ? 'warning' : 'danger', mensagem);
-                    
-                    // Se já tem 5, desabilitar o botão de salvar
-                    const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
-                    if (total >= 5) {
-                        salvarBtn.disabled = true;
-                        salvarBtn.textContent = 'Limite Atingido';
-                        return; // Não abrir o modal se já tem 5
-                    } else {
-                        salvarBtn.disabled = false;
-                        salvarBtn.textContent = 'Salvar';
-                    }
-                } else {
-                    // Garantir que o botão esteja habilitado
+                    // Garantir que o botão esteja habilitado para gerentes
                     const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
                     salvarBtn.disabled = false;
                     salvarBtn.textContent = 'Salvar';
+                } else {
+                    modalLabel.innerHTML = `Salvar Simulação <small class="text-muted">(${total}/5 simulações salvas)</small>`;
+                    
+                    // Mostrar aviso se está próximo do limite (apenas para não-gerentes)
+                    if (total >= 4) {
+                        const alertDiv = document.getElementById('alertaSalvar');
+                        const mensagem = total === 4 
+                            ? '⚠️ Atenção: Esta será sua última simulação (5/5). Para salvar mais, delete uma existente.'
+                            : '🚫 Limite atingido! Você já tem 5 simulações. Delete uma existente para criar uma nova.';
+                        
+                        mostrarAlerta(alertDiv, total === 4 ? 'warning' : 'danger', mensagem);
+                        
+                        // Se já tem 5, desabilitar o botão de salvar
+                        const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
+                        if (total >= 5) {
+                            salvarBtn.disabled = true;
+                            salvarBtn.textContent = 'Limite Atingido';
+                            return; // Não abrir o modal se já tem 5
+                        } else {
+                            salvarBtn.disabled = false;
+                            salvarBtn.textContent = 'Salvar';
+                        }
+                    } else {
+                        // Garantir que o botão esteja habilitado
+                        const salvarBtn = document.getElementById('confirmarSalvarSimulacao');
+                        salvarBtn.disabled = false;
+                        salvarBtn.textContent = 'Salvar';
+                    }
                 }
             }
         } catch (error) {
@@ -360,7 +422,17 @@
     async function abrirModalCarregar(e) {
         e.preventDefault();
         
-        console.log('🔗 abrirModalCarregar() - Tipo de usuário:', tipoUsuario);
+        // CORREÇÃO: Verificar se há simulação em edição
+        if (simulacaoEmEdicao) {
+            alert(
+                `⚠️ Você está editando a simulação "${simulacaoEmEdicao.nome}".\n\n` +
+                `Para carregar outra simulação:\n` +
+                `1. Finalize a edição atual (botão "Finalizar Edição")\n` +
+                `2. Ou cancele a edição (botão "Cancelar")\n\n` +
+                `Depois você poderá carregar uma nova simulação.`
+            );
+            return;
+        }
         
         // Limpar lista e alerta
         const listaDiv = document.getElementById('listaSimulacoesCarregar');
@@ -378,13 +450,17 @@
             const data = await response.json();
             
             if (response.ok) {
-                console.log('📊 Dados recebidos:', data);
+                const isGerente = data.is_gerente || false;
                 
-                if (tipoUsuario === 'gerente') {
-                    console.log('👑 Renderizando interface de MESCLAGEM para gerente');
-                    renderizarInterfaceMesclagem(data.simulacoes, listaDiv);
+                // Configurar interface baseada no tipo de usuário
+                if (isGerente) {
+                    const instrucoesMesclagem = document.getElementById('instrucoesMesclagem');
+                    const btnModoMesclagem = document.getElementById('btnModoMesclagem');
+                    
+                    instrucoesMesclagem.classList.remove('d-none');
+                    btnModoMesclagem.classList.remove('d-none');
+                    renderizarListaSimulacoesComCheckbox(data.simulacoes, listaDiv);
                 } else {
-                    console.log('👤 Renderizando interface normal de carregamento');
                     renderizarListaSimulacoes(data.simulacoes, listaDiv, 'carregar');
                 }
             } else {
@@ -416,18 +492,19 @@
             if (response.ok) {
                 // Atualizar tipo de usuário
                 tipoUsuario = data.user_type || 'externo';
-                
-                const total = data.total || 0;
-                const limite = data.limite; // Agora vem da API
                 const isGerente = data.is_gerente || false;
                 
-                // Atualizar contador com informações mais detalhadas
+                const total = data.total || 0;
+                
+                // Atualizar contador baseado no tipo de usuário
                 let contadorTexto;
                 
                 if (isGerente) {
-                    contadorTexto = `Você tem <strong>${total}</strong> simulações salvas <strong class="text-success">(sem limite)</strong>`;
+                    contadorTexto = `Você tem <strong>${total}</strong> simulações no sistema <strong>(sem limite)</strong>`;
                 } else {
+                    const limite = 5;
                     const restantes = limite - total;
+                    
                     contadorTexto = `Você tem <strong>${total}</strong> de <strong>${limite}</strong> simulações salvas`;
                     
                     if (restantes > 0) {
@@ -442,7 +519,7 @@
                 
                 // Mostrar informações sobre o tipo de usuário
                 if (tipoUsuario === 'gerente') {
-                    mostrarAlerta(alertDiv, 'info', '👥 Como gerente, você pode ver simulações enviadas para análise por usuários internos.');
+                    mostrarAlerta(alertDiv, 'info', '👥 Como gerente, você pode ver TODAS as simulações do sistema e não tem limite de criação.');
                 } else if (tipoUsuario === 'interno') {
                     mostrarAlerta(alertDiv, 'info', '📊 Como usuário interno, você pode enviar simulações para análise dos gerentes.');
                 }
@@ -481,7 +558,7 @@
                     <h6 class="mb-1">${sim.nome}</h6>
                     <small>${sim.criado_em}</small>
                 </div>
-                <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'}</small>
+                <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'} | Status: ${sim.status}</small>
             `;
             
             item.addEventListener('click', () => carregarSimulacao(sim.id));
@@ -489,286 +566,62 @@
         });
     }
     
-    // Renderizar interface de mesclagem para gerentes
-    function renderizarInterfaceMesclagem(simulacoes, container) {
-        console.log('🎯 renderizarInterfaceMesclagem() - Simulações:', simulacoes.length);
-        
+    // Renderizar lista de simulações com checkbox para mesclagem (gerentes)
+    function renderizarListaSimulacoesComCheckbox(simulacoes, container) {
         container.innerHTML = '';
         
         if (simulacoes.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted">Nenhuma simulação disponível para mesclagem</div>';
+            container.innerHTML = '<div class="text-center text-muted">Nenhuma simulação salva</div>';
             return;
         }
-        
-        // Contar simulações aprovadas
-        const simulacoesAprovadas = simulacoes.filter(sim => sim.status_code === 'aprovada');
-        console.log(`📊 Total: ${simulacoes.length} simulações, Aprovadas: ${simulacoesAprovadas.length}`);
-        
-        // Adicionar contador de simulações aprovadas
-        if (simulacoesAprovadas.length === 0) {
-            const alerta = document.createElement('div');
-            alerta.className = 'alert alert-warning mb-3';
-            alerta.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i> 
-                <strong>Nenhuma simulação aprovada disponível.</strong> Para mesclar simulações, é necessário ter pelo menos 2 simulações com status "Aprovada".
-            `;
-            container.appendChild(alerta);
-        } else if (simulacoesAprovadas.length === 1) {
-            const alerta = document.createElement('div');
-            alerta.className = 'alert alert-warning mb-3';
-            alerta.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i> 
-                <strong>Apenas 1 simulação aprovada disponível.</strong> Para mesclar, é necessário ter pelo menos 2 simulações aprovadas.
-            `;
-            container.appendChild(alerta);
-        }
-        
-        // Instruções para gerentes
-        const instrucoes = document.createElement('div');
-        instrucoes.className = 'alert alert-info mb-3';
-        instrucoes.innerHTML = `
-            <i class="fas fa-info-circle"></i> 
-            <strong>Mesclar Simulações:</strong> Selecione 2 ou mais simulações <strong>aprovadas</strong> para mesclar em uma nova.
-            <br><small>💡 <strong>Dica:</strong> ${simulacoesAprovadas.length} de ${simulacoes.length} simulações estão aprovadas e podem ser mescladas. Simulações em outros status aparecerão desabilitadas.</small>
-        `;
-        container.appendChild(instrucoes);
-        
-        // Container para simulações com checkboxes
-        const listaContainer = document.createElement('div');
-        listaContainer.className = 'list-group mb-3';
         
         simulacoes.forEach(sim => {
             const item = document.createElement('div');
-            const isAprovada = sim.status_code === 'aprovada';
-            const itemClass = isAprovada ? 'list-group-item' : 'list-group-item list-group-item-secondary';
-            const checkboxDisabled = !isAprovada ? 'disabled' : '';
-            const titleText = !isAprovada ? 'title="Apenas simulações aprovadas podem ser mescladas"' : '';
-            
-            // Determinar cor do status
-            let statusBadge = '';
-            switch(sim.status_code) {
-                case 'aprovada':
-                    statusBadge = '<span class="badge bg-success">Aprovada</span>';
-                    break;
-                case 'rascunho':
-                    statusBadge = '<span class="badge bg-secondary">Rascunho</span>';
-                    break;
-                case 'enviada_analise':
-                    statusBadge = '<span class="badge bg-warning">Em Análise</span>';
-                    break;
-                case 'rejeitada':
-                    statusBadge = '<span class="badge bg-danger">Rejeitada</span>';
-                    break;
-                case 'rejeitada_editada':
-                    statusBadge = '<span class="badge bg-warning text-dark">Rejeitada (Editada)</span>';
-                    break;
-                default:
-                    statusBadge = `<span class="badge bg-light text-dark">${sim.status}</span>`;
-            }
-            
-            item.className = itemClass;
+            item.className = 'list-group-item';
             item.innerHTML = `
-                <div class="form-check">
-                    <input class="form-check-input simulacao-checkbox" type="checkbox" 
-                           value="${sim.id}" id="sim-${sim.id}" ${checkboxDisabled} ${titleText}>
-                    <label class="form-check-label w-100" for="sim-${sim.id}" ${titleText}>
-                        <div class="d-flex w-100 justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1 ${!isAprovada ? 'text-muted' : ''}">${sim.nome}</h6>
-                                <small class="text-muted">
-                                    Unidade: ${sim.unidade_base || 'N/A'} | 
-                                    Usuário: ${sim.usuario}
-                                </small>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block">${sim.criado_em}</small>
-                                ${statusBadge}
-                            </div>
+                <div class="d-flex align-items-start">
+                    <div class="form-check me-3">
+                        <input class="form-check-input simulacao-checkbox" type="checkbox" value="${sim.id}" id="check_${sim.id}">
+                        <label class="form-check-label" for="check_${sim.id}"></label>
+                    </div>
+                    <div class="flex-grow-1" style="cursor: pointer;" onclick="carregarSimulacao(${sim.id})">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${sim.nome}</h6>
+                            <small>${sim.criado_em}</small>
                         </div>
-                        ${!isAprovada ? '<small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Não pode ser mesclada (não aprovada)</small>' : ''}
-                    </label>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Unidade: ${sim.unidade_base || 'N/A'}</small>
+                            <small class="text-muted">
+                                <span class="badge ${getStatusBadgeClass(sim.status_code)}">${sim.status}</span>
+                                ${sim.usuario !== 'Você' ? ` | ${sim.usuario}` : ''}
+                            </small>
+                        </div>
+                    </div>
                 </div>
             `;
             
-            listaContainer.appendChild(item);
+            container.appendChild(item);
         });
         
-        container.appendChild(listaContainer);
-        
-        // Formulário de mesclagem
-        const formContainer = document.createElement('div');
-        formContainer.id = 'formMesclagem';
-        formContainer.style.display = 'none';
-        formContainer.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-cogs"></i> Configurar Mesclagem</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="metodoMesclagem" class="form-label">Método de Mesclagem</label>
-                            <select class="form-select" id="metodoMesclagem">
-                                <option value="somar">Somar - Agrupa itens iguais e soma quantidades</option>
-                                <option value="media">Média - Calcula média das quantidades para itens iguais</option>
-                                <option value="substituir">Substituir - Últimas simulações prevalecem</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="nomeMesclagem" class="form-label">Nome da Nova Simulação</label>
-                            <input type="text" class="form-control" id="nomeMesclagem" 
-                                   placeholder="Ex: Mesclagem MPO 2024" maxlength="100">
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <label for="descricaoMesclagem" class="form-label">Descrição (opcional)</label>
-                        <textarea class="form-control" id="descricaoMesclagem" rows="2" 
-                                  placeholder="Descreva o objetivo desta mesclagem..."></textarea>
-                    </div>
-                    <div class="mt-3 text-end">
-                        <button type="button" class="btn btn-secondary me-2" onclick="cancelarMesclagem()">
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="executarMesclagem()">
-                            <i class="fas fa-magic"></i> Mesclar Simulações
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(formContainer);
-        
-        // Event listeners para checkboxes
+        // Adicionar event listeners para os checkboxes
         const checkboxes = container.querySelectorAll('.simulacao-checkbox');
         checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', atualizarFormMesclagem);
+            checkbox.addEventListener('change', atualizarContadorSelecionadas);
         });
         
-        console.log('✅ Interface de mesclagem renderizada com', simulacoes.length, 'simulações');
+        // Configurar event listeners para o formulário de mesclagem
+        configurarEventListenersMesclagem();
     }
     
-    // Atualizar visibilidade do formulário de mesclagem
-    function atualizarFormMesclagem() {
-        // Contar apenas checkboxes habilitados (aprovados) que estão marcados
-        const checkboxes = document.querySelectorAll('.simulacao-checkbox:checked:not(:disabled)');
-        const formContainer = document.getElementById('formMesclagem');
-        
-        console.log('🔍 Checkboxes aprovados selecionados:', checkboxes.length);
-        
-        if (checkboxes.length >= 2) {
-            formContainer.style.display = 'block';
-            
-            // Gerar nome sugestivo automaticamente
-            const nomeInput = document.getElementById('nomeMesclagem');
-            if (!nomeInput.value) {
-                const dataHora = new Date().toLocaleDateString('pt-BR');
-                nomeInput.value = `Mesclagem ${checkboxes.length} simulações aprovadas - ${dataHora}`;
-            }
-        } else {
-            formContainer.style.display = 'none';
-            
-            // Mostrar alerta se há simulações selecionadas mas insuficientes/inválidas
-            const todasSelecionadas = document.querySelectorAll('.simulacao-checkbox:checked');
-            if (todasSelecionadas.length > 0 && checkboxes.length < 2) {
-                console.log('⚠️ Simulações selecionadas não aprovadas ou insuficientes');
-            }
-        }
-    }
-    
-    // Cancelar processo de mesclagem
-    function cancelarMesclagem() {
-        // Desmarcar todos os checkboxes
-        const checkboxes = document.querySelectorAll('.simulacao-checkbox');
-        checkboxes.forEach(checkbox => checkbox.checked = false);
-        
-        // Esconder formulário
-        const formContainer = document.getElementById('formMesclagem');
-        formContainer.style.display = 'none';
-        
-        // Limpar campos
-        document.getElementById('nomeMesclagem').value = '';
-        document.getElementById('descricaoMesclagem').value = '';
-        document.getElementById('metodoMesclagem').value = 'somar';
-    }
-    
-    // Executar mesclagem de simulações
-    async function executarMesclagem() {
-        console.log('🔄 Iniciando mesclagem...');
-        
-        // Obter apenas simulações aprovadas selecionadas
-        const checkboxes = document.querySelectorAll('.simulacao-checkbox:checked:not(:disabled)');
-        const simulacaoIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
-        
-        // Verificar se há simulações não aprovadas selecionadas
-        const checkboxesDesabilitados = document.querySelectorAll('.simulacao-checkbox:checked:disabled');
-        if (checkboxesDesabilitados.length > 0) {
-            alert('❌ Algumas simulações selecionadas não estão aprovadas e foram ignoradas. Apenas simulações aprovadas podem ser mescladas.');
-        }
-        
-        // Obter dados do formulário
-        const metodo = document.getElementById('metodoMesclagem').value;
-        const nome = document.getElementById('nomeMesclagem').value.trim();
-        const descricao = document.getElementById('descricaoMesclagem').value.trim();
-        
-        // Validações
-        if (simulacaoIds.length < 2) {
-            alert('❌ Selecione pelo menos 2 simulações aprovadas para mesclar.');
-            return;
-        }
-        
-        if (!nome) {
-            alert('Informe um nome para a nova simulação.');
-            document.getElementById('nomeMesclagem').focus();
-            return;
-        }
-        
-        try {
-            const csrfToken = getCSRFToken();
-            
-            console.log('📤 Enviando dados:', {
-                simulacao_ids: simulacaoIds,
-                metodo: metodo,
-                nome: nome,
-                descricao: descricao
-            });
-            
-            const response = await fetch('/api/simulacoes/mesclar/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    simulacao_ids: simulacaoIds,
-                    metodo: metodo,
-                    nome: nome,
-                    descricao: descricao
-                })
-            });
-            
-            const result = await response.json();
-            console.log('📥 Resposta recebida:', result);
-            
-            if (response.ok) {
-                alert(`✅ ${result.mensagem}`);
-                
-                // Fechar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('modalCarregarSimulacao'));
-                modal.hide();
-                
-                // Limpar seleções
-                cancelarMesclagem();
-                
-                console.log('🎉 Mesclagem concluída com sucesso!');
-            } else {
-                alert(`❌ Erro: ${result.erro}`);
-                console.error('Erro na mesclagem:', result);
-            }
-            
-        } catch (error) {
-            console.error('Erro ao executar mesclagem:', error);
-            alert('❌ Erro de rede ao executar mesclagem. Tente novamente.');
+    // Função auxiliar para obter classe CSS do badge do status
+    function getStatusBadgeClass(statusCode) {
+        switch(statusCode) {
+            case 'rascunho': return 'bg-secondary';
+            case 'enviada_analise': return 'bg-warning';
+            case 'aprovada': return 'bg-success';
+            case 'rejeitada': return 'bg-danger';
+            case 'rejeitada_editada': return 'bg-warning text-dark';
+            default: return 'bg-light text-dark';
         }
     }
     
@@ -884,6 +737,29 @@
     // Carregar simulação específica
     async function carregarSimulacao(id) {
         try {
+            // CORREÇÃO: Verificar se há simulação em edição
+            if (simulacaoEmEdicao) {
+                const confirmar = confirm(
+                    `🚨 Atenção! Você está editando a simulação "${simulacaoEmEdicao.nome}".\n\n` +
+                    `Carregar uma nova simulação irá:\n` +
+                    `• Finalizar a edição atual automaticamente\n` +
+                    `• Salvar as alterações pendentes\n` +
+                    `• Carregar a nova simulação\n\n` +
+                    `Deseja continuar?`
+                );
+                
+                if (!confirmar) {
+                    return; // Usuário cancelou
+                }
+                
+                // Finalizar edição atual automaticamente
+                console.log('🔄 Finalizando edição automática antes de carregar nova simulação');
+                await finalizarEdicao();
+            }
+            
+            // CORREÇÃO: Limpar contexto de simulação anterior
+            limparContextoSimulacao();
+            
             console.log('🔄 Iniciando carregamento da simulação ID:', id);
             
             const response = await fetch(`/api/simulacoes/${id}/`);
@@ -2087,9 +1963,6 @@
     
     // === FUNCIONALIDADE DE EDIÇÃO COM AUTO-SAVE ===
     
-    let simulacaoEmEdicao = null;
-    let timeoutAutoSave = null;
-    
     // Função para editar simulação
     async function editarSimulacao(simulacaoId) {
         try {
@@ -2422,7 +2295,160 @@
     window.marcarComoLida = marcarComoLida;
     window.excluirNotificacao = excluirNotificacao;
     window.excluirTodasNotificacoes = excluirTodasNotificacoes;
-    // Funções de mesclagem para gerentes
-    window.cancelarMesclagem = cancelarMesclagem;
-    window.executarMesclagem = executarMesclagem;
+
+    // Atualizar contador de simulações selecionadas para mesclagem
+    function atualizarContadorSelecionadas() {
+        const checkboxes = document.querySelectorAll('.simulacao-checkbox:checked');
+        const contador = document.getElementById('contadorSelecionadas');
+        const formMesclagem = document.getElementById('formMesclagem');
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        
+        const totalSelecionadas = checkboxes.length;
+        contador.textContent = totalSelecionadas;
+        
+        // Mostrar/ocultar formulário de mesclagem baseado na seleção
+        if (totalSelecionadas >= 2) {
+            formMesclagem.classList.remove('d-none');
+            btnExecutar.disabled = false;
+        } else {
+            formMesclagem.classList.add('d-none');
+            btnExecutar.disabled = true;
+        }
+    }
+    
+    // Configurar event listeners para mesclagem
+    function configurarEventListenersMesclagem() {
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        const btnModoMesclagem = document.getElementById('btnModoMesclagem');
+        
+        // Remover listeners antigos se existirem
+        if (btnExecutar) {
+            btnExecutar.removeEventListener('click', executarMesclagem);
+            btnExecutar.addEventListener('click', executarMesclagem);
+        }
+        
+        if (btnModoMesclagem) {
+            btnModoMesclagem.removeEventListener('click', toggleModoMesclagem);
+            btnModoMesclagem.addEventListener('click', toggleModoMesclagem);
+        }
+    }
+    
+    // Toggle modo mesclagem (para alternar entre carregar e mesclar)
+    function toggleModoMesclagem() {
+        const checkboxes = document.querySelectorAll('.simulacao-checkbox');
+        const allUnchecked = Array.from(checkboxes).every(cb => !cb.checked);
+        
+        if (allUnchecked) {
+            // Selecionar todos
+            checkboxes.forEach(cb => cb.checked = true);
+        } else {
+            // Desmarcar todos
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+        
+        atualizarContadorSelecionadas();
+    }
+    
+    // Executar mesclagem de simulações
+    async function executarMesclagem() {
+        const checkboxesSelecionados = document.querySelectorAll('.simulacao-checkbox:checked');
+        const nomeMesclagem = document.getElementById('nomeMesclagem').value.trim();
+        const descricaoMesclagem = document.getElementById('descricaoMesclagem').value.trim();
+        const metodoMesclagem = document.getElementById('metodoMesclagem').value;
+        const alertDiv = document.getElementById('alertaCarregar');
+        const btnExecutar = document.getElementById('btnExecutarMesclagem');
+        
+        // Validações
+        if (checkboxesSelecionados.length < 2) {
+            mostrarAlerta(alertDiv, 'warning', 'Selecione pelo menos 2 simulações para mesclar.');
+            return;
+        }
+        
+        if (!nomeMesclagem) {
+            mostrarAlerta(alertDiv, 'warning', 'Informe um nome para a simulação mesclada.');
+            document.getElementById('nomeMesclagem').focus();
+            return;
+        }
+        
+        if (nomeMesclagem.length < 3) {
+            mostrarAlerta(alertDiv, 'warning', 'O nome deve ter pelo menos 3 caracteres.');
+            document.getElementById('nomeMesclagem').focus();
+            return;
+        }
+        
+        // Coletar IDs das simulações selecionadas
+        const simulacoesIds = Array.from(checkboxesSelecionados).map(cb => parseInt(cb.value));
+        
+        // Preparar dados da mesclagem
+        const dadosMesclagem = {
+            simulacoes_ids: simulacoesIds,
+            nome_mesclagem: nomeMesclagem,
+            descricao_mesclagem: descricaoMesclagem,
+            metodo_mesclagem: metodoMesclagem
+        };
+        
+        // Mostrar loading
+        btnExecutar.disabled = true;
+        btnExecutar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mesclando...';
+        
+        try {
+            const csrfToken = getCSRFToken();
+            if (!csrfToken) {
+                mostrarAlerta(alertDiv, 'danger', 'Erro: Token CSRF não encontrado. Recarregue a página.');
+                return;
+            }
+            
+            console.log('🔄 Mesclando simulações:', simulacoesIds);
+            console.log('📋 Dados:', dadosMesclagem);
+            
+            const response = await fetch('/api/simulacoes/mesclar/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(dadosMesclagem)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.sucesso) {
+                // Sucesso na mesclagem
+                mostrarAlerta(alertDiv, 'success', 
+                    `✅ ${result.mensagem}\n\n` +
+                    `📊 Nova simulação: ${result.simulacao_mesclada.nome}\n` +
+                    `📈 Total de registros: ${result.simulacao_mesclada.total_registros}\n` +
+                    `🔧 Método: ${result.simulacao_mesclada.metodo_mesclagem}\n` +
+                    `📋 Origem: ${result.simulacao_mesclada.simulacoes_origem.join(', ')}`
+                );
+                
+                // Limpar formulário
+                document.getElementById('nomeMesclagem').value = '';
+                document.getElementById('descricaoMesclagem').value = '';
+                document.querySelectorAll('.simulacao-checkbox').forEach(cb => cb.checked = false);
+                atualizarContadorSelecionadas();
+                
+                // Perguntar se quer carregar a simulação mesclada
+                if (confirm(`Simulação "${result.simulacao_mesclada.nome}" criada com sucesso!\n\nDeseja carregá-la agora no comparador?`)) {
+                    // Fechar modal e carregar simulação
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalCarregarSimulacao'));
+                    modal.hide();
+                    carregarSimulacao(result.simulacao_mesclada.id);
+                }
+                
+            } else {
+                // Erro na mesclagem
+                const mensagemErro = result.erro || 'Erro desconhecido ao mesclar simulações';
+                mostrarAlerta(alertDiv, 'danger', `❌ Erro: ${mensagemErro}`);
+            }
+            
+        } catch (error) {
+            console.error('Erro ao mesclar simulações:', error);
+            mostrarAlerta(alertDiv, 'danger', 'Erro de rede ao mesclar simulações. Tente novamente.');
+        } finally {
+            // Restaurar botão
+            btnExecutar.disabled = false;
+            btnExecutar.innerHTML = '<i class="fas fa-magic"></i> Mesclar Simulações';
+        }
+    }
 })(); 

@@ -67,6 +67,8 @@ from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib.auth.models import User, Group
+import time
+import uuid
 
 
 class CustomLoginView(LoginView):
@@ -3592,57 +3594,40 @@ def adicionar_cargo(request):
         pontos_total = pontos_unitario * quantidade
         valor_total = valor_unitario * quantidade
 
-        # Gerar um grafo único para o cargo adicionado manualmente
+        # *** CORREÇÃO: NÃO SALVAR NO BANCO - APENAS SIMULAR ***
+        # Gerar um ID único para simulação local
         import uuid
-
-        grafo_unico = f"MANUAL_{sigla_unidade}_{tipo_cargo}_{categoria}_{nivel}_{uuid.uuid4().hex[:8]}"
-
-        # Criar o novo cargo ASSOCIADO AO USUÁRIO
-        novo_cargo = UnidadeCargo.objects.create(
-            nivel_hierarquico=unidade_base.nivel_hierarquico,
-            tipo_unidade=unidade_base.tipo_unidade,
-            denominacao_unidade=unidade_base.denominacao_unidade,
-            codigo_unidade=unidade_base.codigo_unidade,
-            sigla_unidade=sigla_unidade,
-            categoria_unidade=unidade_base.categoria_unidade,
-            orgao_entidade=unidade_base.orgao_entidade,
-            tipo_cargo=tipo_cargo,
-            denominacao=denominacao,
-            categoria=categoria,
-            nivel=nivel,
-            quantidade=quantidade,
-            sigla=sigla_unidade,
-            grafo=grafo_unico,
-            pontos_total=pontos_total,
-            valor_total=valor_total,
-            usuario=request.user,  # ✅ ASSOCIAR AO USUÁRIO ATUAL
-        )
+        import time
+        
+        local_id = f"local_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+        grafo_simulado = f"LOCAL_{sigla_unidade}_{tipo_cargo}_{categoria}_{nivel}"
 
         logger.info(
-            f"Novo cargo criado: {novo_cargo.denominacao} (ID: {novo_cargo.id}) por usuário {request.user.username}"
+            f"Cargo SIMULADO criado (NÃO salvou no banco): {denominacao} (ID: {local_id}) por usuário {request.user.username}"
         )
 
-        # Retornar dados do cargo criado
+        # Retornar dados do cargo SIMULADO (sem salvar no banco)
         return JsonResponse(
             {
                 "success": True,
                 "cargo": {
-                    "id": novo_cargo.id,
-                    "sigla": novo_cargo.sigla,
-                    "tipo_cargo": novo_cargo.tipo_cargo,
-                    "denominacao": novo_cargo.denominacao,
-                    "categoria": novo_cargo.categoria,
-                    "nivel": novo_cargo.nivel,
-                    "quantidade": novo_cargo.quantidade,
+                    "id": local_id,  # ID local para simulação
+                    "sigla": sigla_unidade,
+                    "tipo_cargo": tipo_cargo,
+                    "denominacao": denominacao,
+                    "categoria": categoria,
+                    "nivel": nivel,
+                    "quantidade": quantidade,
                     "pontos": pontos_unitario,  # Pontos unitários para o frontend
                     "valor_unitario": valor_unitario,  # Valor unitário para o frontend
-                    "pontos_total": novo_cargo.pontos_total,
-                    "valor_total": novo_cargo.valor_total,
-                    "grafo": novo_cargo.grafo,
+                    "pontos_total": pontos_total,
+                    "valor_total": valor_total,
+                    "grafo": grafo_simulado,
                     "is_manual": True,  # ✅ MARCAR COMO CARGO MANUAL
-                    "manual_id": novo_cargo.id,  # ✅ ID PARA REMOÇÃO
+                    "is_local_only": True,  # ✅ MARCAR COMO APENAS LOCAL (não está no banco)
+                    "manual_id": local_id,  # ✅ ID PARA REMOÇÃO LOCAL
                 },
-                "message": "Cargo adicionado com sucesso!",
+                "message": "Cargo criado APENAS para simulação (NÃO foi salvo no banco)!",
             }
         )
 
@@ -3872,3 +3857,69 @@ def mesclar_simulacoes(request):
     except Exception as e:
         print(f"❌ [ERROR] Erro ao mesclar simulações: {str(e)}")
         return JsonResponse({"erro": f"Erro interno: {str(e)}"}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def excluir_cargo_manual(request):
+    """
+    Endpoint para excluir um cargo manual criado pelo usuário.
+    """
+    import logging
+    import json
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Obter dados do JSON (para ambos DELETE e POST)
+        if hasattr(request, 'body') and request.body:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                cargo_id = data.get('cargo_id')
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return JsonResponse({"success": False, "error": "Dados JSON inválidos"}, status=400)
+        else:
+            return JsonResponse({"success": False, "error": "ID do cargo é obrigatório"}, status=400)
+
+        if not cargo_id:
+            return JsonResponse({"success": False, "error": "ID do cargo é obrigatório"}, status=400)
+
+        try:
+            # Buscar o cargo manual que pertence ao usuário atual
+            cargo = UnidadeCargo.objects.get(
+                id=cargo_id,
+                usuario=request.user  # ✅ Garantir que só exclua cargos do próprio usuário
+            )
+            
+            # Salvar dados para log
+            denominacao = cargo.denominacao
+            sigla = cargo.sigla_unidade
+            
+            # Excluir o cargo
+            cargo.delete()
+            
+            logger.info(f"Cargo manual excluído: {denominacao} (ID: {cargo_id}) por usuário {request.user.username}")
+            
+            return JsonResponse({
+                "success": True,
+                "message": f"Cargo '{denominacao}' excluído com sucesso!",
+                "cargo_id": cargo_id
+            })
+            
+        except UnidadeCargo.DoesNotExist:
+            return JsonResponse(
+                {"success": False, "error": "Cargo não encontrado ou não pertence ao usuário"}, 
+                status=404
+            )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "error": "Dados JSON inválidos"}, status=400
+        )
+
+    except Exception as e:
+        logger.error(f"Erro ao excluir cargo manual: {str(e)}")
+        return JsonResponse(
+            {"success": False, "error": "Erro interno do servidor"}, status=500
+        )

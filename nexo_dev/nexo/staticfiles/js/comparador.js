@@ -9,7 +9,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-  
+  console.log("Inicializando página do comparador");
   
   // Elementos DOM
   const unitSelect = document.getElementById('unitSelect');
@@ -2473,6 +2473,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (target.closest('#editableTable') && 
           (target.hasAttribute('data-field') || target.tagName === 'SELECT')) {
         setTimeout(function() {
+          console.log('Campo editado, atualizando relatório...');
           updatePointsReport();
         }, 300);
       }
@@ -2480,11 +2481,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Forçar inicialização do relatório após o DOM estar pronto
     setTimeout(function() {
+      console.log('Inicializando relatório de pontos...');
       updatePointsReport();
     }, 1000);
   });
 
   function getTableData(tableId) {
+    console.log(`Attempting to get data from table with ID: ${tableId}`);
     const tableElement = document.getElementById(tableId); // Changed from getElementById(tableId) to a more descriptive name
     
     if (!tableElement) {
@@ -2494,19 +2497,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const tbodyElement = tableElement.querySelector('tbody'); // Changed from querySelector('tbody') to a more descriptive name
     if (!tbodyElement) {
+        console.warn(`No tbody found in table with ID '${tableId}'. Table HTML:`, tableElement.innerHTML);
         // Fallback: If no tbody, try to get rows directly from table if it's a simple table
         // This might not be robust if headers are not in thead
         const directRows = tableElement.querySelectorAll('tr');
         if (directRows.length > 1) { // Assuming first row might be header
+             console.log(`Found ${directRows.length} rows directly in table '${tableId}', attempting to process.`);
              // Process directRows, skipping first if it's likely a header
         } else {
             return [];
         }
-    } 
+    } else {
+        console.log(`Found tbody in table '${tableId}'. Processing rows...`);
+    }
 
     const data = [];
     // Use tbodyElement if found, otherwise fallback to tableElement for rows (less ideal)
     const rows = tbodyElement ? tbodyElement.querySelectorAll('tr') : tableElement.querySelectorAll('tr');
+    console.log(`Found ${rows.length} rows in table '${tableId}'.`);
 
     rows.forEach((row, rowIndex) => {
         const cells = row.querySelectorAll('td');
@@ -2520,12 +2528,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 nivel: cells[4]?.textContent.trim(),
                 // quantidade: cells[5]?.textContent.trim(), // Assuming Qtd. is the 6th cell
             };
+            // console.log(`Row ${rowIndex} data for ${tableId}:`, rowData);
             data.push(rowData);
         } else if (cells.length > 0) {
             // Log rows that don't meet the cell count criteria but are not empty
             // console.warn(`Row ${rowIndex} in ${tableId} has only ${cells.length} cells, expected at least 5. Skipping.`);
         }
     });
+    console.log(`Extracted ${data.length} data rows from table '${tableId}'.`);
     return data;
   }
 
@@ -2544,7 +2554,11 @@ document.addEventListener('DOMContentLoaded', function() {
               console.warn('Data for mapping is not an array:', dataArray);
               return [];
           }
-
+          
+          // Debug: verificar primeiro item antes do filtro
+          if (dataArray.length > 0) {
+              console.log("Primeiro item ANTES do filtro:", dataArray[0]);
+          }
           
           return dataArray
               .filter(item => {
@@ -2585,7 +2599,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   
                   // Debug: log primeiro item mapeado
                   if (index === 0) {
-
+                      console.log("Primeiro item DEPOIS do mapeamento:", mapped);
+                      console.log("Quantidade original:", item.quantidade, "Quantidade mapeada:", mapped.quantidade);
                   }
                   
                   return mapped;
@@ -2600,12 +2615,15 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
       }
       
-  
+      console.log("Dados para anexo (Atual):", estruturaAtualDataForExcel);
+      console.log("Dados para anexo (Nova):", estruturaNovaDataForExcel);
       
       // Debug: verificar se quantidade está presente
       if (estruturaAtualDataForExcel.length > 0) {
+          console.log("Exemplo de item (Atual) com quantidade:", estruturaAtualDataForExcel[0]);
       }
       if (estruturaNovaDataForExcel.length > 0) {
+          console.log("Exemplo de item (Nova) com quantidade:", estruturaNovaDataForExcel[0]);
       }
 
       try {
@@ -2706,17 +2724,22 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Função para simular o comportamento do filtro (sem fazer requisição à API)
   window.aplicarFiltroSimulacao = function(dadosSimulacao, unidadeBase) {
+    console.log('🔄 Aplicando filtro de simulação...');
+    console.log('📊 Dados recebidos:', dadosSimulacao.length, 'itens');
+    console.log('🏢 Unidade base:', unidadeBase);
     
     // CORREÇÃO: Se os dados já estão corretos (originalData != editedData), só atualizar interface
     if (window.originalData && window.editedData && 
         window.originalData.length > 0 && window.editedData.length > 0 &&
         JSON.stringify(window.originalData) !== JSON.stringify(window.editedData)) {
       
+      console.log('✅ Dados já aplicados corretamente, apenas atualizando interface...');
       
       // Só atualizar a interface sem modificar os dados
       updateInterface();
       
     } else {
+      console.log('🔄 Aplicando dados da simulação...');
       
       // Comportamento original: substituir dados (fallback)
       originalData.splice(0, originalData.length, ...dadosSimulacao);
@@ -2726,6 +2749,7 @@ document.addEventListener('DOMContentLoaded', function() {
       window.originalData = originalData;
       window.editedData = editedData;
       
+      console.log('✅ Dados substituídos - originalData:', originalData.length, 'editedData:', editedData.length);
       
       updateInterface();
     }
@@ -2749,6 +2773,7 @@ document.addEventListener('DOMContentLoaded', function() {
       setupPaginationControls();
       
       // Forçar renderização das tabelas
+      console.log('🎯 Forçando renderização...');
       populateCurrentTable(window.originalData.slice(0, itemsPerPage));
       populateEditableTable(window.editedData.slice(0, itemsPerPage));
       
@@ -2775,16 +2800,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // FORÇAR atualização dos relatórios
       setTimeout(() => {
+        console.log('🔄 Atualizando relatórios...');
         updateDiffReport();
         updatePointsReport();
+        console.log('✅ Relatórios atualizados!');
       }, 500);
     }
     
+    console.log('🎉 Filtro de simulação aplicado com sucesso!');
   };
 
   // Função para sincronizar edições com dados completos
   function syncEditedDataToComplete() {
     if (completeOriginalData.length > 0 && editedData.length > 0) {
+      console.log(`🔄 Sincronizando ${editedData.length} edições com ${completeOriginalData.length} dados completos`);
       
       // Para cada item editado, encontrar o correspondente nos dados completos e atualizar
       editedData.forEach((editedItem, editedIndex) => {
@@ -2807,6 +2836,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const itemToUpdate = JSON.parse(JSON.stringify(editedItem));
           completeEditedData[completeIndex] = itemToUpdate;
           
+          console.log(`✅ Sincronizado: ${editedItem.denominacao} (${editedItem.sigla})`);
         } else {
           console.warn(`⚠️ Não encontrado nos dados completos: ${editedItem.denominacao} (${editedItem.sigla})`);
         }
@@ -2815,6 +2845,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // Atualizar variável global
       window.completeEditedData = completeEditedData;
       
+      console.log(`✅ Sincronização completa! ${completeEditedData.length} itens nos dados completos`);
+    } else {
+      console.log('ℹ️ Sincronização não necessária (sem dados completos ou editados)');
     }
   }
 
@@ -2840,8 +2873,10 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(`🔸 isFiltered: ${isFiltered}`);
     
     if (originalData.length > 0) {
+      console.log(`🔸 Primeiro item filtrado: ${originalData[0].denominacao} (${originalData[0].sigla})`);
     }
     if (completeOriginalData.length > 0) {
+      console.log(`🔸 Primeiro item completo: ${completeOriginalData[0].denominacao} (${completeOriginalData[0].sigla})`);
     }
     
     // Verificar se há diferenças entre dados originais e editados nos dados completos
@@ -2852,6 +2887,7 @@ document.addEventListener('DOMContentLoaded', function() {
         diferencasCompletas++;
       }
     });
+    console.log(`🔸 Diferenças nos dados completos: ${diferencasCompletas} itens`);
     
     return {
       originalFiltered: originalData.length,
@@ -2873,6 +2909,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar se os elementos existem
     if (!adicionarCargoBtn || !modal || !confirmarBtn || !nivelSelect) {
+      console.log('⚠️ Elementos do modal de adicionar cargo não encontrados');
       return;
     }
     
@@ -2913,7 +2950,7 @@ document.addEventListener('DOMContentLoaded', function() {
       adicionarNovoCargo();
     });
     
-    
+    console.log('✅ Funcionalidade de adicionar cargo configurada');
   }
   
   /**
@@ -2994,7 +3031,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Atualizar interface
-        
+        console.log('✅ Novo cargo adicionado:', novoCargo);
         
         // Fechar modal após 2 segundos
         setTimeout(() => {

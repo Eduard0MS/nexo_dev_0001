@@ -53,6 +53,7 @@ urlpatterns = [
     ),
     path("api/cargos_diretos/", views.api_cargos_diretos, name="api_cargos_diretos"),
     path("api/adicionar-cargo/", views.adicionar_cargo, name="api_adicionar_cargo"),
+    path("api/excluir-cargo-manual/", views.excluir_cargo_manual, name="api_excluir_cargo_manual"),
     path(
         "simulador/", views.comparador, name="simulador"
     ),  # Corrected to use views.comparador

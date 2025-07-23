@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: nexo_db
       POSTGRES_USER: nexo_user
-      POSTGRES_PASSWORD: nexo_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
@@ -43,7 +43,7 @@ services:
       - static_files:/app/static
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379/0
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
     depends_on:
@@ -81,7 +81,7 @@ services:
       - ./nexo_dev/nexo:/app
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
@@ -96,7 +96,7 @@ services:
       - ./nexo_dev/nexo:/app
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgresql://nexo_user:nexo_password@db:5432/nexo_db
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db

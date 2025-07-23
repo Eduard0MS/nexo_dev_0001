@@ -34,6 +34,7 @@ TEST_SCRIPTS = [
     "scripts/test_organograma.py",
     "scripts/test_financeiro.py",
     "scripts/test_autenticacao.py",
+    "scripts/test_sql_injection.py",
 ]
 
 

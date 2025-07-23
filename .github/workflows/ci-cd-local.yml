@@ -9,6 +9,7 @@ on:
 env:
   PYTHON_VERSION: '3.12'
   DJANGO_SETTINGS_MODULE: 'Nexus.settings'
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
 jobs:
   test:
@@ -35,7 +36,7 @@ jobs:
         cat > .env << EOF
         DEBUG=True
         SECRET_KEY=test-secret-key-for-ci
-        DATABASE_URL=mysql://root:1802Edu0#*#@127.0.0.1:3306/nexo_dev
+        DATABASE_URL=mysql://root:${{ env.DB_PASSWORD }}@127.0.0.1:3306/nexo_dev
         ALLOWED_HOSTS=localhost,127.0.0.1
         EOF
 

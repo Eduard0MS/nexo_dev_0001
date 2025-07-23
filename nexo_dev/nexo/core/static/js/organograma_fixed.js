@@ -18,6 +18,12 @@ let selectedNode = null;
 // Cache para armazenar os valores totais calculados para cada nó DA ESTRUTURA ORIGINAL
 let originalValoresCache = {};
 
+// Timer para auto-hide do tooltip
+let tooltipTimer = null;
+let tooltipClicked = false;
+let mouseOverNode = false;
+let mouseOverTooltip = false;
+
 // Cores e estilos
 const colors = {
   node: {
@@ -583,6 +589,8 @@ function update(source) {
     .on('mouseover', (event, d) => {
       console.log("Mouseover detectado no nó:", d.data.secretaria); // Log para debug
       
+      mouseOverNode = true;
+      
       const nodeElement = event.currentTarget;
       const { x, y, position } = calcularPosicaoTooltip(event, nodeElement);
       
@@ -677,6 +685,29 @@ function update(source) {
         ${cargosHtml}
       `);
       
+      // Adicionar eventos do tooltip
+      tooltip.on('click', function() {
+        tooltipClicked = true;
+        // Limpar timer quando clicado
+        if (tooltipTimer) {
+          clearTimeout(tooltipTimer);
+          tooltipTimer = null;
+        }
+      })
+      .on('mouseenter', function() {
+        mouseOverTooltip = true;
+        // Limpar timer quando mouse entra no tooltip
+        if (tooltipTimer) {
+          clearTimeout(tooltipTimer);
+          tooltipTimer = null;
+        }
+      })
+      .on('mouseleave', function() {
+        mouseOverTooltip = false;
+        // Reiniciar timer quando mouse sai do tooltip
+        startTooltipTimer();
+      });
+      
       console.log("Tooltip HTML definido, aplicando posição..."); // Log para debug
       
       // Depois posicionar e mostrar o tooltip
@@ -692,14 +723,19 @@ function update(source) {
       
       console.log("Tooltip exibido"); // Log para debug
       
+      // Iniciar timer de 3 segundos para auto-hide
+      startTooltipTimer();
+      
       d3.select(event.currentTarget).select('circle')
         .transition().duration(200).attr('r', d => d.depth === 0 ? 18 : 14);
     })
     .on('mouseout', (event, d) => {
       console.log("Mouseout detectado no nó:", d.data.secretaria); // Log para debug
       
-      // Não esconder o tooltip automaticamente no mouseout
-      // Ele só será escondido quando o mouse entrar em outro nó ou clicar no botão fechar
+      mouseOverNode = false;
+      
+      // Iniciar timer quando mouse sai do nó
+      startTooltipTimer();
       
       d3.select(event.currentTarget).select('circle')
         .transition().duration(200).attr('r', d => d.depth === 0 ? 14 : 10);
@@ -1541,8 +1577,34 @@ console.log("🔧 DEBUG: Script organograma_fixed.js carregado completamente!");
 
 // Função para esconder o tooltip
 function hideTooltip() {
+  // Limpar timer se existir
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = null;
+  }
+  
+  tooltipClicked = false;
+  mouseOverNode = false;
+  mouseOverTooltip = false;
+  
   tooltip.transition()
          .duration(150)
          .style('opacity', 0)
          .style('pointer-events', 'none');
+}
+
+// Função para iniciar timer de auto-hide
+function startTooltipTimer() {
+  // Limpar timer anterior se existir
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+  }
+  
+  // Iniciar novo timer de 3 segundos
+  tooltipTimer = setTimeout(() => {
+    // Só esconder se o mouse não estiver sobre o nó nem sobre o tooltip
+    if (!mouseOverNode && !mouseOverTooltip) {
+      hideTooltip();
+    }
+  }, 3000);
 }

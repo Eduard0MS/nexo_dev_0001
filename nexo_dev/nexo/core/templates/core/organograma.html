@@ -171,9 +171,15 @@
 <!-- Dados do organograma -->
 <script type="text/javascript">
   window.organogramaData = JSON.parse('{{ organograma_data|escapejs }}');
+  console.log("🔧 DEBUG: Dados do organograma carregados:", window.organogramaData);
+  console.log("🔧 DEBUG: Tipo dos dados:", typeof window.organogramaData);
+  console.log("🔧 DEBUG: Estrutura dos dados:", Object.keys(window.organogramaData || {}));
+  if (window.organogramaData && window.organogramaData.core_unidadecargo) {
+    console.log("🔧 DEBUG: Quantidade de unidades:", window.organogramaData.core_unidadecargo.length);
+  }
 </script>
 <!-- Carrega o script do organograma -->
-<script src="{% static 'js/organograma_fixed.js' %}?v=1.0.4"></script>
+<script src="{% static 'js/organograma_fixed.js' %}?v=1.0.5"></script>
 
 <!-- Inicialização do Select2 para o campo de filtro -->
 <script>
@@ -209,11 +215,21 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log("Inicializando página do organograma");
     
+    // Teste de debug para verificar funções
+    console.log("🔧 DEBUG: buscarDadosCargos está definida?", typeof buscarDadosCargos);
+    console.log("🔧 DEBUG: processarDados está definida?", typeof processarDados);
+    console.log("🔧 DEBUG: window.organogramaData existe?", !!window.organogramaData);
+    
     // Aguardar para garantir que todos os scripts estejam carregados
     setTimeout(function() {
       console.log("Inicializando tabela de cargos");
+      console.log("🔧 DEBUG: buscarDadosCargos está definida DEPOIS?", typeof buscarDadosCargos);
       // Carregar dados da SE por padrão
-      buscarDadosCargos('SE', '', '', 1, 20);
+      if (typeof buscarDadosCargos === 'function') {
+        buscarDadosCargos('SE', '', '', 1, 20);
+      } else {
+        console.error("❌ ERRO: buscarDadosCargos não está definida!");
+      }
     }, 1000);
     
     // Configurar botões de paginação

@@ -18,10 +18,10 @@ def is_safe_table_name(table_name):
 
 # Configurações do MySQL
 mysql_config = {
-    "host": "127.0.0.1",
-    "user": "root",
-    "password": "1802Edu0#*#",
-    "database": "nexo_dev",
+    "host": os.environ.get("DB_HOST", "127.0.0.1"),
+    "user": os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", ""),
+    "database": os.environ.get("DB_NAME", "nexo_dev"),
 }
 
 try:

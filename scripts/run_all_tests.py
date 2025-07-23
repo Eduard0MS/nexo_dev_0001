@@ -30,10 +30,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Lista de scripts de teste a serem executados
 TEST_SCRIPTS = [
     'scripts/test_ransomware_protection.py',
-    'scripts/test_backup_system.py', 
+    'scripts/test_backup_system.py',
     'scripts/test_organograma.py',
     'scripts/test_financeiro.py',
-    'scripts/test_autenticacao.py'
+    'scripts/test_autenticacao.py',
+    'scripts/test_sql_injection.py'
 ]
 
 def ensure_directories():

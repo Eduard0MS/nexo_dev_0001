@@ -360,6 +360,65 @@ def estrutura_json_organograma():
     
     return unidades_processadas
 
+def estrutura_json_organograma_completa():
+    """
+    Estrutura os dados das unidades e cargos em um formato JSON hierárquico.
+    Retorna TODOS os dados, incluindo unidades sem grafo válido.
+    """
+    from .models import UnidadeCargo, CargoSIORG
+    from decimal import Decimal
+    
+    # Buscar todos os cargos SIORG para referência de valores
+    cargos_siorg = {
+        f"{cargo.cargo}": {
+            'valor': Decimal(cargo.valor.replace('R$ ', '').replace('.', '').replace(',', '.')),
+            'unitario': cargo.unitario
+        }
+        for cargo in CargoSIORG.objects.all()
+    }
+    
+    # Buscar TODAS as unidades (incluindo as sem grafo válido)
+    unidades = UnidadeCargo.objects.all()
+    
+    # Lista para armazenar todas as unidades processadas
+    unidades_processadas = []
+    
+    # Processar cada unidade
+    for unidade in unidades:
+        # Calcular valores do cargo
+        cargo_key = f"{unidade.tipo_cargo} {unidade.categoria} {unidade.nivel:02d}"
+        cargo_siorg = cargos_siorg.get(cargo_key, {'valor': Decimal('0'), 'unitario': Decimal('0')})
+        
+        valor_unitario = cargo_siorg['valor']
+        pontos = cargo_siorg['unitario']
+        
+        # Calcular totais
+        quantidade = unidade.quantidade or 0
+        gasto_total = valor_unitario * quantidade
+        pontos_total = pontos * quantidade
+        
+        # Estrutura da unidade
+        dados_unidade = {
+            'tipo_unidade': unidade.tipo_unidade,
+            'denominacao_unidade': unidade.denominacao_unidade,
+            'codigo_unidade': unidade.codigo_unidade,
+            'sigla': unidade.sigla_unidade,
+            'tipo_cargo': unidade.tipo_cargo,
+            'denominacao': unidade.denominacao,
+            'categoria': unidade.categoria,
+            'nivel': unidade.nivel,
+            'quantidade': quantidade,
+            'grafo': unidade.grafo,
+            'valor_unitario': float(valor_unitario),
+            'pontos': float(pontos),
+            'gasto_total': float(gasto_total),
+            'pontos_total': float(pontos_total)
+        }
+        
+        unidades_processadas.append(dados_unidade)
+    
+    return unidades_processadas
+
 def processa_json_organograma(json_data):
     """
     Processa os dados do arquivo JSON do organograma e combina com os dados do SIORG.
@@ -440,94 +499,392 @@ def processa_json_organograma(json_data):
         print(f"Erro ao processar JSON do organograma: {str(e)}")
         return None
 
+def _remove_sigla_from_denominacao(denominacao):
+    """
+    Remove a sigla do final do nome da unidade (ex: " - SAGE").
+    """
+    if not denominacao:
+        return denominacao
+    
+    # Remove sigla no formato " - SIGLA" ou " - SIGLA_UNIDADE"
+    if ' - ' in denominacao:
+        return denominacao.split(' - ')[0].strip()
+    
+    return denominacao
+
+def _group_identical_cargos(items):
+    """
+    Groups items that have the same cargo (tipo_cargo, categoria, nivel)
+    into a single item, summing their quantidades.
+    """
+    grouped_items = {}
+    for item in items:
+        cargo_key = (item['tipo_cargo'], item['categoria'], item['nivel'])
+        if cargo_key not in grouped_items:
+            grouped_items[cargo_key] = {
+                'tipo_cargo': item['tipo_cargo'],
+                'categoria': item['categoria'],
+                'nivel': item['nivel'],
+                'quantidade': 0,
+                'denominacao': '',
+                'grafo': item['grafo'] # Keep the original grafo
+            }
+        grouped_items[cargo_key]['quantidade'] += item['quantidade']
+        grouped_items[cargo_key]['denominacao'] = item['denominacao'] # Keep the original denominacao
+        grouped_items[cargo_key]['grafo'] = item['grafo'] # Keep the original grafo
+    
+    return list(grouped_items.values())
+
 def _prepare_data_for_excel(data_list):
     """
-    Prepares the list of data items for Excel, maintaining hierarchical order based on 'grafo' field.
-    The 'grafo' field contains the hierarchical path (e.g., "308804-308805-308806").
-    Parents always come before children, and items are grouped by area.
-    Higher level positions (e.g., FCE 1.15) come before lower levels (e.g., FCE 1.14).
+    Prepara os dados para exportação em Excel com formatação hierárquica.
+    """
+    processed_list = []
+    if not data_list:
+        return processed_list
+    
+    # Debug: log first few items
+    print(f"DEBUG: _prepare_data_for_excel received {len(data_list)} items")
+    if data_list:
+        print(f"DEBUG: First item keys: {list(data_list[0].keys())}")
+        print(f"DEBUG: First item: {data_list[0]}")
+    
+    # Check if this is complete data (327+ items) or filtered data
+    is_complete_data = len(data_list) > 100  # Threshold to determine if it's complete data
+    
+    if is_complete_data:
+        print(f"DEBUG: Processing COMPLETE DATA ({len(data_list)} items)")
+        return _prepare_complete_data_for_excel(data_list)
+    else:
+        print(f"DEBUG: Processing FILTERED DATA ({len(data_list)} items)")
+        return _prepare_filtered_data_for_excel(data_list)
+
+def _prepare_complete_data_for_excel(data_list):
+    """
+    Prepares complete data (327+ items) for Excel using simplified hierarchical logic.
+    For complete data, we organize by major organizational units first.
     """
     processed_list = []
     
-    # First, create a complete hierarchical structure
-    # Group by area first
-    areas_dict = {}
+    # Debug: check if we have grafo and codigo_unidade
+    has_grafo = any(item.get('grafo', '') for item in data_list)
+    has_codigo_unidade = any(item.get('codigo_unidade', '') for item in data_list)
+    
+    print(f"DEBUG: Complete data has grafo: {has_grafo}, has codigo_unidade: {has_codigo_unidade}")
+    
+    if not has_grafo and not has_codigo_unidade:
+        # Fallback: organize by denominacao_unidade and nivel_hierarquico
+        print("DEBUG: Using fallback logic for complete data without grafo/codigo_unidade")
+        return _prepare_complete_data_fallback(data_list)
+    
+    # 1. Group data by major organizational units (first level of grafo)
+    major_units = {}
     for item in data_list:
-        area = item.get('area', 'N/A')
-        if area not in areas_dict:
-            areas_dict[area] = []
-        areas_dict[area].append(item)
+        grafo = item.get('grafo', '')
+        if grafo and grafo.strip():
+            niveis = grafo.split('-')
+            if len(niveis) >= 1:
+                major_unit_code = niveis[0]
+                if major_unit_code not in major_units:
+                    major_units[major_unit_code] = []
+                major_units[major_unit_code].append(item)
     
-    # Sort areas alphabetically, but SAGE (if exists) should come first as it's usually the top level
-    sorted_areas = sorted(areas_dict.keys())
-    if 'SAGE' in sorted_areas:
-        sorted_areas.remove('SAGE')
-        sorted_areas.insert(0, 'SAGE')
+    print(f"DEBUG: Found {len(major_units)} major units for complete data")
     
-    # Process each area
-    for area_key in sorted_areas:
-        items_in_area = areas_dict[area_key]
+    # 2. Process major units in order
+    for major_unit_code in sorted(major_units.keys()):
+        major_unit_items = major_units[major_unit_code]
         
-        # Sort items within area by hierarchy
-        def get_hierarchical_sort_key(item):
-            # Safely convert nivel and categoria to int with fallback
-            try:
-                nivel_raw = item.get('nivel', 0)
-                nivel = int(nivel_raw) if nivel_raw not in ('', None, 'None') else 0
-            except (ValueError, TypeError):
-                nivel = 0
-            
-            try:
-                categoria_raw = item.get('categoria', 0)
-                categoria = int(categoria_raw) if categoria_raw not in ('', None, 'None') else 0
-            except (ValueError, TypeError):
-                categoria = 0
-                
-            tipo_cargo = item.get('tipo_cargo', '')
-            denominacao = item.get('denominacao', '')
-            
-            # Primary sort: by nivel DESCENDING (15 before 14)
-            # Secondary sort: by categoria ASCENDING (1 before 3)
-            # Tertiary sort: by cargo type (CCE before FCE alphabetically)
-            # Quaternary sort: by denominacao
-            return (-nivel, categoria, tipo_cargo, denominacao)
+        # Find the major unit name (usually the first item with this grafo)
+        major_unit_name = ""
+        for item in major_unit_items:
+            denominacao_unidade = item.get('denominacao_unidade', '')
+            if denominacao_unidade and not major_unit_name:
+                major_unit_name = denominacao_unidade
+                break
         
-        # Sort items
-        items_sorted = sorted(items_in_area, key=get_hierarchical_sort_key)
+        if major_unit_name:
+            # Add major unit header in UPPERCASE (without sigla)
+            major_unit_name_clean = _remove_sigla_from_denominacao(major_unit_name)
+            processed_list.append({
+                'area': major_unit_name_clean.upper(),
+                'quantidade': '',
+                'denominacao': '',
+                'cargo_formatado': ''
+            })
         
-        # Add items to processed list
-        for item in items_sorted:
-            categoria_str = str(item.get('categoria', ''))
-            nivel_str = str(item.get('nivel', ''))
-            tipo_cargo = item.get('tipo_cargo', '')
+        # Group by second level (branches)
+        branches = {}
+        for item in major_unit_items:
+            grafo = item.get('grafo', '')
+            if grafo and grafo.strip():
+                niveis = grafo.split('-')
+                if len(niveis) >= 2:
+                    branch_code = niveis[1]
+                    if branch_code not in branches:
+                        branches[branch_code] = []
+                    branches[branch_code].append(item)
+        
+        # Process branches within this major unit
+        for branch_code in sorted(branches.keys()):
+            branch_items = branches[branch_code]
             
-            # Get quantity - ensure it's an integer
-            quantidade_raw = item.get('quantidade', 1)
-            try:
-                quantidade = int(quantidade_raw) if quantidade_raw else 1
-            except (ValueError, TypeError):
-                quantidade = 1
+            # Find branch parent
+            branch_parent = None
+            for item in branch_items:
+                nivel_hierarquico = item.get('nivel_hierarquico', 0)
+                if nivel_hierarquico == 2:
+                    branch_parent = item
+                    break
             
-            # Format cargo string
-            if categoria_str and nivel_str and tipo_cargo:
-                cargo_formatado = f"{tipo_cargo} {categoria_str}.{nivel_str.zfill(2)}".strip()
+            if branch_parent:
+                denominacao_unidade = branch_parent.get('denominacao_unidade', '')
+                denominacao_unidade_clean = _remove_sigla_from_denominacao(denominacao_unidade)
+                if denominacao_unidade_clean:
+                    # Add branch with first job on same line
+                    first_job = None
+                    for cargo in branch_items:
+                        nivel_hierarquico = cargo.get('nivel_hierarquico', 0)
+                        if nivel_hierarquico == 2:
+                            first_job = cargo
+                            break
+                    
+                    if first_job:
+                        tipo_cargo = first_job.get('tipo_cargo', '')
+                        categoria = first_job.get('categoria', '')
+                        nivel = first_job.get('nivel', '')
+                        
+                        if tipo_cargo and categoria and nivel:
+                            cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+                        else:
+                            cargo_formatado = tipo_cargo or ''
+                        
+                        processed_list.append({
+                            'area': denominacao_unidade_clean.upper(),
+                            'quantidade': first_job.get('quantidade', 1),
+                            'denominacao': first_job.get('denominacao', ''),
+                            'cargo_formatado': cargo_formatado
+                        })
+                        
+                        # Add remaining jobs
+                        for cargo in branch_items:
+                            nivel_hierarquico = cargo.get('nivel_hierarquico', 0)
+                            if nivel_hierarquico == 2 and cargo != first_job:
+                                tipo_cargo = cargo.get('tipo_cargo', '')
+                                categoria = cargo.get('categoria', '')
+                                nivel = cargo.get('nivel', '')
+                                
+                                if tipo_cargo and categoria and nivel:
+                                    cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+                                else:
+                                    cargo_formatado = tipo_cargo or ''
+                                
+                                processed_list.append({
+                                    'area': '',
+                                    'quantidade': cargo.get('quantidade', 1),
+                                    'denominacao': cargo.get('denominacao', ''),
+                                    'cargo_formatado': cargo_formatado
+                                })
+        
+        # Add empty line after major unit
+        processed_list.append({
+            'area': '',
+            'quantidade': '',
+            'denominacao': '',
+            'cargo_formatado': ''
+        })
+    
+    return processed_list
+
+def _prepare_complete_data_fallback(data_list):
+    """
+    Fallback function for complete data that doesn't have grafo or codigo_unidade.
+    Organizes data by denominacao_unidade and nivel_hierarquico.
+    """
+    processed_list = []
+    
+    # Group by denominacao_unidade
+    units = {}
+    for item in data_list:
+        denominacao_unidade = item.get('denominacao_unidade', '') or item.get('sigla_unidade', '') or item.get('area', '')
+        if denominacao_unidade:
+            if denominacao_unidade not in units:
+                units[denominacao_unidade] = []
+            units[denominacao_unidade].append(item)
+    
+    print(f"DEBUG: Fallback - Found {len(units)} units by denominacao_unidade")
+    
+    # Process units in alphabetical order
+    for unit_name in sorted(units.keys()):
+        unit_items = units[unit_name]
+        
+        # Sort items by nivel_hierarquico (higher first), then by nivel (higher first), then alphabetically
+        sorted_items = sorted(unit_items, key=lambda x: (
+            -(x.get('nivel_hierarquico', 0) or 0),  # Higher hierarchical level first
+            -(x.get('nivel', 0) or 0),  # Higher level first
+            x.get('denominacao', '').lower()  # Then alphabetically
+        ))
+        
+        if sorted_items:
+            # Add unit header in UPPERCASE (without sigla)
+            unit_name_clean = _remove_sigla_from_denominacao(unit_name)
+            processed_list.append({
+                'area': unit_name_clean.upper(),
+                'quantidade': '',
+                'denominacao': '',
+                'cargo_formatado': ''
+            })
+            
+            # Add first job on same line as unit
+            first_job = sorted_items[0]
+            tipo_cargo = first_job.get('tipo_cargo', '')
+            categoria = first_job.get('categoria', '')
+            nivel = first_job.get('nivel', '')
+            
+            if tipo_cargo and categoria and nivel:
+                cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
             else:
-                cargo_formatado = tipo_cargo
+                cargo_formatado = tipo_cargo or ''
             
-            # Clean up the formatted cargo string
-            if cargo_formatado == ".":
-                cargo_formatado = ""
-            elif cargo_formatado.startswith(" ."):
-                cargo_formatado = cargo_formatado[2:]
-            
-            row_data = {
-                'area': area_key,
-                'quantidade': quantidade,  # Use the converted integer
-                'denominacao': item.get('denominacao', ''),
+            processed_list.append({
+                'area': unit_name_clean.upper(),
+                'quantidade': first_job.get('quantidade', 1),
+                'denominacao': first_job.get('denominacao', ''),
                 'cargo_formatado': cargo_formatado
-            }
-            processed_list.append(row_data)
+            })
+            
+            # Add remaining jobs
+            for cargo in sorted_items[1:]:
+                tipo_cargo = cargo.get('tipo_cargo', '')
+                categoria = cargo.get('categoria', '')
+                nivel = cargo.get('nivel', '')
+                
+                if tipo_cargo and categoria and nivel:
+                    cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+                else:
+                    cargo_formatado = tipo_cargo or ''
+                
+                processed_list.append({
+                    'area': '',  # Empty for jobs under unit
+                    'quantidade': cargo.get('quantidade', 1),
+                    'denominacao': cargo.get('denominacao', ''),
+                    'cargo_formatado': cargo_formatado
+                })
+            
+            # Add empty line after unit
+            processed_list.append({
+                'area': '',
+                'quantidade': '',
+                'denominacao': '',
+                'cargo_formatado': ''
+            })
     
+    return processed_list
+
+def _prepare_filtered_data_for_excel(data_list):
+    """
+    Prepare filtered data for Excel export with hierarchical structure
+    """
+    print(f"DEBUG: Processing FILTERED DATA ({len(data_list)} items)")
+    
+    if not data_list:
+        return []
+    
+    # Debug first item
+    first_item = data_list[0]
+    print(f"DEBUG: First item keys: {list(first_item.keys())}")
+    print(f"DEBUG: First item: {first_item}")
+    
+    # SIMPLIFIED LOGIC: Process ALL items directly
+    # Group by denominacao_unidade to organize by units
+    units = {}
+    for item in data_list:
+        denominacao_unidade = item.get('denominacao_unidade', '')
+        if denominacao_unidade not in units:
+            units[denominacao_unidade] = []
+        units[denominacao_unidade].append(item)
+    
+    print(f"DEBUG: Found {len(units)} units")
+    
+    processed_list = []
+    
+    # Sort units to ensure parent units (SUBSECRETARIA) come first
+    sorted_units = sorted(units.items(), key=lambda x: (
+        # Parent units (containing SUBSECRETARIA) come first (0), others come after (1)
+        0 if 'SUBSECRETARIA' in _remove_sigla_from_denominacao(x[0]).upper() else 1,
+        # Then alphabetically
+        _remove_sigla_from_denominacao(x[0]).lower()
+    ))
+    
+    # Process each unit
+    for denominacao_unidade, unit_items in sorted_units:
+        # Group identical cargos within this unit
+        unit_items = _group_identical_cargos(unit_items)
+        
+        # Sort by level (higher first), then alphabetically
+        unit_items.sort(key=lambda x: (
+            -(x.get('nivel', 0) or 0),  # Higher level first (negative for descending)
+            x.get('denominacao', '').lower()  # Then alphabetically
+        ))
+        
+        if unit_items:
+            # Determine if this is a parent unit or subunit
+            first_item = unit_items[0]
+            denominacao_unidade_clean = _remove_sigla_from_denominacao(denominacao_unidade)
+            
+            # Check if this is a parent unit (contains SUBSECRETARIA)
+            if 'SUBSECRETARIA' in denominacao_unidade_clean.upper():
+                # Parent unit - use full name in UPPERCASE
+                unit_name = denominacao_unidade_clean.upper()
+            else:
+                # Subunit - use first word in lowercase
+                unit_name = denominacao_unidade_clean.split()[0].lower()
+            
+            # Add first job on the same line as the unit
+            first_job = unit_items[0]
+            tipo_cargo = first_job.get('tipo_cargo', '')
+            categoria = first_job.get('categoria', '')
+            nivel = first_job.get('nivel', '')
+            
+            if tipo_cargo and categoria and nivel:
+                cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+            else:
+                cargo_formatado = tipo_cargo or ''
+            
+            processed_list.append({
+                'area': unit_name,
+                'quantidade': first_job.get('quantidade', 1),
+                'denominacao': first_job.get('denominacao', ''),
+                'cargo_formatado': cargo_formatado
+            })
+            
+            # Add remaining jobs on separate lines
+            for cargo in unit_items[1:]:
+                tipo_cargo = cargo.get('tipo_cargo', '')
+                categoria = cargo.get('categoria', '')
+                nivel = cargo.get('nivel', '')
+                
+                if tipo_cargo and categoria and nivel:
+                    cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+                else:
+                    cargo_formatado = tipo_cargo or ''
+                
+                processed_list.append({
+                    'area': '',  # Empty for jobs under unit
+                    'quantidade': cargo.get('quantidade', 1),
+                    'denominacao': cargo.get('denominacao', ''),
+                    'cargo_formatado': cargo_formatado
+                })
+    
+    # Add blank line at the end
+    processed_list.append({
+        'area': '',
+        'quantidade': '',
+        'denominacao': '',
+        'cargo_formatado': ''
+    })
+    
+    print(f"DEBUG: Processed {len(processed_list)} items")
     return processed_list
 
 def gerar_anexo_simulacao(data_atual, data_nova):
@@ -579,9 +936,25 @@ def gerar_anexo_simulacao(data_atual, data_nova):
     # 2. Headers are already in the template on row 7 - DO NOT ADD THEM AGAIN
     #    Data will be populated starting from row 8.
 
+    # Debug: log input data
+    print(f"DEBUG: gerar_anexo_simulacao - data_atual length: {len(data_atual)}")
+    print(f"DEBUG: gerar_anexo_simulacao - data_nova length: {len(data_nova)}")
+    
+    # Debug: log input data
+    print(f"DEBUG: gerar_anexo_simulacao - data_atual length: {len(data_atual)}")
+    print(f"DEBUG: gerar_anexo_simulacao - data_nova length: {len(data_nova)}")
+
     # 3. Prepare and populate data
     processed_atual = _prepare_data_for_excel(data_atual)
     processed_nova = _prepare_data_for_excel(data_nova)
+    
+    # Debug: log processed data
+    print(f"DEBUG: gerar_anexo_simulacao - processed_atual length: {len(processed_atual)}")
+    print(f"DEBUG: gerar_anexo_simulacao - processed_nova length: {len(processed_nova)}")
+    
+    # Debug: log processed data
+    print(f"DEBUG: gerar_anexo_simulacao - processed_atual length: {len(processed_atual)}")
+    print(f"DEBUG: gerar_anexo_simulacao - processed_nova length: {len(processed_nova)}")
 
     # Define alignments
     align_left = Alignment(horizontal='left', vertical='center')

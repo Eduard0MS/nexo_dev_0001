@@ -1613,6 +1613,8 @@ def api_cargos_diretos(request):
                     or "",  # Campo explícito para compatibilidade
                     "tipo_unidade": cargo.tipo_unidade
                     or "",  # Campo explícito para compatibilidade
+                    "denominacao_unidade": cargo.denominacao_unidade or "",  # Campo para hierarquia
+                    "nivel_hierarquico": cargo.nivel_hierarquico or 0,  # Campo para hierarquia
                     "tipo_cargo": cargo.tipo_cargo or "",
                     "denominacao": cargo.denominacao or "",
                     "categoria": categoria,
@@ -1922,6 +1924,22 @@ class BaixarAnexoSimulacaoView(View):
                         status=400,
                     )
 
+            # Debug: log data before processing
+            print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_atual length: {len(estrutura_atual)}")
+            print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_nova length: {len(estrutura_nova)}")
+            if estrutura_atual:
+                print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_atual[0] keys: {list(estrutura_atual[0].keys())}")
+            if estrutura_nova:
+                print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_nova[0] keys: {list(estrutura_nova[0].keys())}")
+            
+            # Debug: log data before processing
+            print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_atual length: {len(estrutura_atual)}")
+            print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_nova length: {len(estrutura_nova)}")
+            if estrutura_atual:
+                print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_atual[0] keys: {list(estrutura_atual[0].keys())}")
+            if estrutura_nova:
+                print(f"DEBUG: BaixarAnexoSimulacaoView - estrutura_nova[0] keys: {list(estrutura_nova[0].keys())}")
+            
             # Call the utility function to generate the Excel file
             excel_stream = gerar_anexo_simulacao(estrutura_atual, estrutura_nova)
 

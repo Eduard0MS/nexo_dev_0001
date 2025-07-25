@@ -635,6 +635,8 @@ document.addEventListener('DOMContentLoaded', function() {
           denominacao: cargo.denominacao || '',
           categoria: cargo.categoria || '',
           nivel: cargo.nivel || '',
+          nivel_hierarquico: cargo.nivel_hierarquico || 0,
+          grafo: cargo.grafo || '',
           quantidade: cargo.quantidade || 0,
           pontos: cargo.pontos || 0,
           valor_unitario: cargo.valor_unitario || 0
@@ -2575,12 +2577,13 @@ document.addEventListener('DOMContentLoaded', function() {
                       categoria: (item.categoria !== undefined && item.categoria !== null && item.categoria !== '') ? parseInt(item.categoria) : 0,
                       nivel: (item.nivel !== undefined && item.nivel !== null && item.nivel !== '') ? parseInt(item.nivel) : 0,
                       grafo: item.grafo || '', // Include grafo field for hierarchical ordering
+                      nivel_hierarquico: (item.nivel_hierarquico !== undefined && item.nivel_hierarquico !== null && item.nivel_hierarquico !== '') ? parseInt(item.nivel_hierarquico) : 0, // Include hierarchical level
                       codigo_unidade: item.codigo_unidade || '', // Include unit code
                       denominacao_unidade: item.denominacao_unidade || '', // Include unit name
                       sigla_unidade: item.sigla_unidade || item.sigla || item.area || '', // Include unit acronym
-                      quantidade: item.quantidade || 1, // Include quantity for reference
-                      pontos: item.pontos || 0, // Include points for reference
-                      valor_unitario: item.valor_unitario || 0 // Include unit value for reference
+                      quantidade: (item.quantidade !== undefined && item.quantidade !== null && item.quantidade !== '') ? parseInt(item.quantidade) : 1, // Include quantity for reference
+                      pontos: (item.pontos !== undefined && item.pontos !== null && item.pontos !== '') ? parseFloat(item.pontos) : 0, // Include points for reference
+                      valor_unitario: (item.valor_unitario !== undefined && item.valor_unitario !== null && item.valor_unitario !== '') ? parseFloat(item.valor_unitario) : 0 // Include unit value for reference
                   };
                   
                   // Debug: log primeiro item mapeado

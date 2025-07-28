@@ -17,7 +17,7 @@ from django.dispatch import receiver
 
 # Caminho para o arquivo JSON
 ORGANOGRAMA_JSON_PATH = os.path.join(
-    os.path.dirname(__file__), "static", "data", "organograma.json"
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static", "data", "organograma.json"
 )
 
 # Variáveis de controle

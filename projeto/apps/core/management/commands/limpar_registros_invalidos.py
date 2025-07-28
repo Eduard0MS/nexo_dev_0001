@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Q
-from core.models import UnidadeCargo
+from apps.core.models import UnidadeCargo
 
 class Command(BaseCommand):
-    help = 'Remove registros inválidos (sem grafo) da tabela UnidadeCargo'
+    help = 'Remove registros inválidos (sem grafo e categoria "Colegiado") da tabela UnidadeCargo'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -20,31 +20,40 @@ class Command(BaseCommand):
         self.stdout.write(f"Total de registros: {total_registros}")
         
         # Identificar registros inválidos (sem grafo ou com grafo vazio)
-        registros_invalidos = UnidadeCargo.objects.filter(
+        registros_sem_grafo = UnidadeCargo.objects.filter(
             Q(grafo__exact='') | Q(grafo__isnull=True)
         )
-        qtd_invalidos = registros_invalidos.count()
+        qtd_sem_grafo = registros_sem_grafo.count()
+        
+        # Identificar registros com categoria 'Colegiado'
+        registros_colegiado = UnidadeCargo.objects.filter(categoria_unidade__icontains='Colegiado')
+        qtd_colegiado = registros_colegiado.count()
+        
+        total_invalidos = qtd_sem_grafo + qtd_colegiado
         
         # Exibir informações
-        self.stdout.write(f"Registros inválidos encontrados: {qtd_invalidos}")
+        self.stdout.write(f"Registros sem grafo encontrados: {qtd_sem_grafo}")
+        self.stdout.write(f"Registros com categoria 'Colegiado' encontrados: {qtd_colegiado}")
+        self.stdout.write(f"Total de registros inválidos: {total_invalidos}")
         
-        if qtd_invalidos == 0:
+        if total_invalidos == 0:
             self.stdout.write(self.style.SUCCESS("Não há registros inválidos para remover."))
             return
         
         # Se não for apenas simulação, remover os registros
         if not dry_run:
-            registros_invalidos.delete()
+            registros_sem_grafo.delete()
+            registros_colegiado.delete()
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Removidos {qtd_invalidos} registros inválidos. "
-                    f"Agora restam {total_registros - qtd_invalidos} registros válidos."
+                    f"Removidos {total_invalidos} registros inválidos ({qtd_sem_grafo} sem grafo + {qtd_colegiado} categoria 'Colegiado'). "
+                    f"Agora restam {total_registros - total_invalidos} registros válidos."
                 )
             )
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    f"Modo simulação: {qtd_invalidos} registros seriam removidos. "
+                    f"Modo simulação: {total_invalidos} registros seriam removidos ({qtd_sem_grafo} sem grafo + {qtd_colegiado} categoria 'Colegiado'). "
                     f"Execute sem --dry-run para remover de fato."
                 )
             ) 

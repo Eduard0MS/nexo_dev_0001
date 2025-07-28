@@ -279,7 +279,7 @@ def simulacao_page(request):
         from django.conf import settings
 
         json_path = os.path.join(
-            settings.BASE_DIR, "core", "static", "data", "organograma.json"
+            settings.BASE_DIR, "static", "data", "organograma.json"
         )
 
         # Verificar se o arquivo existe
@@ -898,7 +898,7 @@ def api_organograma(request):
     try:
         # Usar o mesmo arquivo JSON que usamos para o template
         json_path = os.path.join(
-            settings.BASE_DIR, "core", "static", "data", "organograma.json"
+            settings.BASE_DIR, "static", "data", "organograma.json"
         )
 
         # Verificar se o arquivo existe
@@ -1220,7 +1220,7 @@ def api_organograma_filter(request):
 
     # Caminho para o JSON original
     json_path = os.path.join(
-        settings.BASE_DIR, "core", "static", "data", "organograma.json"
+        settings.BASE_DIR, "static", "data", "organograma.json"
     )
 
     try:
@@ -1423,57 +1423,45 @@ def api_cargos_diretos(request):
     )
 
     try:
-        # Consulta base - FILTRAR POR USUÁRIO: cargos padrão (sem usuario) + cargos do usuário atual
+        # Consulta base - TODOS os cargos (removendo filtro por usuário para mostrar estado completo)
         from django.db.models import Q
 
-        query = UnidadeCargo.objects.filter(
-            Q(usuario__isnull=True)
-            | Q(usuario=request.user)  # Cargos padrão + cargos do usuário
-        )
-        logger.info(f"Total de registros filtrados por usuário: {query.count()}")
+        query = UnidadeCargo.objects.all()
+        logger.info(f"Total de registros disponíveis: {query.count()}")
 
         # Se houver sigla, aplicar filtro especial
         if sigla:
             logger.info(f"Iniciando processamento de filtro por sigla: {sigla}")
-
-            # Buscamos registros onde a sigla aparece diretamente (nos campos indicados)
-            codigos_associados = (
-                UnidadeCargo.objects.filter(
-                    Q(sigla_unidade__icontains=sigla)
-                    | Q(sigla__icontains=sigla)
-                    | Q(denominacao_unidade__icontains=sigla)
-                )
-                .values_list("codigo_unidade", flat=True)
-                .distinct()
-            )
-
+            
+            # Buscamos registros onde a sigla aparece EXATAMENTE (não parcialmente)
+            codigos_associados = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla) | 
+                Q(sigla__iexact=sigla)
+            ).values_list('codigo_unidade', flat=True).distinct()
+            
             codigos_lista = list(codigos_associados)
-            logger.info(
-                f"Códigos de unidade associados à sigla '{sigla}': {codigos_lista[:10]} (total: {len(codigos_lista)})"
-            )
-
+            logger.info(f"Códigos de unidade associados à sigla '{sigla}': {codigos_lista[:10]} (total: {len(codigos_lista)})")
+            
             if codigos_lista:
-                # Em vez de usar somente a união dos códigos, usamos um filtro OR:
-                query = query.filter(
-                    Q(codigo_unidade__in=codigos_lista)
-                    | reduce(
-                        operator.or_,
-                        (Q(grafo__icontains=code) for code in codigos_lista),
-                    )
-                )
-                logger.info(
-                    f"Filtrando registros com código ou grafo contendo os códigos. Resultados: {query.count()} registros"
-                )
+                # Filtro correto: incluir a própria unidade E TODA a árvore subordinada
+                filtros_hierarquicos = []
+                for code in codigos_lista:
+                    # Incluir a própria unidade
+                    filtros_hierarquicos.append(Q(codigo_unidade=code))
+                    # Incluir TODA a árvore subordinada (qualquer grafo que contenha este código seguido de hífen)
+                    filtros_hierarquicos.append(Q(grafo__contains=f"-{code}-"))
+                    # Incluir subordinadas diretas (grafo começa com o código seguido de hífen)
+                    filtros_hierarquicos.append(Q(grafo__startswith=f"{code}-"))
+                
+                query = query.filter(reduce(operator.or_, filtros_hierarquicos))
+                logger.info(f"Filtrando registros hierárquicos completos para códigos {codigos_lista}. Resultados: {query.count()} registros")
             else:
-                # Fallback: se não houver códigos associados, usa filtro tradicional
+                # Fallback: se não houver códigos associados, usa filtro tradicional EXATO
                 query = query.filter(
-                    Q(sigla_unidade__icontains=sigla)
-                    | Q(sigla__icontains=sigla)
-                    | Q(denominacao_unidade__icontains=sigla)
+                    Q(sigla_unidade__iexact=sigla) | 
+                    Q(sigla__iexact=sigla)
                 )
-                logger.info(
-                    f"Nenhum código associado encontrado. Usando filtro tradicional: {query.count()} registros"
-                )
+                logger.info(f"Nenhum código associado encontrado. Usando filtro tradicional EXATO: {query.count()} registros")
 
         # Aplicar os demais filtros (tipo_cargo, nivel)
         if tipo_cargo:
@@ -1865,7 +1853,7 @@ def api_financeira_organograma(request):
     try:
         # Mesmo arquivo JSON utilizado pela API de organograma
         json_path = os.path.join(
-            settings.BASE_DIR, "core", "static", "data", "organograma.json"
+            settings.BASE_DIR, "static", "data", "organograma.json"
         )
 
         if not os.path.exists(json_path):

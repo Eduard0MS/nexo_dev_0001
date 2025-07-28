@@ -169,26 +169,33 @@ class UnidadeCargoAdmin(admin.ModelAdmin):
     actions = ["limpar_registros_invalidos"]
 
     def limpar_registros_invalidos(self, request, queryset):
-        """Limpa os registros que não possuem grafo válido (não fazem parte da estrutura do ministério)"""
+        """Limpa os registros que não possuem grafo válido e registros com categoria 'Colegiado'"""
         registros_totais = UnidadeCargo.objects.count()
 
         # Obter registros sem grafo válido
-        registros_invalidos = UnidadeCargo.objects.filter(
-            grafo__exact=""
-        ) | UnidadeCargo.objects.filter(grafo__isnull=True)
-        qtd_invalidos = registros_invalidos.count()
+        registros_sem_grafo = UnidadeCargo.objects.filter(grafo__exact='') | UnidadeCargo.objects.filter(grafo__isnull=True)
+        qtd_sem_grafo = registros_sem_grafo.count()
 
-        # Excluir registros inválidos
-        registros_invalidos.delete()
+        # Obter registros com categoria 'Colegiado'
+        registros_colegiado = UnidadeCargo.objects.filter(categoria_unidade__icontains='Colegiado')
+        qtd_colegiado = registros_colegiado.count()
+
+        # Excluir registros inválidos (sem grafo)
+        registros_sem_grafo.delete()
+
+        # Excluir registros com categoria 'Colegiado'
+        registros_colegiado.delete()
+
+        total_removidos = qtd_sem_grafo + qtd_colegiado
 
         # Exibir mensagem de sucesso
         self.message_user(
             request,
-            f"Foram removidos {qtd_invalidos} registros inválidos (sem grafo). Restam {registros_totais - qtd_invalidos} registros válidos no banco de dados.",
-            messages.SUCCESS,
+            f'Foram removidos {total_removidos} registros inválidos ({qtd_sem_grafo} sem grafo + {qtd_colegiado} categoria "Colegiado"). Restam {registros_totais - total_removidos} registros válidos no banco de dados.',
+            messages.SUCCESS
         )
 
-    limpar_registros_invalidos.short_description = "Remover registros sem grafo válido"
+    limpar_registros_invalidos.short_description = "Remover registros sem grafo válido e categoria 'Colegiado'"
 
     def get_urls(self):
         urls = super().get_urls()
@@ -212,18 +219,25 @@ class UnidadeCargoAdmin(admin.ModelAdmin):
             registros_totais = UnidadeCargo.objects.count()
 
             # Obter registros sem grafo válido
-            registros_invalidos = UnidadeCargo.objects.filter(
-                grafo__exact=""
-            ) | UnidadeCargo.objects.filter(grafo__isnull=True)
-            qtd_invalidos = registros_invalidos.count()
+            registros_sem_grafo = UnidadeCargo.objects.filter(grafo__exact='') | UnidadeCargo.objects.filter(grafo__isnull=True)
+            qtd_sem_grafo = registros_sem_grafo.count()
 
-            # Excluir registros inválidos
-            registros_invalidos.delete()
+            # Obter registros com categoria 'Colegiado'
+            registros_colegiado = UnidadeCargo.objects.filter(categoria_unidade__icontains='Colegiado')
+            qtd_colegiado = registros_colegiado.count()
+
+            # Excluir registros inválidos (sem grafo)
+            registros_sem_grafo.delete()
+
+            # Excluir registros com categoria 'Colegiado'
+            registros_colegiado.delete()
+
+            total_removidos = qtd_sem_grafo + qtd_colegiado
 
             # Exibir mensagem de sucesso
             self.message_user(
                 request,
-                f"Foram removidos {qtd_invalidos} registros inválidos (sem grafo). Restam {registros_totais - qtd_invalidos} registros válidos no banco de dados.",
+                f'Foram removidos {total_removidos} registros inválidos ({qtd_sem_grafo} sem grafo + {qtd_colegiado} categoria "Colegiado"). Restam {registros_totais - total_removidos} registros válidos no banco de dados.',
                 messages.SUCCESS,
             )
 

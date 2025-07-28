@@ -9,8 +9,12 @@
     
     <div class="module">
         <h2>Confirmar Limpeza</h2>
-        <p>Esta ação irá remover todos os registros que não possuem grafos válidos da base de dados.</p>
-        <p>Registros inválidos são aqueles que não fazem parte da estrutura hierárquica do organograma.</p>
+        <p>Esta ação irá remover todos os registros que não possuem grafos válidos e registros com categoria 'Colegiado' da base de dados.</p>
+        <p>Registros inválidos são aqueles que:</p>
+        <ul>
+            <li>Não fazem parte da estrutura hierárquica do organograma (sem grafo válido)</li>
+            <li>Possuem categoria de unidade como 'Colegiado' (dados inconsistentes)</li>
+        </ul>
         
         <div class="description">
             <p><strong>Atenção:</strong> Esta ação não pode ser desfeita. Após a limpeza, o arquivo dados.json será automaticamente atualizado.</p>

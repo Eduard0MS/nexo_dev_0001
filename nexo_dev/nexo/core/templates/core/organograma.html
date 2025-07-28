@@ -223,13 +223,8 @@
     // Aguardar para garantir que todos os scripts estejam carregados
     setTimeout(function() {
       console.log("Inicializando tabela de cargos");
-      console.log("🔧 DEBUG: buscarDadosCargos está definida DEPOIS?", typeof buscarDadosCargos);
-      // Carregar dados da SE por padrão
-      if (typeof buscarDadosCargos === 'function') {
-        buscarDadosCargos('SE', '', '', 1, 20);
-      } else {
-        console.error("❌ ERRO: buscarDadosCargos não está definida!");
-      }
+      // Carregar todos os dados por padrão (sem filtro)
+      buscarDadosCargos('', '', '', 1, 20);
     }, 1000);
     
     // Configurar botões de paginação
@@ -344,10 +339,10 @@
         if (typeof $ !== 'undefined' && $.fn.select2) {
           $('#filtroSigla').val(null).trigger('change');
         } else {
-          document.getElementById('filtroSigla').value = 'SE';
+          document.getElementById('filtroSigla').value = '';
         }
         const tamanhoPagina = parseInt(document.getElementById('tamanhoPaginaSelect').value) || 20;
-        buscarDadosCargos('SE', '', '', 1, tamanhoPagina);
+        buscarDadosCargos('', '', '', 1, tamanhoPagina);
       };
     }
   });

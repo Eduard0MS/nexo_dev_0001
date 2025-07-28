@@ -16,7 +16,9 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 # Caminho para o arquivo JSON
-ORGANOGRAMA_JSON_PATH = os.path.join(os.path.dirname(__file__), 'static', 'data', 'organograma.json')
+ORGANOGRAMA_JSON_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static', 'data', 'organograma.json'
+)
 
 # Variáveis de controle
 atualizacao_pendente = False

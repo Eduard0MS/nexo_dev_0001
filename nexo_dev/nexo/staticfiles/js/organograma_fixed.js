@@ -1187,8 +1187,8 @@ const limparFiltros = () => {
         
         update(root);
         
-        // Buscar dados padrão para a tabela (por exemplo, SE)
-        buscarDadosCargos('SE', '', '');
+        // Buscar todos os dados para a tabela (sem filtro inicial)
+        buscarDadosCargos('', '', '');
         
         // Aplicar zoom adequado
         setTimeout(() => {
@@ -1215,8 +1215,8 @@ const limparFiltros = () => {
             // Processar dados, que também preencherá o cache
             processarDados(data);
             
-            // Buscar dados padrão para a tabela (por exemplo, SE)
-            buscarDadosCargos('SE', '', '');
+            // Buscar todos os dados para a tabela (sem filtro inicial)
+            buscarDadosCargos('', '', '');
             
             const filtrosAtivos = document.getElementById('filtrosAtivos');
             const semFiltros = document.getElementById('semFiltros');

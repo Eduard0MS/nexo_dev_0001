@@ -893,18 +893,53 @@ def gerar_anexo_simulacao(data_atual, data_nova):
     Clears rows 5-327 in 'ComparativoEstruturas' sheet,
     and populates data from row 8.
     """
+    import os
+    
+    planilha_ativa = None
+    
+    # Try to get active planilha
     try:
         planilha_ativa = PlanilhaImportada.objects.get(ativo=True)
+        # Verify if the file actually exists
+        if not os.path.exists(planilha_ativa.arquivo.path):
+            print(f"WARNING: Active planilha file not found: {planilha_ativa.arquivo.path}")
+            planilha_ativa = None
     except PlanilhaImportada.DoesNotExist:
-        raise FileNotFoundError("Nenhuma planilha ativa encontrada no sistema.")
+        print("WARNING: No active planilha found in database.")
+        planilha_ativa = None
     except PlanilhaImportada.MultipleObjectsReturned:
-        raise ValueError("Múltiplas planilhas ativas encontradas. Por favor, defina apenas uma como ativa.")
+        print("WARNING: Multiple active planilhas found. Using the first one.")
+        try:
+            planilha_ativa = PlanilhaImportada.objects.filter(ativo=True).first()
+        except:
+            planilha_ativa = None
+
+    # If no active planilha or file doesn't exist, try to find any available planilha
+    if not planilha_ativa:
+        print("INFO: Searching for any available planilha template...")
+        available_planilhas = PlanilhaImportada.objects.all().order_by('-data_importacao')
+        
+        for planilha in available_planilhas:
+            if os.path.exists(planilha.arquivo.path):
+                print(f"INFO: Using available planilha: {planilha.nome}")
+                planilha_ativa = planilha
+                # Set this one as active for future use
+                planilha.ativo = True
+                planilha.save()
+                break
+        
+        if not planilha_ativa:
+            raise FileNotFoundError(
+                "Nenhum template de planilha encontrado no sistema. "
+                "Por favor, importe um arquivo de template através do admin."
+            )
 
     try:
         # Load the workbook, trying with keep_vba=False first
         workbook = openpyxl.load_workbook(planilha_ativa.arquivo.path, keep_vba=False, data_only=False)
+        print(f"SUCCESS: Loaded template: {planilha_ativa.nome}")
     except Exception as e:
-        raise ValueError(f"Erro ao carregar o template da planilha: {str(e)}")
+        raise ValueError(f"Erro ao carregar o template da planilha '{planilha_ativa.nome}': {str(e)}")
 
     sheet_name = "ComparativoEstruturas"
     if sheet_name not in workbook.sheetnames:

@@ -638,6 +638,21 @@ function update(source) {
           <span class="tooltip-label">Código:</span>
           <span class="tooltip-value">${d.data.codigo || ''}</span>
         </div>
+        ${d.data.cargos_detalhes && d.data.cargos_detalhes.length > 0 ? 
+          `<div class="cargos-detalhes">
+            <div class="tooltip-subtitle">
+              Detalhes dos Cargos
+            </div>
+            <div class="detalhes-lista">
+              ${d.data.cargos_detalhes.map(item => 
+                `<div class="detalhe-item">
+                  <span class="cargo-badge">${item.cargo}</span>
+                  <span class="quantidade-badge">${item.quantidade}</span>
+                </div>`
+              ).join('')}
+            </div>
+          </div>` : ''
+        }
       `);
       
       // Adicionar eventos do tooltip
@@ -1330,6 +1345,50 @@ style.textContent = `
     margin-left: 8px;
     display: inline-block;
     white-space: nowrap;
+  }
+  
+  /* Estilos minimalistas para os detalhes dos cargos */
+  .cargos-detalhes { 
+    border-top: 1px solid #e5e7eb; 
+    padding-top: 10px; 
+    margin-top: 10px; 
+  }
+  .detalhes-lista { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px;
+  }
+  .detalhe-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 4px 0;
+  }
+  .cargo-badge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .quantidade-badge {
+    background: #6b7280;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+  }
+  .tooltip-subtitle { 
+    font-size: 12px; 
+    font-weight: 600; 
+    color: #6b7280; 
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   /* Forçar cores dos nós */

@@ -483,6 +483,21 @@ function update(source) {
             <span class="tooltip-label">Código:</span>
           <span class="tooltip-value">${d.data.codigo || ''}</span>
         </div>
+        ${d.data.cargos && d.data.cargos.length > 0 ? 
+          `<div style="border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 10px;">
+            <div style="font-size: 12px; font-weight: 600; color: #6b7280; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+              Detalhes dos Cargos
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              ${d.data.cargos.map(cargo => 
+                `<div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+                  <span style="background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">${cargo.tipo} ${cargo.nivel}</span>
+                  <span style="background: #6b7280; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; min-width: 20px; text-align: center;">${cargo.quantidade || 1}</span>
+                </div>`
+              ).join('')}
+            </div>
+          </div>` : ''
+        }
       `
         )
         .style('left', tooltipX + 'px')

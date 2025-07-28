@@ -638,6 +638,21 @@ function update(source) {
           <span class="tooltip-label">Código:</span>
           <span class="tooltip-value">${d.data.codigo || ''}</span>
         </div>
+        ${d.data.cargos_detalhes && d.data.cargos_detalhes.length > 0 ? 
+          `<div class="cargos-detalhes">
+            <div class="tooltip-subtitle">
+              Detalhes dos Cargos
+            </div>
+            <div class="detalhes-lista">
+              ${d.data.cargos_detalhes.map(item => 
+                `<div class="detalhe-item">
+                  <span class="cargo-badge">${item.cargo}</span>
+                  <span class="quantidade-badge">${item.quantidade}</span>
+                </div>`
+              ).join('')}
+            </div>
+          </div>` : ''
+        }
       `);
       
       // Adicionar eventos do tooltip
@@ -1316,10 +1331,7 @@ style.textContent = `
   .tooltip-label { color: #718096; font-weight: 500; }
   .tooltip-value { color: #0ea5e9; font-weight: 500; text-align: right; }
   .tooltip-percentage { color: #dc2626; font-weight: bold; background-color: #fef2f2; padding: 2px 6px; border-radius: 4px; }
-  .cargos-detalhes { border-top: 1px dashed #e2e8f0; padding-top: 6px; margin-top: 6px; }
-  .detalhes-lista { display: flex; flex-direction: column; align-items: flex-end; }
-  .detalhe-item { margin-bottom: 2px; white-space: nowrap; }
-  .tooltip-subtitle { font-size: 13px; font-weight: 600; color: #4a5568; margin: 8px 0; }
+
   .badge { 
     font-size: 11px; 
     padding: 3px 8px; 
@@ -1330,6 +1342,50 @@ style.textContent = `
     margin-left: 8px;
     display: inline-block;
     white-space: nowrap;
+  }
+  
+  /* Estilos minimalistas para os detalhes dos cargos */
+  .cargos-detalhes { 
+    border-top: 1px solid #e5e7eb; 
+    padding-top: 10px; 
+    margin-top: 10px; 
+  }
+  .detalhes-lista { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px;
+  }
+  .detalhe-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 4px 0;
+  }
+  .cargo-badge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .quantidade-badge {
+    background: #6b7280;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+  }
+  .tooltip-subtitle { 
+    font-size: 12px; 
+    font-weight: 600; 
+    color: #6b7280; 
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   /* Forçar cores dos nós */

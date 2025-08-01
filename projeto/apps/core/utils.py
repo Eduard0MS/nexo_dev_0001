@@ -519,19 +519,25 @@ def _group_identical_cargos(items):
     """
     grouped_items = {}
     for item in items:
-        cargo_key = (item['tipo_cargo'], item['categoria'], item['nivel'])
+        cargo_key = (item['denominacao'], item['tipo_cargo'], item['categoria'], item['nivel'])
         if cargo_key not in grouped_items:
             grouped_items[cargo_key] = {
                 'tipo_cargo': item['tipo_cargo'],
                 'categoria': item['categoria'],
                 'nivel': item['nivel'],
                 'quantidade': 0,
-                'denominacao': '',
-                'grafo': item['grafo'] # Keep the original grafo
+                'denominacao': item['denominacao'],
+                'denominacao_unidade': item.get('denominacao_unidade', ''),
+                'sigla_unidade': item.get('sigla_unidade', ''),
+                'codigo_unidade': item.get('codigo_unidade', ''),
+                'grafo': item.get('grafo', ''),
+                'pontos': item.get('pontos', 0),
+                'valor_unitario': item.get('valor_unitario', 0)
             }
-        grouped_items[cargo_key]['quantidade'] += item['quantidade']
-        grouped_items[cargo_key]['denominacao'] = item['denominacao'] # Keep the original denominacao
-        grouped_items[cargo_key]['grafo'] = item['grafo'] # Keep the original grafo
+        grouped_items[cargo_key]['quantidade'] += item.get('quantidade', 1)
+        # Keep other numeric fields summed
+        grouped_items[cargo_key]['pontos'] += item.get('pontos', 0)
+        grouped_items[cargo_key]['valor_unitario'] += item.get('valor_unitario', 0)
     
     return list(grouped_items.values())
 
@@ -592,7 +598,8 @@ def _prepare_complete_data_for_excel(data_list):
     print(f"DEBUG: Found {len(major_units)} major units for complete data")
     
     # 2. Process major units in order
-    for major_unit_code in sorted(major_units.keys()):
+    major_unit_list = sorted(major_units.keys())
+    for i, major_unit_code in enumerate(major_unit_list):
         major_unit_items = major_units[major_unit_code]
         
         # Find the major unit name (usually the first item with this grafo)
@@ -686,13 +693,14 @@ def _prepare_complete_data_for_excel(data_list):
                                     'cargo_formatado': cargo_formatado
                                 })
         
-        # Add empty line after major unit
-        processed_list.append({
-            'area': '',
-            'quantidade': '',
-            'denominacao': '',
-            'cargo_formatado': ''
-        })
+        # Add empty line after major unit (except the last one)
+        if i < len(major_unit_list) - 1:
+            processed_list.append({
+                'area': '',
+                'quantidade': '',
+                'denominacao': '',
+                'cargo_formatado': ''
+            })
     
     return processed_list
 
@@ -771,19 +779,23 @@ def _prepare_complete_data_fallback(data_list):
                     'cargo_formatado': cargo_formatado
                 })
             
-            # Add empty line after unit
-            processed_list.append({
-                'area': '',
-                'quantidade': '',
-                'denominacao': '',
-                'cargo_formatado': ''
-            })
+            # Add empty line between different unit groups (except the last one)
+            current_index = list(sorted_units).index((grouping_key, unit_items))
+            if current_index < len(sorted_units) - 1:
+                # Always add blank line between different groups
+                processed_list.append({
+                    'area': '',
+                    'quantidade': '',
+                    'denominacao': '',
+                    'cargo_formatado': ''
+                })
     
     return processed_list
 
 def _prepare_filtered_data_for_excel(data_list):
     """
     Prepare filtered data for Excel export with hierarchical structure
+    NOVA LÓGICA: Agrupar cargos idênticos GLOBALMENTE primeiro, depois determinar unidade
     """
     print(f"DEBUG: Processing FILTERED DATA ({len(data_list)} items)")
     
@@ -795,96 +807,172 @@ def _prepare_filtered_data_for_excel(data_list):
     print(f"DEBUG: First item keys: {list(first_item.keys())}")
     print(f"DEBUG: First item: {first_item}")
     
-    # SIMPLIFIED LOGIC: Process ALL items directly
-    # Group by denominacao_unidade to organize by units
-    units = {}
-    for item in data_list:
-        denominacao_unidade = item.get('denominacao_unidade', '')
-        if denominacao_unidade not in units:
-            units[denominacao_unidade] = []
-        units[denominacao_unidade].append(item)
+    # ETAPA 1: Agrupar cargos idênticos GLOBALMENTE (independente da unidade)
+    grouped_globally = _group_identical_cargos(data_list)
+    print(f"DEBUG: Agrupamento global: {len(data_list)} -> {len(grouped_globally)} cargos únicos")
     
-    print(f"DEBUG: Found {len(units)} units")
+    # ETAPA 2: Identificar PAI pelo MAIOR NÍVEL DO CARGO
+    main_unit_sigla = None
+    highest_cargo_level = -1
     
-    processed_list = []
-    
-    # Sort units to ensure parent units (SUBSECRETARIA) come first
-    sorted_units = sorted(units.items(), key=lambda x: (
-        # Parent units (containing SUBSECRETARIA) come first (0), others come after (1)
-        0 if 'SUBSECRETARIA' in _remove_sigla_from_denominacao(x[0]).upper() else 1,
-        # Then alphabetically
-        _remove_sigla_from_denominacao(x[0]).lower()
-    ))
-    
-    # Process each unit
-    for denominacao_unidade, unit_items in sorted_units:
-        # Group identical cargos within this unit
-        unit_items = _group_identical_cargos(unit_items)
+    for item in data_list:  # Usar dados originais para encontrar PAI
+        sigla = item.get('sigla_unidade', '')
+        nivel = int(item.get('nivel', 0) or 0)
         
-        # Sort by level (higher first), then alphabetically
+        if nivel > highest_cargo_level:
+            highest_cargo_level = nivel
+            main_unit_sigla = sigla
+    
+    print(f"DEBUG: PAI identificado: {main_unit_sigla} (nível do cargo: {highest_cargo_level})")
+    
+    # ETAPA 3: Para cada cargo agrupado, determinar em qual unidade deve aparecer
+    processed_list = []
+    unit_groups = {}  # Para organizar por tipo de unidade
+    
+    for grouped_cargo in grouped_globally:
+        cargo_key = f"{grouped_cargo['denominacao']}_{grouped_cargo['tipo_cargo']}_{grouped_cargo['categoria']}_{grouped_cargo['nivel']}"
+        
+        # Encontrar todas as unidades originais que têm este cargo
+        unidades_com_cargo = []
+        for original_item in data_list:
+            original_cargo_key = f"{original_item['denominacao']}_{original_item['tipo_cargo']}_{original_item['categoria']}_{original_item['nivel']}"
+            if original_cargo_key == cargo_key:
+                unidades_com_cargo.append(original_item)
+        
+        # REGRA: Se cargo aparece em múltiplas unidades, escolher a mais específica
+        if len(unidades_com_cargo) > 1:
+            # Escolher unidade com MAIOR nível hierárquico (mais específica)
+            unidade_escolhida = max(unidades_com_cargo, key=lambda x: x.get('nivel_hierarquico', 0))
+        else:
+            unidade_escolhida = unidades_com_cargo[0]
+        
+        sigla_escolhida = unidade_escolhida['sigla_unidade']
+        denominacao_escolhida = unidade_escolhida['denominacao_unidade']
+        denominacao_clean = _remove_sigla_from_denominacao(denominacao_escolhida)
+        
+        # DETERMINAR NOME DA UNIDADE PARA EXIBIÇÃO
+        # REGRA: Só é PAI se for da main_unit_sigla E tiver o nível mais alto
+        cargo_nivel = int(grouped_cargo.get('nivel', 0) or 0)
+        is_pai = (sigla_escolhida == main_unit_sigla and cargo_nivel == highest_cargo_level)
+        
+        # REGRA ESPECIAL: Se mesmo grafo do PAI mas cargo diferente -> UNIDADE VAZIA
+        main_unit_grafo = None
+        for item in data_list:
+            sigla = item.get('sigla_unidade', '')
+            nivel = int(item.get('nivel', 0) or 0)
+            if sigla == main_unit_sigla and nivel == highest_cargo_level:
+                main_unit_grafo = item.get('grafo', '')
+                break
+        
+        cargo_grafo = unidade_escolhida.get('grafo', '')
+        is_mesmo_grafo_cargo_diferente = (cargo_grafo == main_unit_grafo and 
+                                        sigla_escolhida == main_unit_sigla and 
+                                        not is_pai)
+        
+        if is_pai:
+            # PAI - nome completo em UPPERCASE
+            unit_display_name = denominacao_clean.upper()
+        elif is_mesmo_grafo_cargo_diferente:
+            # UNIDADE VAZIA - cargos do mesmo grafo do PAI mas não o PAI
+            unit_display_name = ''
+        else:
+            # FILHO - LÓGICA ROBUSTA: Mini tabela baseada no tipo de cargo
+            cargo_denominacao = grouped_cargo.get('denominacao', '').lower()
+            
+            if 'coordenador-geral' in cargo_denominacao:
+                unit_display_name = 'coordenação-geral'
+            elif 'coordenador' in cargo_denominacao or 'coordenador de projeto' in cargo_denominacao:  # coordenador ou coordenador de projeto
+                unit_display_name = 'coordenação'
+            else:
+                # Para outros tipos (chefe, etc.) - usar primeira palavra da unidade
+                if denominacao_clean:
+                    first_word = denominacao_clean.split()[0].lower()
+                    unit_display_name = first_word
+                else:
+                    unit_display_name = denominacao_escolhida.lower()
+        
+        print(f"DEBUG: Cargo {grouped_cargo['denominacao']} {grouped_cargo['tipo_cargo']} {grouped_cargo['categoria']}.{grouped_cargo['nivel']} -> Unidade: '{unit_display_name}' (QTD: {grouped_cargo['quantidade']})")
+        
+        # Adicionar ao grupo da unidade
+        if unit_display_name not in unit_groups:
+            unit_groups[unit_display_name] = []
+        
+        # Formatar cargo
+        tipo_cargo = grouped_cargo.get('tipo_cargo', '')
+        categoria = grouped_cargo.get('categoria', '')
+        nivel = grouped_cargo.get('nivel', '')
+        
+        if tipo_cargo and categoria and nivel:
+            cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
+        else:
+            cargo_formatado = tipo_cargo or ''
+        
+        unit_groups[unit_display_name].append({
+            'area': unit_display_name,
+            'quantidade': grouped_cargo.get('quantidade', 1),
+            'denominacao': grouped_cargo.get('denominacao', ''),
+            'cargo_formatado': cargo_formatado,
+            'is_pai': is_pai,
+            'nivel_cargo': nivel
+        })
+    
+    # ETAPA 4: Organizar resultado - PAI primeiro, depois ordem específica
+    def get_sort_order(unit_name):
+        # PAI sempre primeiro
+        if any(item['is_pai'] for item in unit_groups.get(unit_name, [])):
+            return (0, unit_name)
+        # Unidade vazia depois do PAI
+        elif unit_name == '':
+            return (1, unit_name)
+        # Ordem específica para os tipos
+        elif unit_name == 'coordenação-geral':
+            return (2, unit_name)
+        elif unit_name == 'coordenação':
+            return (3, unit_name)
+        elif unit_name == 'divisão':
+            return (4, unit_name)
+        else:
+            # Outros tipos por ordem alfabética
+            return (5, unit_name.lower())
+    
+    sorted_unit_groups = sorted(unit_groups.items(), key=lambda x: get_sort_order(x[0]))
+    
+    # ETAPA 5: Construir lista final com linhas em branco
+    for i, (unit_name, unit_items) in enumerate(sorted_unit_groups):
+        # Ordenar cargos dentro da unidade por nível (maior primeiro)
         unit_items.sort(key=lambda x: (
-            -(x.get('nivel', 0) or 0),  # Higher level first (negative for descending)
-            x.get('denominacao', '').lower()  # Then alphabetically
+            -(int(x['nivel_cargo']) if x['nivel_cargo'] else 0),  # Maior nível primeiro
+            x['denominacao'].lower()  # Depois alfabeticamente
         ))
         
-        if unit_items:
-            # Determine if this is a parent unit or subunit
-            first_item = unit_items[0]
-            denominacao_unidade_clean = _remove_sigla_from_denominacao(denominacao_unidade)
-            
-            # Check if this is a parent unit (contains SUBSECRETARIA)
-            if 'SUBSECRETARIA' in denominacao_unidade_clean.upper():
-                # Parent unit - use full name in UPPERCASE
-                unit_name = denominacao_unidade_clean.upper()
-            else:
-                # Subunit - use first word in lowercase
-                unit_name = denominacao_unidade_clean.split()[0].lower()
-            
-            # Add first job on the same line as the unit
-            first_job = unit_items[0]
-            tipo_cargo = first_job.get('tipo_cargo', '')
-            categoria = first_job.get('categoria', '')
-            nivel = first_job.get('nivel', '')
-            
-            if tipo_cargo and categoria and nivel:
-                cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
-            else:
-                cargo_formatado = tipo_cargo or ''
-            
+        # Adicionar todos os cargos da unidade
+        for cargo in unit_items:
             processed_list.append({
-                'area': unit_name,
-                'quantidade': first_job.get('quantidade', 1),
-                'denominacao': first_job.get('denominacao', ''),
-                'cargo_formatado': cargo_formatado
+                'area': cargo['area'],
+                'quantidade': cargo['quantidade'],
+                'denominacao': cargo['denominacao'],
+                'cargo_formatado': cargo['cargo_formatado']
             })
+        
+        # Adicionar linha em branco entre unidades (exceto a última)
+        # MAS não adicionar linha em branco entre PAI e UNIDADE VAZIA
+        if i < len(sorted_unit_groups) - 1:
+            current_unit_name = unit_name
+            next_unit_name = sorted_unit_groups[i + 1][0]
             
-            # Add remaining jobs on separate lines
-            for cargo in unit_items[1:]:
-                tipo_cargo = cargo.get('tipo_cargo', '')
-                categoria = cargo.get('categoria', '')
-                nivel = cargo.get('nivel', '')
-                
-                if tipo_cargo and categoria and nivel:
-                    cargo_formatado = f"{tipo_cargo} {categoria}.{str(nivel).zfill(2)}"
-                else:
-                    cargo_formatado = tipo_cargo or ''
-                
+            # Se atual é PAI e próximo é VAZIO, NÃO adicionar linha em branco
+            is_current_pai = any(item['is_pai'] for item in unit_items)
+            is_next_vazio = (next_unit_name == '')
+            
+            if not (is_current_pai and is_next_vazio):
                 processed_list.append({
-                    'area': '',  # Empty for jobs under unit
-                    'quantidade': cargo.get('quantidade', 1),
-                    'denominacao': cargo.get('denominacao', ''),
-                    'cargo_formatado': cargo_formatado
+                    'area': '',
+                    'quantidade': '',
+                    'denominacao': '',
+                    'cargo_formatado': ''
                 })
     
-    # Add blank line at the end
-    processed_list.append({
-        'area': '',
-        'quantidade': '',
-        'denominacao': '',
-        'cargo_formatado': ''
-    })
-    
-    print(f"DEBUG: Processed {len(processed_list)} items")
+    print(f"DEBUG: Resultado final: {len(processed_list)} linhas")
     return processed_list
 
 def gerar_anexo_simulacao(data_atual, data_nova):

@@ -647,6 +647,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clonar dados para a versão editável
         editedData = JSON.parse(JSON.stringify(originalData));
         
+        // IMPORTANTE: Quando carregamos dados filtrados, precisamos armazená-los
+        // também nas variáveis completas para que o agrupamento funcione corretamente
+        completeOriginalData = JSON.parse(JSON.stringify(originalData));
+        completeEditedData = JSON.parse(JSON.stringify(editedData));
+        
         // Resetar filtro e página atual
         isFiltered = false;
         currentPage = 1;
@@ -2585,11 +2590,11 @@ document.addEventListener('DOMContentLoaded', function() {
               })
               .map((item, index) => {
                   const mapped = {
-                      area: item.sigla || item.area || item.sigla_unidade || 'N/D', // Prefer sigla, fallback to area
+                      area: item.denominacao_unidade || item.sigla || item.area || item.sigla_unidade || 'N/D', // Use denominacao_unidade for better grouping
                       tipo_cargo: item.tipo_cargo || '',
                       denominacao: item.denominacao || '',
-                      categoria: (item.categoria !== undefined && item.categoria !== null && item.categoria !== '') ? parseInt(item.categoria) : 0,
-                      nivel: (item.nivel !== undefined && item.nivel !== null && item.nivel !== '') ? parseInt(item.nivel) : 0,
+                      categoria: (item.categoria !== undefined && item.categoria !== null && item.categoria !== '') ? String(item.categoria) : '0',  // Keep as string for consistency
+                      nivel: (item.nivel !== undefined && item.nivel !== null && item.nivel !== '') ? String(item.nivel) : '0',  // Keep as string for consistency
                       grafo: item.grafo || '', // Include grafo field for hierarchical ordering
                       nivel_hierarquico: (item.nivel_hierarquico !== undefined && item.nivel_hierarquico !== null && item.nivel_hierarquico !== '') ? parseInt(item.nivel_hierarquico) : 0, // Include hierarchical level
                       codigo_unidade: item.codigo_unidade || '', // Include unit code
@@ -2604,14 +2609,33 @@ document.addEventListener('DOMContentLoaded', function() {
                   if (index === 0) {
                       console.log("Primeiro item DEPOIS do mapeamento:", mapped);
                       console.log("Quantidade original:", item.quantidade, "Quantidade mapeada:", mapped.quantidade);
+                      console.log("DEBUG JS: denominacao_unidade =", mapped.denominacao_unidade);
+                      console.log("DEBUG JS: denominacao =", mapped.denominacao);
+                      console.log("DEBUG JS: tipo_cargo =", mapped.tipo_cargo);
+                      console.log("DEBUG JS: categoria =", mapped.categoria);
+                      console.log("DEBUG JS: nivel =", mapped.nivel);
                   }
                   
                   return mapped;
               });
       };
 
-      const estruturaAtualDataForExcel = mapDataForExcel(window.originalDataGlobal || originalData || []);
-      const estruturaNovaDataForExcel = mapDataForExcel(window.editedDataGlobal || editedData || []);
+      // Prioritize complete data when available, use filtered data as fallback
+      console.log("DEBUG: originalData length:", originalData.length);
+      console.log("DEBUG: editedData length:", editedData.length);
+      console.log("DEBUG: completeOriginalData length:", completeOriginalData.length);
+      console.log("DEBUG: completeEditedData length:", completeEditedData.length);
+      console.log("DEBUG: isFiltered:", isFiltered);
+      
+      // Use complete data if available and we have any data, otherwise use current data
+      const currentOriginalData = (completeOriginalData.length > 0) ? completeOriginalData : originalData;
+      const currentEditedData = (completeEditedData.length > 0) ? completeEditedData : editedData;
+      
+      console.log("DEBUG: Using originalData length:", currentOriginalData.length);
+      console.log("DEBUG: Using editedData length:", currentEditedData.length);
+      
+      const estruturaAtualDataForExcel = mapDataForExcel(currentOriginalData || []);
+      const estruturaNovaDataForExcel = mapDataForExcel(currentEditedData || []);
 
       if (!estruturaAtualDataForExcel.length && !estruturaNovaDataForExcel.length) {
           alert('Não há dados nas estruturas para exportar. Carregue ou adicione dados primeiro.');

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}{% if filtro_unidade %} - {{ filtro_unidade }}{% endif %}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2c5282;
+        }
+        
+        .report-title {
+            color: #2c5282;
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .report-meta {
+            color: #718096;
+            font-size: 12px;
+        }
+        
+        .development-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .development-title {
+            color: #856404;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .development-text {
+            color: #856404;
+        }
+        
+        @media print {
+            body { margin: 0; }
+            .report-header { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h1 class="report-title">{{ titulo }}</h1>
+        <p class="report-meta">
+            Gerado em: {{ data_geracao }}
+        </p>
+    </div>
+
+    <div class="development-notice">
+        <div class="development-title">Relatório em Desenvolvimento</div>
+        <p class="development-text">
+            O relatório de Decretos está em desenvolvimento.<br>
+            Em breve estará disponível com todos os dados e funcionalidades.
+        </p>
+    </div>
+</body>
+</html>

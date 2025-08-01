@@ -1,8 +1,0 @@
-{% extends "admin/base_site.html" %}
-{% block content %}
-  {{ block.super }}
-  <hr>
-  <h2>Importar Dados</h2>
-  <p><a href="{% url 'core_unidadecargo_import_planilhas' %}">Importar Planilhas de Estrutura</a></p>
-  <p><a href="{% url 'admin:core_cargosiorg_scrape' %}" class="button">Atualizar Dados do SIORG</a></p>
-{% endblock %}

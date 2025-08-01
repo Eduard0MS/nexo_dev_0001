@@ -57,6 +57,266 @@ from django.views import View
 from django.contrib.auth.models import User, Group
 
 
+# Funções auxiliares para lógica hierárquica de contagem de funcionários
+def identificar_tipo_no(sigla_unidade):
+    """
+    Identifica se um nó é pai (secretaria) ou agregador (superior).
+    """
+    # Buscar o nó na tabela UnidadeCargo
+    no = UnidadeCargo.objects.filter(sigla_unidade=sigla_unidade).first()
+    
+    if not no:
+        return None, None
+    
+    # Verificar se é um nó agregador (tem múltiplos filhos diretos)
+    # Filhos diretos são nós que contêm o código do nó pai no grafo
+    filhos_diretos = UnidadeCargo.objects.filter(
+        grafo__contains=f"-{no.codigo_unidade}-"
+    ).exclude(codigo_unidade=no.codigo_unidade)
+    
+    # Filtrar apenas os filhos diretos únicos (não netos e sem duplicatas)
+    filhos_reais = {}
+    for filho in filhos_diretos:
+        # Verificar se é filho direto (não tem outros códigos entre o pai e o filho)
+        grafo_filho = filho.grafo
+        codigos_grafo = grafo_filho.split('-')
+        
+        # Encontrar a posição do código do pai no grafo
+        try:
+            pos_pai = codigos_grafo.index(str(no.codigo_unidade))
+            # Se o código do filho está logo após o código do pai, é filho direto
+            if pos_pai + 1 < len(codigos_grafo) and codigos_grafo[pos_pai + 1] == str(filho.codigo_unidade):
+                # Usar sigla_unidade como chave para evitar duplicatas
+                filhos_reais[filho.sigla_unidade] = filho
+        except ValueError:
+            continue
+    
+    # Converter para lista
+    filhos_reais_lista = list(filhos_reais.values())
+    
+    # Verificar se é um nó agregador (tem múltiplos filhos diretos)
+    if len(filhos_reais_lista) > 1:
+        return "AGREGADOR", no
+    elif len(filhos_reais_lista) == 1:
+        # Se tem apenas 1 filho, verificar se esse filho tem filhos
+        filho = filhos_reais_lista[0]
+        netos = UnidadeCargo.objects.filter(
+            grafo__contains=f"-{filho.codigo_unidade}-"
+        ).exclude(codigo_unidade=filho.codigo_unidade)
+        
+        if netos.count() > 0:
+            return "AGREGADOR", no
+        else:
+            return "PAI", no
+    else:
+        # Se não tem filhos diretos, é um nó pai
+        return "PAI", no
+
+def contar_funcionarios_no_pai(sigla_unidade):
+    """
+    Conta funcionários de um nó pai usando a coluna 'diretoria' ou 'coordenacao'.
+    Tenta primeiro 'diretoria', depois 'coordenacao'.
+    Inclui tratamento especial para casos onde a secretaria contém MPO/SIGLA.
+    """
+    from .models import RelatorioGratificacoes
+    from django.db.models import Q
+    
+    # Construir filtros robustos que incluem variações MPO/SIGLA
+    diretoria_filter = Q(diretoria=sigla_unidade)
+    coordenacao_filter = Q(coordenacao=sigla_unidade)
+    
+    # Tratamento especial para casos MPO/SIGLA (adiciona busca por secretaria também)
+    if sigla_unidade:
+        # Buscar por variações MPO/SIGLA em qualquer campo relevante
+        mpo_pattern = f"MPO/{sigla_unidade}"
+        diretoria_filter |= Q(diretoria=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(coordenacao=mpo_pattern)
+        coordenacao_filter |= Q(coordenacao=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(diretoria=mpo_pattern)
+    
+    # Contar por diretoria (incluindo todas as variações)
+    count_diretoria = RelatorioGratificacoes.objects.filter(diretoria_filter).count()
+    
+    # Contar por coordenacao (incluindo todas as variações)
+    count_coordenacao = RelatorioGratificacoes.objects.filter(coordenacao_filter).count()
+    
+    # Retornar o maior valor (priorizar diretoria se igual)
+    return max(count_diretoria, count_coordenacao)
+
+def contar_funcionarios_no_agregador(sigla_unidade, no_agregador):
+    """
+    Conta funcionários de um nó agregador somando:
+    1. Funcionários próprios (coordenacao/diretoria)
+    2. Funcionários de TODOS os descendentes na árvore hierárquica
+    """
+    # 1. Contar funcionários próprios do nó agregador
+    funcionarios_proprios = contar_funcionarios_no_pai(sigla_unidade)
+    
+    # 2. Encontrar TODOS os descendentes (não apenas filhos diretos)
+    # Buscar todos os nós que têm o código do agregador no seu grafo
+    todos_descendentes = UnidadeCargo.objects.filter(
+        grafo__contains=f"-{no_agregador.codigo_unidade}-"
+    ).exclude(codigo_unidade=no_agregador.codigo_unidade)
+    
+    # 3. Contar funcionários de todos os descendentes (sem duplicatas por sigla)
+    descendentes_unicos = {}
+    for descendente in todos_descendentes:
+        sigla_desc = descendente.sigla_unidade
+        if sigla_desc not in descendentes_unicos:
+            descendentes_unicos[sigla_desc] = descendente
+    
+    # 4. Somar funcionários de todos os descendentes
+    total_descendentes = 0
+    for sigla_desc, descendente in descendentes_unicos.items():
+        # Contar funcionários diretos do descendente (sem recursão para evitar loop)
+        funcionarios_desc = contar_funcionarios_no_pai(sigla_desc)
+        total_descendentes += funcionarios_desc
+    
+    # 5. Somar funcionários próprios + todos os descendentes
+    return funcionarios_proprios + total_descendentes
+
+def contar_funcionarios_unidade(sigla_unidade):
+    """
+    Conta funcionários de uma unidade usando a lógica hierárquica.
+    """
+    tipo_no, no = identificar_tipo_no(sigla_unidade)
+    
+    if tipo_no == "PAI":
+        return contar_funcionarios_no_pai(sigla_unidade)
+    elif tipo_no == "AGREGADOR":
+        return contar_funcionarios_no_pai(sigla_unidade)  # Usar apenas funcionários próprios, não somar descendentes
+    else:
+        return 0
+
+
+def contar_gsiste_no_pai(sigla_unidade):
+    """
+    Conta funcionários com GSISTE (qualquer valor exceto GSISP) de um nó pai.
+    GSISTE inclui: G.SPO, GSISTE.CF, G.SISG, G.SIPEC
+    """
+    from .models import RelatorioGratificacoes
+    from django.db.models import Q
+    
+    # Construir filtros robustos que incluem variações MPO/SIGLA
+    # GSISTE = qualquer valor exceto 'GSISP'
+    diretoria_filter = Q(diretoria=sigla_unidade) & ~Q(gsiste='GSISP') & ~Q(gsiste='')
+    coordenacao_filter = Q(coordenacao=sigla_unidade) & ~Q(gsiste='GSISP') & ~Q(gsiste='')
+    
+    # Tratamento especial para casos MPO/SIGLA (adiciona busca por secretaria também)
+    if sigla_unidade:
+        # Buscar por variações MPO/SIGLA em qualquer campo relevante
+        mpo_pattern = f"MPO/{sigla_unidade}"
+        diretoria_filter |= (Q(diretoria=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(coordenacao=mpo_pattern)) & ~Q(gsiste='GSISP') & ~Q(gsiste='')
+        coordenacao_filter |= (Q(coordenacao=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(diretoria=mpo_pattern)) & ~Q(gsiste='GSISP') & ~Q(gsiste='')
+    
+    # Contar por diretoria (incluindo todas as variações)
+    count_diretoria = RelatorioGratificacoes.objects.filter(diretoria_filter).count()
+    
+    # Contar por coordenacao (incluindo todas as variações)
+    count_coordenacao = RelatorioGratificacoes.objects.filter(coordenacao_filter).count()
+    
+    # Retornar o maior valor (priorizar diretoria se igual)
+    return max(count_diretoria, count_coordenacao)
+
+
+def contar_gsisp_no_pai(sigla_unidade):
+    """
+    Conta funcionários com GSISTE = 'GSISP' de um nó pai usando a mesma lógica de contagem.
+    """
+    from .models import RelatorioGratificacoes
+    from django.db.models import Q
+    
+    # Construir filtros robustos que incluem variações MPO/SIGLA
+    diretoria_filter = Q(diretoria=sigla_unidade) & Q(gsiste='GSISP')
+    coordenacao_filter = Q(coordenacao=sigla_unidade) & Q(gsiste='GSISP')
+    
+    # Tratamento especial para casos MPO/SIGLA (adiciona busca por secretaria também)
+    if sigla_unidade:
+        # Buscar por variações MPO/SIGLA em qualquer campo relevante
+        mpo_pattern = f"MPO/{sigla_unidade}"
+        diretoria_filter |= (Q(diretoria=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(coordenacao=mpo_pattern)) & Q(gsiste='GSISP')
+        coordenacao_filter |= (Q(coordenacao=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(diretoria=mpo_pattern)) & Q(gsiste='GSISP')
+    
+    # Contar por diretoria (incluindo todas as variações)
+    count_diretoria = RelatorioGratificacoes.objects.filter(diretoria_filter).count()
+    
+    # Contar por coordenacao (incluindo todas as variações)
+    count_coordenacao = RelatorioGratificacoes.objects.filter(coordenacao_filter).count()
+    
+    # Retornar o maior valor (priorizar diretoria se igual)
+    return max(count_diretoria, count_coordenacao)
+
+
+def contar_gsiste_nivel_no_pai(sigla_unidade, nivel_tipo):
+    """
+    Conta funcionários com GSISTE_NIVEL específico (NI ou NS) de um nó pai.
+    nivel_tipo pode ser 'NI' ou 'NS'.
+    """
+    from .models import RelatorioGratificacoes
+    from django.db.models import Q
+    
+    # Construir filtros robustos que incluem variações MPO/SIGLA
+    diretoria_filter = Q(diretoria=sigla_unidade) & Q(gsiste_nivel=nivel_tipo)
+    coordenacao_filter = Q(coordenacao=sigla_unidade) & Q(gsiste_nivel=nivel_tipo)
+    
+    # Tratamento especial para casos MPO/SIGLA (adiciona busca por secretaria também)
+    if sigla_unidade:
+        # Buscar por variações MPO/SIGLA em qualquer campo relevante
+        mpo_pattern = f"MPO/{sigla_unidade}"
+        diretoria_filter |= (Q(diretoria=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(coordenacao=mpo_pattern)) & Q(gsiste_nivel=nivel_tipo)
+        coordenacao_filter |= (Q(coordenacao=mpo_pattern) | Q(secretaria=mpo_pattern) | Q(diretoria=mpo_pattern)) & Q(gsiste_nivel=nivel_tipo)
+    
+    # Contar por diretoria (incluindo todas as variações)
+    count_diretoria = RelatorioGratificacoes.objects.filter(diretoria_filter).count()
+    
+    # Contar por coordenacao (incluindo todas as variações)
+    count_coordenacao = RelatorioGratificacoes.objects.filter(coordenacao_filter).count()
+    
+    # Retornar o maior valor (priorizar diretoria se igual)
+    return max(count_diretoria, count_coordenacao)
+
+
+def contar_gsiste_unidade(sigla_unidade):
+    """
+    Conta funcionários com GSISTE (qualquer valor exceto GSISP) de uma unidade usando a lógica hierárquica.
+    """
+    tipo_no, no = identificar_tipo_no(sigla_unidade)
+    
+    if tipo_no == "PAI":
+        return contar_gsiste_no_pai(sigla_unidade)
+    elif tipo_no == "AGREGADOR":
+        return contar_gsiste_no_pai(sigla_unidade)  # Usar apenas funcionários próprios, não somar descendentes
+    else:
+        return 0
+
+
+def contar_gsisp_unidade(sigla_unidade):
+    """
+    Conta funcionários com GSISTE = 'GSISP' de uma unidade usando a lógica hierárquica.
+    """
+    tipo_no, no = identificar_tipo_no(sigla_unidade)
+    
+    if tipo_no == "PAI":
+        return contar_gsisp_no_pai(sigla_unidade)
+    elif tipo_no == "AGREGADOR":
+        return contar_gsisp_no_pai(sigla_unidade)  # Usar apenas funcionários próprios, não somar descendentes
+    else:
+        return 0
+
+
+def contar_gsiste_nivel_unidade(sigla_unidade, nivel_tipo):
+    """
+    Conta funcionários com GSISTE_NIVEL específico de uma unidade usando a lógica hierárquica.
+    nivel_tipo pode ser 'NI' ou 'NS'.
+    """
+    tipo_no, no = identificar_tipo_no(sigla_unidade)
+    
+    if tipo_no == "PAI":
+        return contar_gsiste_nivel_no_pai(sigla_unidade, nivel_tipo)
+    elif tipo_no == "AGREGADOR":
+        return contar_gsiste_nivel_no_pai(sigla_unidade, nivel_tipo)  # Usar apenas funcionários próprios, não somar descendentes
+    else:
+        return 0
+
+
 class CustomLoginView(LoginView):
     template_name = "registration/login_direct.html"
     authentication_form = CustomLoginForm
@@ -1396,15 +1656,6 @@ def api_cargos_diretos(request):
                 else:
                     valor_unitario = float(cargo_siorg.valor) if cargo_siorg.valor else 0
             
-            if pontos <= 0:
-                pontos_padrao = {
-                    18: 7.65, 17: 7.08, 16: 6.23, 15: 5.41, 14: 4.63,
-                    13: 4.12, 12: 3.10, 11: 2.47, 10: 2.12, 9: 1.67,
-                    8: 1.60, 7: 1.39, 6: 1.17, 5: 1.00, 4: 0.44,
-                    3: 0.37, 2: 0.21, 1: 0.12,
-                }
-                pontos = pontos_padrao.get(nivel_cargo, 1.0)
-            
             if valor_unitario <= 0:
                 valor_unitario = 100.0
             
@@ -2021,63 +2272,23 @@ def relatorios(request):
 @require_http_methods(["GET"])
 def api_relatorio_pontos_gratificacoes(request):
     """
-    API para dados do relatório usando a API do organograma.
-    Primeira tabela: Unidade, Pontos totais (sem GSIST/GSISP por enquanto)
+    API para dados do relatório de pontos e gratificações.
+    Primeira tabela: Unidade, Pontos totais (sem GSISTE/GSISP por enquanto)
     """
-    from django.http import HttpRequest
-    import json
-    
     try:
         # Parâmetros de filtro e paginação
         filtro_unidade = request.GET.get('unidade', '').strip()
         page = int(request.GET.get('page', 1))
         per_page = int(request.GET.get('per_page', 11))
         
-        # Criar uma requisição interna para a API do organograma
-        internal_request = HttpRequest()
-        internal_request.method = 'GET'
-        internal_request.user = request.user
-        internal_request.GET = request.GET.copy()
+        # Criar chave de cache única baseada nos filtros
+        cache_key = f"gratificacoes_data_{filtro_unidade}_{hash(filtro_unidade)}"
         
-        # Chamar a API do organograma
-        response = api_organograma(internal_request)
-        
-        if response.status_code == 200:
-            data = json.loads(response.content)
-            registros = data.get('core_unidadecargo', [])
-            
-            # Processar dados do organograma
-            tabela_gratificacoes = []
-            unidades_unicas = {}
-            
-            for registro in registros:
-                unidade = registro.get('denominacao_unidade', '')
-                pontos = float(registro.get('pontos_total', 0))
-                
-                # Aplicar filtro se fornecido
-                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
-                    continue
-                
-                if unidade:  # Só incluir se tem nome da unidade
-                    if unidade in unidades_unicas:
-                        unidades_unicas[unidade]['pontos'] += pontos
-                    else:
-                        unidades_unicas[unidade] = {
-                            'unidade': unidade,
-                            'pontos': pontos,
-                            'gsist': 0,  # Por enquanto zerado
-                            'gsisp': 0   # Por enquanto zerado
-                        }
-            
-            # Converter para lista e ordenar
-            tabela_final = list(unidades_unicas.values())
-            tabela_final.sort(key=lambda x: x['unidade'])
-            
-            # Arredondar pontos
-            for item in tabela_final:
-                item['pontos'] = round(item['pontos'], 2)
-            
-            # Implementar paginação
+        # Tentar buscar dados do cache primeiro
+        dados_cache = cache.get(cache_key)
+        if dados_cache is not None:
+            # Dados em cache encontrados - aplicar apenas paginação
+            tabela_final = dados_cache
             total_registros = len(tabela_final)
             total_pages = (total_registros + per_page - 1) // per_page
             start_index = (page - 1) * per_page
@@ -2100,11 +2311,156 @@ def api_relatorio_pontos_gratificacoes(request):
                     'total_registros': total_registros
                 }
             })
-        else:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Erro ao acessar dados do organograma'
-            }, status=500)
+        
+        # Se não há cache, processar dados completos
+        from django.db.models import Q
+        from functools import reduce
+        import operator
+        
+        # Consulta base
+        query = UnidadeCargo.objects.all()
+        
+        # Aplicar filtro de unidade com busca hierárquica se fornecido
+        if filtro_unidade:
+            # Busca hierárquica: encontrar códigos associados à sigla/unidade
+            sigla_upper = filtro_unidade.upper()
+            codigos_associados = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla_upper) | 
+                Q(sigla__iexact=sigla_upper) |
+                Q(denominacao_unidade__icontains=filtro_unidade)
+            ).values_list('codigo_unidade', flat=True).distinct()
+            
+            codigos_lista = list(codigos_associados)
+            
+            if codigos_lista:
+                # Filtro hierárquico: incluir unidade E toda árvore subordinada
+                filtros_hierarquicos = []
+                for code in codigos_lista:
+                    # Incluir a própria unidade
+                    filtros_hierarquicos.append(Q(codigo_unidade=code))
+                    # Incluir TODA a árvore subordinada
+                    filtros_hierarquicos.append(Q(grafo__contains=f"-{code}-"))
+                    # Incluir subordinadas diretas
+                    filtros_hierarquicos.append(Q(grafo__startswith=f"{code}-"))
+                
+                query = query.filter(reduce(operator.or_, filtros_hierarquicos))
+            else:
+                # Fallback para busca por nome
+                query = query.filter(
+                    Q(denominacao_unidade__icontains=filtro_unidade) |
+                    Q(sigla_unidade__icontains=filtro_unidade)
+                )
+        
+        # Carregar os cargos do SIORG para matching (mesma lógica do Comparador)
+        cargos_siorg_dict = {}
+        try:
+            for cs in CargoSIORG.objects.all():
+                key1 = f"{cs.cargo}"
+                key2 = f"{cs.cargo}".replace(" ", "")
+                
+                import re
+                match = re.match(r"(\w+)\s+(\d+)\s+(\d+)", cs.cargo)
+                if match:
+                    tipo, categoria, nivel_cargo = match.groups()
+                    key3 = f"{tipo}{categoria}{nivel_cargo}"
+                    key4 = f"{tipo}-{categoria}-{nivel_cargo}"
+                    
+                    cargos_siorg_dict[key1] = cs
+                    cargos_siorg_dict[key2] = cs
+                    cargos_siorg_dict[key3] = cs
+                    cargos_siorg_dict[key4] = cs
+                else:
+                    cargos_siorg_dict[key1] = cs
+                    cargos_siorg_dict[key2] = cs
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erro ao carregar cargos SIORG: {str(e)}")
+        
+        # Agrupar dados por unidade
+        unidades_dados = {}
+        for registro in query:
+            unidade = registro.denominacao_unidade or registro.sigla_unidade or 'Unidade não identificada'
+            quantidade = int(registro.quantidade or 0)
+            
+            # Calcular pontos usando a mesma lógica do Comparador
+            categoria = int(registro.categoria) if registro.categoria is not None else 1
+            nivel_cargo = int(registro.nivel) if registro.nivel is not None else 0
+            
+            cargo_key = f"{registro.tipo_cargo} {categoria} {nivel_cargo:02d}"
+            cargo_key_alt = f"{registro.tipo_cargo}{categoria}{nivel_cargo:02d}"
+            
+            cargo_siorg = None
+            for key in [cargo_key, cargo_key_alt, cargo_key.replace(" ", "")]:
+                if key in cargos_siorg_dict:
+                    cargo_siorg = cargos_siorg_dict[key]
+                    break
+            
+            pontos = 0
+            if cargo_siorg:
+                pontos = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+            
+            pontos_total = pontos * quantidade
+            
+            if unidade in unidades_dados:
+                unidades_dados[unidade]['pontos'] += pontos_total
+            else:
+                # Extrair sigla da unidade para usar nas contagens
+                sigla_unidade = extrair_sigla_unidade(unidade)
+                
+                # Contar GSISTE (qualquer valor exceto GSISP: G.SPO, GSISTE.CF, G.SISG, G.SIPEC)
+                gsiste_count = contar_gsiste_unidade(sigla_unidade)
+                
+                # Contar GSISP (apenas GSISTE = 'GSISP')
+                gsisp_count = contar_gsisp_unidade(sigla_unidade)
+                
+                # Contar GSISTE_NIVEL (NI e NS)
+                ni_count = contar_gsiste_nivel_unidade(sigla_unidade, 'NI')
+                ns_count = contar_gsiste_nivel_unidade(sigla_unidade, 'NS')
+                
+                unidades_dados[unidade] = {
+                    'unidade': unidade,
+                    'pontos': pontos_total,
+                    'gsist': gsiste_count,  # Contagem real de GSISTE (G.SPO, GSISTE.CF, G.SISG, G.SIPEC)
+                    'gsisp': gsisp_count,   # Contagem real de GSISP
+                    'ns': ns_count,         # Contagem real de GSISTE_NIVEL = 'NS'
+                    'ni': ni_count          # Contagem real de GSISTE_NIVEL = 'NI'
+                }
+        
+        # Converter para lista e ordenar
+        tabela_final = list(unidades_dados.values())
+        tabela_final.sort(key=lambda x: x['unidade'])
+        
+        # Arredondar pontos
+        for item in tabela_final:
+            item['pontos'] = round(item['pontos'], 2)
+        
+        # Salvar dados no cache por 30 minutos (1800 segundos)
+        cache.set(cache_key, tabela_final, 1800)
+        
+        # Implementar paginação
+        total_registros = len(tabela_final)
+        total_pages = (total_registros + per_page - 1) // per_page
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        dados_paginados = tabela_final[start_index:end_index]
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': dados_paginados,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_pages': total_pages,
+                'total_registros': total_registros,
+                'has_next': page < total_pages,
+                'has_previous': page > 1
+            },
+            'filtros': {
+                'unidade': filtro_unidade,
+                'total_registros': total_registros
+            }
+        })
         
     except Exception as e:
         return JsonResponse({
@@ -2113,93 +2469,33 @@ def api_relatorio_pontos_gratificacoes(request):
         }, status=500)
 
 
+
 @login_required
 @require_http_methods(["GET"])
-def api_relatorio_dimensionamento(request):
+def api_relatorio_idp(request):
     """
-    API para dados do dimensionamento usando a API do organograma.
-    Segunda tabela: Unidade, Pontos da área, Colaboradores (quantidade), IEE
+    API específica para relatório IDP.
+    PADRONIZADA COM IEE - usa exatamente a mesma lógica de pontos e colaboradores.
     """
-    from django.http import HttpRequest
-    import json
-    
     try:
-        # Parâmetros de filtro e paginação
+        # Parâmetros de filtro e paginação  
         filtro_unidade = request.GET.get('unidade', '').strip()
         page = int(request.GET.get('page', 1))
         per_page = int(request.GET.get('per_page', 11))
         
-        # Criar uma requisição interna para a API do organograma
-        internal_request = HttpRequest()
-        internal_request.method = 'GET'
-        internal_request.user = request.user
-        internal_request.GET = request.GET.copy()
+        # Criar chave de cache única baseada nos filtros
+        cache_key = f"idp_data_{filtro_unidade}_{hash(filtro_unidade)}"
         
-        # Chamar a API do organograma
-        response = api_organograma(internal_request)
-        
-        if response.status_code == 200:
-            data = json.loads(response.content)
-            registros = data.get('core_unidadecargo', [])
-            
-            # Processar dados do organograma
-            tabela_dimensionamento = []
-            total_colaboradores_instituicao = 0
-            total_pontos_instituicao = 0
-            
-            # Agrupar por unidade
-            unidades_dados = {}
-            for registro in registros:
-                unidade = registro.get('denominacao_unidade', '')
-                pontos = float(registro.get('pontos_total', 0))
-                quantidade = int(registro.get('quantidade', 0))
-                
-                # Aplicar filtro se fornecido
-                if filtro_unidade and filtro_unidade.lower() not in unidade.lower():
-                    continue
-                
-                if unidade:
-                    if unidade in unidades_dados:
-                        unidades_dados[unidade]['pontos'] += pontos
-                        unidades_dados[unidade]['colaboradores'] += quantidade
-                    else:
-                        unidades_dados[unidade] = {
-                            'unidade': unidade,
-                            'pontos': pontos,
-                            'colaboradores': quantidade,
-                            'consultoria': 0  # Por enquanto zerado
-                        }
-            
-            # Calcular totais para IEE
-            for dados in unidades_dados.values():
-                total_colaboradores_instituicao += dados['colaboradores']
-                total_pontos_instituicao += dados['pontos']
-            
-            # Calcular IEE: (Servidores na Unidade / Número de Pontos)
-            for dados in unidades_dados.values():
-                colaboradores = dados['colaboradores']
-                pontos = dados['pontos']
-                
-                # IEE = Servidores na Unidade / Número de Pontos
-                iee = round(colaboradores / pontos, 3) if pontos > 0 else 0
-                
-                tabela_dimensionamento.append({
-                    'unidade': dados['unidade'],
-                    'pontos': round(pontos, 2),
-                    'colaboradores': colaboradores,
-                    'consultoria': dados['consultoria'],
-                    'iee': iee
-                })
-            
-            # Ordenar por nome da unidade
-            tabela_dimensionamento.sort(key=lambda x: x['unidade'])
-            
-            # Implementar paginação
-            total_registros = len(tabela_dimensionamento)
+        # Tentar buscar dados do cache primeiro
+        dados_cache = cache.get(cache_key)
+        if dados_cache is not None:
+            # Dados em cache encontrados - aplicar apenas paginação
+            tabela_final = dados_cache
+            total_registros = len(tabela_final)
             total_pages = (total_registros + per_page - 1) // per_page
             start_index = (page - 1) * per_page
             end_index = start_index + per_page
-            dados_paginados = tabela_dimensionamento[start_index:end_index]
+            dados_paginados = tabela_final[start_index:end_index]
             
             return JsonResponse({
                 'status': 'success',
@@ -2215,23 +2511,510 @@ def api_relatorio_dimensionamento(request):
                 'filtros': {
                     'unidade': filtro_unidade,
                     'total_registros': total_registros
-                },
-                'estatisticas': {
-                    'total_colaboradores_instituicao': total_colaboradores_instituicao,
-                    'total_pontos_instituicao': round(total_pontos_instituicao, 2),
-                    'formula_iee': 'IEE = (Servidores na Unidade / Número de Pontos)'
                 }
             })
+        
+        # Se não há cache, processar dados completos
+        from django.db.models import Q
+        from functools import reduce
+        import operator
+        
+        # Consulta base
+        query = UnidadeCargo.objects.all()
+        
+        # Aplicar filtro de unidade com busca hierárquica se fornecido (IGUAL AO IEE)
+        if filtro_unidade:
+            # Busca hierárquica: encontrar códigos associados à sigla/unidade
+            sigla_upper = filtro_unidade.upper()
+            codigos_associados = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla_upper) | 
+                Q(sigla__iexact=sigla_upper)
+            ).values_list('codigo_unidade', flat=True).distinct()
+            
+            codigos_lista = list(codigos_associados)
+            
+            if codigos_lista:
+                # Filtro hierárquico: incluir unidade E toda árvore subordinada
+                filtros_hierarquicos = []
+                for code in codigos_lista:
+                    # Incluir a própria unidade
+                    filtros_hierarquicos.append(Q(codigo_unidade=code))
+                    # Incluir TODA a árvore subordinada
+                    filtros_hierarquicos.append(Q(grafo__contains=f"-{code}-"))
+                    # Incluir subordinadas diretas
+                    filtros_hierarquicos.append(Q(grafo__startswith=f"{code}-"))
+                
+                query = query.filter(reduce(operator.or_, filtros_hierarquicos))
+            else:
+                # Fallback para busca por nome
+                query = query.filter(
+                    Q(denominacao_unidade__icontains=filtro_unidade) |
+                    Q(sigla_unidade__icontains=filtro_unidade)
+                )
+        
+        # Carregar os cargos do SIORG para matching (IGUAL AO IEE)
+        cargos_siorg_dict = {}
+        try:
+            for cs in CargoSIORG.objects.all():
+                key1 = f"{cs.cargo}"
+                key2 = f"{cs.cargo}".replace(" ", "")
+                
+                import re
+                parts = re.split(r'\s+', cs.cargo)
+                if len(parts) >= 3:
+                    tipo_cargo = ' '.join(parts[:-2])
+                    categoria = parts[-2]
+                    nivel = parts[-1]
+                    
+                    key3 = f"{tipo_cargo} {categoria} {nivel}"
+                    key4 = f"{tipo_cargo}{categoria}{nivel}"
+                    key5 = f"{tipo_cargo}{categoria}{nivel:0>2}"
+                    
+                    for key in [key1, key2, key3, key4, key5]:
+                        cargos_siorg_dict[key] = cs
+        except Exception as e:
+            pass
+        
+        # Primeiro, calcular pontos por unidade
+        unidades_pontos = {}
+        for registro in query:
+            unidade = registro.denominacao_unidade or registro.sigla_unidade or 'Unidade não identificada'
+            quantidade = int(registro.quantidade or 0)
+            
+            # Calcular pontos usando a mesma lógica do Comparador
+            categoria = int(registro.categoria) if registro.categoria is not None else 1
+            nivel_cargo = int(registro.nivel) if registro.nivel is not None else 0
+            
+            cargo_key = f"{registro.tipo_cargo} {categoria} {nivel_cargo:02d}"
+            cargo_key_alt = f"{registro.tipo_cargo}{categoria}{nivel_cargo:02d}"
+            
+            cargo_siorg = None
+            for key in [cargo_key, cargo_key_alt, cargo_key.replace(" ", "")]:
+                if key in cargos_siorg_dict:
+                    cargo_siorg = cargos_siorg_dict[key]
+                    break
+            
+            pontos = 0
+            if cargo_siorg:
+                pontos = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+            
+            pontos_total = pontos * quantidade
+            
+            if unidade in unidades_pontos:
+                unidades_pontos[unidade]['pontos'] += pontos_total
+            else:
+                unidades_pontos[unidade] = {
+                    'pontos': pontos_total,
+                    'sigla_unidade': registro.sigla_unidade
+                }
+        
+        # Segundo, criar dados finais com contagem correta de funcionários
+        unidades_dados = {}
+        
+        # Se há filtro, agrupar tudo sob a unidade filtrada
+        if filtro_unidade:
+            # Encontrar a unidade principal do filtro
+            sigla_upper = filtro_unidade.upper()
+            unidade_principal = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla_upper) | 
+                Q(sigla__iexact=sigla_upper)
+            ).first()
+            
+            if unidade_principal:
+                # CORREÇÃO: Usar APENAS os pontos já calculados corretamente na query filtrada (IGUAL AO IEE)
+                # Calcular total de pontos da query filtrada
+                total_pontos_filtro = 0
+                for registro in query:
+                    quantidade = int(registro.quantidade or 0)
+                    categoria = int(registro.categoria) if registro.categoria is not None else 1
+                    nivel_cargo = int(registro.nivel) if registro.nivel is not None else 0
+                    
+                    cargo_key = f"{registro.tipo_cargo} {categoria} {nivel_cargo:02d}"
+                    cargo_key_alt = f"{registro.tipo_cargo}{categoria}{nivel_cargo:02d}"
+                    
+                    cargo_siorg = None
+                    for key in [cargo_key, cargo_key_alt, cargo_key.replace(" ", "")]:
+                        if key in cargos_siorg_dict:
+                            cargo_siorg = cargos_siorg_dict[key]
+                            break
+                    
+                    pontos = 0
+                    if cargo_siorg:
+                        pontos = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+                    
+                    total_pontos_filtro += pontos * quantidade
+                
+                # Usar a lógica hierárquica para contar funcionários da unidade principal (IGUAL AO IEE)
+                colaboradores = contar_funcionarios_unidade(unidade_principal.sigla_unidade)
+                
+                unidades_dados[unidade_principal.denominacao_unidade] = {
+                    'unidade': unidade_principal.denominacao_unidade,
+                    'pontos': total_pontos_filtro,
+                    'colaboradores': colaboradores
+                }
+            else:
+                # Fallback: usar lógica original se não encontrar a unidade principal
+                for unidade, dados_pontos in unidades_pontos.items():
+                    sigla_unidade = dados_pontos['sigla_unidade']
+                    colaboradores = contar_funcionarios_unidade(sigla_unidade) if sigla_unidade else 0
+                    
+                    unidades_dados[unidade] = {
+                        'unidade': unidade,
+                        'pontos': dados_pontos['pontos'],
+                        'colaboradores': colaboradores
+                    }
         else:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Erro ao acessar dados do organograma'
-            }, status=500)
+            # Sem filtro: usar lógica original (cada unidade separadamente) - IGUAL AO IEE
+            for unidade, dados_pontos in unidades_pontos.items():
+                sigla_unidade = dados_pontos['sigla_unidade']
+                colaboradores = contar_funcionarios_unidade(sigla_unidade) if sigla_unidade else 0
+                
+                unidades_dados[unidade] = {
+                    'unidade': unidade,
+                    'pontos': dados_pontos['pontos'],
+                    'colaboradores': colaboradores
+                }
+        
+        # Converter para lista e calcular índices
+        tabela_final = []
+        for dados in unidades_dados.values():
+            if dados['colaboradores'] > 0 or dados['pontos'] > 0:  # Só incluir unidades com dados
+                # Calcular IDP: Pontos por colaborador
+                if dados['colaboradores'] > 0:
+                    dados['idp'] = round(dados['pontos'] / dados['colaboradores'], 2)
+                else:
+                    dados['idp'] = dados['pontos']  # Se não há colaboradores, IDP = pontos total
+                
+                dados['pontos'] = round(dados['pontos'], 2)
+                tabela_final.append(dados)
+        
+        # Ordenar por unidade
+        tabela_final.sort(key=lambda x: x['unidade'])
+        
+        # Salvar dados no cache por 30 minutos (1800 segundos)
+        cache.set(cache_key, tabela_final, 1800)
+        
+        # Implementar paginação
+        total_registros = len(tabela_final)
+        total_pages = (total_registros + per_page - 1) // per_page
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        dados_paginados = tabela_final[start_index:end_index]
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': dados_paginados,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_pages': total_pages,
+                'total_registros': total_registros,
+                'has_next': page < total_pages,
+                'has_previous': page > 1
+            },
+            'filtros': {
+                'unidade': filtro_unidade,
+                'total_registros': total_registros
+            }
+        })
         
     except Exception as e:
         return JsonResponse({
             'status': 'error',
-            'message': f'Erro ao carregar dados de dimensionamento: {str(e)}'
+            'message': f'Erro ao carregar dados IDP: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_relatorio_iee(request):
+    """
+    API específica para relatório IEE.
+    Retorna dados de pontos e colaboradores organizados por unidade para cálculo do IEE.
+    """
+    try:
+        # Parâmetros de filtro e paginação
+        filtro_unidade = request.GET.get('unidade', '').strip()
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 11))
+        
+        # Criar chave de cache única baseada nos filtros
+        cache_key = f"iee_data_{filtro_unidade}_{hash(filtro_unidade)}"
+        
+        # Tentar buscar dados do cache primeiro
+        dados_cache = cache.get(cache_key)
+        if dados_cache is not None:
+            # Dados em cache encontrados - aplicar apenas paginação
+            tabela_final = dados_cache
+            total_registros = len(tabela_final)
+            total_pages = (total_registros + per_page - 1) // per_page
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            dados_paginados = tabela_final[start_index:end_index]
+            
+            return JsonResponse({
+                'status': 'success',
+                'data': dados_paginados,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'total_registros': total_registros,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                },
+                'filtros': {
+                    'unidade': filtro_unidade,
+                    'total_registros': total_registros
+                }
+            })
+        
+        # Se não há cache, processar dados completos
+        from django.db.models import Q
+        from functools import reduce
+        import operator
+        
+        # Consulta base
+        query = UnidadeCargo.objects.all()
+        
+        # Aplicar filtro de unidade com busca hierárquica se fornecido
+        if filtro_unidade:
+            # Busca hierárquica: encontrar códigos associados à sigla/unidade
+            sigla_upper = filtro_unidade.upper()
+            codigos_associados = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla_upper) | 
+                Q(sigla__iexact=sigla_upper)
+            ).values_list('codigo_unidade', flat=True).distinct()
+            
+            codigos_lista = list(codigos_associados)
+            
+            if codigos_lista:
+                # CORREÇÃO DO FILTRO: usar a mesma lógica do nosso teste que funciona
+                filtros_hierarquicos = []
+                for code in codigos_lista:
+                    # Incluir a própria unidade
+                    filtros_hierarquicos.append(Q(codigo_unidade=code))
+                    # Incluir subordinadas diretas
+                    filtros_hierarquicos.append(Q(grafo__startswith=f"{code}-"))
+                    # Incluir descendentes que são filhos (código no final do grafo seguido de -)
+                    filtros_hierarquicos.append(Q(grafo__contains=f"-{code}-"))
+                
+                query = query.filter(reduce(operator.or_, filtros_hierarquicos))
+                
+
+            else:
+                # Fallback para busca por nome
+                query = query.filter(
+                    Q(denominacao_unidade__icontains=filtro_unidade) |
+                    Q(sigla_unidade__icontains=filtro_unidade)
+                )
+        
+        # Carregar os cargos do SIORG para matching (mesma lógica do Comparador)
+        cargos_siorg_dict = {}
+        try:
+            for cs in CargoSIORG.objects.all():
+                key1 = f"{cs.cargo}"
+                key2 = f"{cs.cargo}".replace(" ", "")
+                
+                import re
+                match = re.match(r"(\w+)\s+(\d+)\s+(\d+)", cs.cargo)
+                if match:
+                    tipo, categoria, nivel_cargo = match.groups()
+                    key3 = f"{tipo}{categoria}{nivel_cargo}"
+                    key4 = f"{tipo}-{categoria}-{nivel_cargo}"
+                    
+                    cargos_siorg_dict[key1] = cs
+                    cargos_siorg_dict[key2] = cs
+                    cargos_siorg_dict[key3] = cs
+                    cargos_siorg_dict[key4] = cs
+                else:
+                    cargos_siorg_dict[key1] = cs
+                    cargos_siorg_dict[key2] = cs
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erro ao carregar cargos SIORG: {str(e)}")
+        
+        # Primeiro, agrupar dados por unidade para calcular pontos
+        unidades_pontos = {}
+        total_pontos_instituicao = 0
+        
+        for registro in query:
+            unidade = registro.denominacao_unidade or registro.sigla_unidade or 'Unidade não identificada'
+            quantidade = int(registro.quantidade or 0)
+            
+            # Calcular pontos usando a mesma lógica do Comparador
+            categoria = int(registro.categoria) if registro.categoria is not None else 1
+            nivel_cargo = int(registro.nivel) if registro.nivel is not None else 0
+            
+            cargo_key = f"{registro.tipo_cargo} {categoria} {nivel_cargo:02d}"
+            cargo_key_alt = f"{registro.tipo_cargo}{categoria}{nivel_cargo:02d}"
+            
+            cargo_siorg = None
+            for key in [cargo_key, cargo_key_alt, cargo_key.replace(" ", "")]:
+                if key in cargos_siorg_dict:
+                    cargo_siorg = cargos_siorg_dict[key]
+                    break
+            
+            pontos = 0
+            if cargo_siorg:
+                pontos = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+            
+            pontos_total = pontos * quantidade
+            
+            if unidade in unidades_pontos:
+                unidades_pontos[unidade]['pontos'] += pontos_total
+                # Manter referência à sigla da primeira ocorrência
+            else:
+                unidades_pontos[unidade] = {
+                    'pontos': pontos_total,
+                    'sigla_unidade': registro.sigla_unidade
+                }
+            
+            total_pontos_instituicao += pontos_total
+        
+        # Segundo, criar dados finais com contagem correta de funcionários
+        unidades_dados = {}
+        
+        # Se há filtro, agrupar tudo sob a unidade filtrada
+        if filtro_unidade:
+            # Encontrar a unidade principal do filtro
+            sigla_upper = filtro_unidade.upper()
+            unidade_principal = UnidadeCargo.objects.filter(
+                Q(sigla_unidade__iexact=sigla_upper) | 
+                Q(sigla__iexact=sigla_upper)
+            ).first()
+            
+            if unidade_principal:
+                # CORREÇÃO: Usar APENAS os pontos já calculados corretamente na query filtrada
+                # (não somar novamente, pois a query já foi filtrada)
+                total_pontos_filtro = total_pontos_instituicao  # Este já é o total filtrado
+                
+
+                
+                # Usar a lógica hierárquica para contar funcionários da unidade principal
+                colaboradores = contar_funcionarios_unidade(unidade_principal.sigla_unidade)
+                
+                unidades_dados[unidade_principal.denominacao_unidade] = {
+                    'unidade': unidade_principal.denominacao_unidade,
+                    'pontos': total_pontos_filtro,
+                    'colaboradores': colaboradores
+                }
+            else:
+                # Fallback: usar lógica original se não encontrar a unidade principal
+                for unidade, dados_pontos in unidades_pontos.items():
+                    sigla_unidade = dados_pontos['sigla_unidade']
+                    colaboradores = contar_funcionarios_unidade(sigla_unidade) if sigla_unidade else 0
+                    
+                    unidades_dados[unidade] = {
+                        'unidade': unidade,
+                        'pontos': dados_pontos['pontos'],
+                        'colaboradores': colaboradores
+                    }
+        else:
+            # Sem filtro: usar lógica original (cada unidade separadamente)
+            for unidade, dados_pontos in unidades_pontos.items():
+                sigla_unidade = dados_pontos['sigla_unidade']
+                colaboradores = contar_funcionarios_unidade(sigla_unidade) if sigla_unidade else 0
+                
+                unidades_dados[unidade] = {
+                    'unidade': unidade,
+                    'pontos': dados_pontos['pontos'],
+                    'colaboradores': colaboradores
+                }
+        
+        # Calcular total de colaboradores da instituição SEMPRE (não depende do filtro)
+        # Contar todos os funcionários válidos da tabela RelatorioGratificacoes
+        from .models import RelatorioGratificacoes
+        total_colaboradores_instituicao = RelatorioGratificacoes.objects.exclude(
+            coordenacao__isnull=True
+        ).exclude(
+            coordenacao=""
+        ).count()
+        
+        # Calcular total de pontos da instituição SEMPRE (não depende do filtro)
+        # Usar todos os registros, não apenas os filtrados
+        todos_registros = UnidadeCargo.objects.all()
+        total_pontos_instituicao_real = 0
+        
+        for registro in todos_registros:
+            quantidade = int(registro.quantidade or 0)
+            categoria = int(registro.categoria) if registro.categoria is not None else 1
+            nivel_cargo = int(registro.nivel) if registro.nivel is not None else 0
+            
+            cargo_key = f"{registro.tipo_cargo} {categoria} {nivel_cargo:02d}"
+            cargo_key_alt = f"{registro.tipo_cargo}{categoria}{nivel_cargo:02d}"
+            
+            cargo_siorg = None
+            for key in [cargo_key, cargo_key_alt, cargo_key.replace(" ", "")]:
+                if key in cargos_siorg_dict:
+                    cargo_siorg = cargos_siorg_dict[key]
+                    break
+            
+            pontos = 0
+            if cargo_siorg:
+                pontos = float(cargo_siorg.unitario) if cargo_siorg.unitario else 0
+            
+            total_pontos_instituicao_real += pontos * quantidade
+        
+        # Calcular a média institucional FIXA (nunca muda)
+        media_institucional = 0
+        if total_colaboradores_instituicao > 0:
+            media_institucional = total_pontos_instituicao_real / total_colaboradores_instituicao
+        
+        # Converter para lista e calcular IEE
+        tabela_final = []
+        for dados in unidades_dados.values():
+            if dados['colaboradores'] > 0 or dados['pontos'] > 0:  # Só incluir unidades com dados
+                # Calcular IEE: (Pontos da Unidade / Colaboradores da Unidade) / (Média Institucional)
+                if dados['colaboradores'] > 0 and media_institucional > 0:
+                    densidade_unidade = dados['pontos'] / dados['colaboradores']
+                    dados['iee'] = round(densidade_unidade / media_institucional, 2)
+                else:
+                    dados['iee'] = 0
+                
+                dados['pontos'] = round(dados['pontos'], 2)
+                tabela_final.append(dados)
+        
+        # Ordenar por unidade
+        tabela_final.sort(key=lambda x: x['unidade'])
+        
+        # Salvar dados no cache por 30 minutos (1800 segundos)
+        cache.set(cache_key, tabela_final, 1800)
+        
+        # Implementar paginação
+        total_registros = len(tabela_final)
+        total_pages = (total_registros + per_page - 1) // per_page
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        dados_paginados = tabela_final[start_index:end_index]
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': dados_paginados,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_pages': total_pages,
+                'total_registros': total_registros,
+                'has_next': page < total_pages,
+                'has_previous': page > 1
+            },
+                        'filtros': {
+                'unidade': filtro_unidade,
+                'total_registros': total_registros
+            },
+            'totais_instituicao': {
+                'colaboradores': total_colaboradores_instituicao,
+                'pontos': round(total_pontos_instituicao_real, 2),
+                'media_institucional': round(media_institucional, 2)
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao carregar dados IEE: {str(e)}'
         }, status=500)
 
 
@@ -2278,8 +3061,8 @@ def api_historico_decretos(request):
                 },
                 {
                     'id': 3,
-                    'numero': 'Decreto nº 11.355/2022',
-                    'data': '2022-12-30',
+                    'numero': 'Decreto nº 11.355/2025',
+                    'data': '2025-07-29',
                     'titulo': 'Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério do Planejamento e Orçamento',
                     'tipo': 'Estrutura Regimental',
                     'status': 'Vigente'
@@ -3377,3 +4160,568 @@ def mesclar_simulacoes(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Erro ao mesclar simulações: {str(e)}")
         return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
+
+
+# === VIEWS PARA EXPORTAÇÃO DE RELATÓRIOS EM PDF ===
+
+@login_required
+@require_http_methods(["GET"])
+def exportar_relatorio_pdf(request, tipo):
+    """
+    View unificada para exportar relatórios em PDF.
+    Tipos suportados: gratificacoes, idp, iee, decretos, siglario
+    """
+    try:
+        # Buscar dados baseado no tipo de relatório
+        if tipo == 'gratificacoes':
+            dados = buscar_dados_gratificacoes(request)
+
+        elif tipo == 'idp':
+            dados = buscar_dados_idp(request)
+        elif tipo == 'iee':
+            dados = buscar_dados_iee(request)
+        elif tipo == 'decretos':
+            dados = buscar_dados_decretos(request)
+        elif tipo == 'siglario':
+            dados = buscar_dados_siglario(request)
+        else:
+            return JsonResponse({'erro': 'Tipo de relatório não suportado'}, status=400)
+        
+        # Gerar PDF usando weasyprint
+        return gerar_pdf_relatorio(dados, tipo, request.GET.get('unidade', ''))
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao exportar relatório {tipo}: {str(e)}")
+        return JsonResponse({'erro': f'Erro ao gerar relatório: {str(e)}'}, status=500)
+
+
+def buscar_dados_gratificacoes(request):
+    """Busca dados para relatório de gratificações"""
+    from django.http import QueryDict
+    
+    # Simular request para API existente
+    query_params = QueryDict(mutable=True)
+    query_params.update(request.GET)
+    query_params['per_page'] = '1000'  # Buscar todos os dados para PDF
+    
+    # Criar request temporário com atributos necessários
+    request_temp = type('Request', (), {
+        'GET': query_params, 
+        'method': 'GET',
+        'user': request.user  # Adicionar usuário do request original
+    })()
+    response = api_relatorio_pontos_gratificacoes(request_temp)
+    
+    if hasattr(response, 'content'):
+        import json
+        return json.loads(response.content.decode('utf-8'))
+    return response
+
+
+
+
+
+def buscar_dados_idp(request):
+    """Busca dados para relatório de IDP"""
+    from django.http import QueryDict
+    
+    query_params = QueryDict(mutable=True)
+    query_params.update(request.GET)
+    query_params['per_page'] = '1000'
+    
+    request_temp = type('Request', (), {
+        'GET': query_params, 
+        'method': 'GET',
+        'user': request.user
+    })()
+    response = api_relatorio_idp(request_temp)
+    
+    if hasattr(response, 'content'):
+        import json
+        return json.loads(response.content.decode('utf-8'))
+    return response
+
+
+def buscar_dados_iee(request):
+    """Busca dados para relatório de IEE"""
+    from django.http import QueryDict
+    
+    query_params = QueryDict(mutable=True)
+    query_params.update(request.GET)
+    query_params['per_page'] = '1000'
+    
+    request_temp = type('Request', (), {
+        'GET': query_params, 
+        'method': 'GET',
+        'user': request.user
+    })()
+    response = api_relatorio_iee(request_temp)
+    
+    if hasattr(response, 'content'):
+        import json
+        return json.loads(response.content.decode('utf-8'))
+    return response
+
+
+def buscar_dados_decretos(request):
+    """Busca dados para relatório de decretos"""
+    # Implementar quando a API estiver pronta
+    return {
+        'status': 'success',
+        'data': [],
+        'filtros': {'unidade': request.GET.get('unidade', '')},
+        'totais': {'total_registros': 0}
+    }
+
+
+def buscar_dados_siglario(request):
+    """Busca dados para siglário"""
+    try:
+        from .models import UnidadeCargo
+        
+        filtro = request.GET.get('filtro', '').strip()
+        
+        # Buscar unidades
+        query = UnidadeCargo.objects.all()
+        
+        if filtro:
+            from django.db.models import Q
+            query = query.filter(
+                Q(sigla_unidade__icontains=filtro) |
+                Q(denominacao_unidade__icontains=filtro)
+            )
+        
+        unidades = query.values(
+            'sigla_unidade', 'denominacao_unidade', 'codigo_unidade'
+        ).distinct().order_by('sigla_unidade')[:1000]
+        
+        return {
+            'status': 'success',
+            'data': list(unidades),
+            'filtros': {'filtro': filtro},
+            'totais': {'total_registros': len(unidades)}
+        }
+        
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e),
+            'data': []
+        }
+
+
+def gerar_pdf_relatorio(dados, tipo, filtro_unidade=''):
+    """
+    Gera PDF do relatório usando reportlab ou fallback para HTML
+    """
+    from django.template.loader import render_to_string
+    from django.utils import timezone
+    
+    # Obter nome completo da unidade se filtro for uma sigla
+    nome_unidade_completo = obter_nome_completo_unidade(filtro_unidade) if filtro_unidade else ''
+    
+    # Configurar timezone do Brasil (Brasília)
+    import pytz
+    fuso_brasilia = pytz.timezone('America/Sao_Paulo')
+    agora_brasilia = timezone.now().astimezone(fuso_brasilia)
+    
+    # Preparar contexto para o template
+    context = {
+        'dados': dados.get('data', []),
+        'tipo': tipo,
+        'filtro_unidade': filtro_unidade,
+        'nome_unidade_completo': nome_unidade_completo,
+        'filtros': dados.get('filtros', {}),
+        'totais': dados.get('totais', {}),
+        'titulo': obter_titulo_relatorio(tipo),
+        'data_geracao': agora_brasilia.strftime('%d/%m/%Y %H:%M')
+    }
+    
+    # Preparar filename
+    filtro_str = f"_{filtro_unidade}" if filtro_unidade else ""
+    
+    # Tentar reportlab primeiro (OBRIGATÓRIO para PDF)
+    try:
+        return gerar_pdf_com_reportlab(dados, tipo, filtro_unidade, context)
+    except ImportError as e:
+        # Reportlab não instalado - instruir instalação
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"ReportLab não instalado: {str(e)}")
+        
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="instalar_reportlab.txt"'
+        response.write(f'''ERRO: Biblioteca ReportLab não encontrada!
+
+Para gerar PDFs, execute o comando:
+
+    pip install reportlab
+
+Depois tente exportar novamente.
+
+Erro técnico: {str(e)}
+''')
+        return response
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erro ao gerar PDF com reportlab: {str(e)}")
+        
+        # Último recurso: arquivo de erro com instruções
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="erro_pdf_{tipo}.txt"'
+        response.write(f'''ERRO ao gerar PDF do relatório {tipo}!
+
+Erro técnico: {str(e)}
+
+Soluções:
+1. Verifique se reportlab está instalado: pip install reportlab
+2. Entre em contato com o suporte técnico
+3. Tente novamente em alguns minutos
+
+Dados do erro:
+- Tipo: {tipo}
+- Filtro: {filtro_unidade}
+- Registros: {len(dados.get('data', []))}
+''')
+        return response
+
+
+def gerar_pdf_com_reportlab(dados, tipo, filtro_unidade, context):
+    """
+    Gera PDF usando reportlab (melhor compatibilidade Windows)
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    from io import BytesIO
+    
+    # Criar buffer para o PDF
+    buffer = BytesIO()
+    
+    # Criar documento
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1*inch, bottomMargin=1*inch)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1,  # Center
+        textColor=colors.HexColor('#2c5282')
+    )
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=12,
+        spaceAfter=20,
+        alignment=1,
+        textColor=colors.HexColor('#718096')
+    )
+    footer_style = ParagraphStyle(
+        'CustomFooter',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=10,
+        alignment=1,  # Center
+        textColor=colors.HexColor('#718096')
+    )
+    
+    # Elementos do documento
+    elements = []
+    
+    # Título (sem informações de filtro)
+    titulo = context['titulo']
+    elements.append(Paragraph(titulo, title_style))
+    elements.append(Spacer(1, 30))
+    
+    # Remover seção de filtro - não é necessária no PDF
+    
+    # Tabela de dados
+    if context.get('dados'):
+        table_data = criar_tabela_dados_reportlab(context['dados'], tipo)
+        
+        if table_data:
+            # Definir larguras das colunas bem espaçadas
+            if tipo == 'gratificacoes':
+                col_widths = [2.5*inch, 1.0*inch, 1.0*inch, 0.8*inch, 0.8*inch]  # Unidade, Pontos, GSISTE/GSISP, NS, NI
+            elif tipo == 'iee':
+                col_widths = [1.3*inch, 1.2*inch, 1.3*inch, 1.0*inch, 1.4*inch]  # Unidade(sigla), Pontos, Colaboradores, IEE, Status
+            elif tipo == 'idp':
+                col_widths = [1.3*inch, 1.2*inch, 1.3*inch, 1.0*inch, 1.4*inch]  # Unidade(sigla), Pontos, Colaboradores, IDP, Classificação
+            elif tipo == 'siglario':
+                col_widths = [1.5*inch, 1.3*inch, 4.7*inch]  # Sigla, Código, Denominação
+            else:
+                col_widths = None
+            
+            table = Table(table_data, colWidths=col_widths)
+            
+            # Estilo da tabela com melhor espaçamento
+            table_style = TableStyle([
+                # Cabeçalho
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c5282')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 15),
+                ('TOPPADDING', (0, 0), (-1, 0), 15),
+                ('LEFTPADDING', (0, 0), (-1, 0), 8),
+                ('RIGHTPADDING', (0, 0), (-1, 0), 8),
+                
+                # Dados
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e2e8f0')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 1), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 8),
+                ('TOPPADDING', (0, 1), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
+                
+                # Zebra stripes
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')])
+            ])
+            
+            # Alinhamento específico por coluna
+            if tipo in ['gratificacoes', 'iee', 'idp']:
+                # Primeira coluna (Unidade) à esquerda
+                table_style.add('ALIGN', (0, 0), (0, -1), 'LEFT')
+                # Demais colunas (números) à direita
+                for col in range(1, len(table_data[0])):
+                    table_style.add('ALIGN', (col, 0), (col, -1), 'RIGHT')
+            elif tipo == 'siglario':
+                # Todas as colunas à esquerda para siglário
+                table_style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
+                # Código centralizado
+                table_style.add('ALIGN', (1, 0), (1, -1), 'CENTER')
+            
+            table.setStyle(table_style)
+            elements.append(table)
+    else:
+        elements.append(Paragraph("Nenhum dado encontrado para os critérios selecionados.", styles['Normal']))
+    
+    # Adicionar "Gerado em:" no final com fonte menor
+    elements.append(Spacer(1, 20))
+    data_text = f"Gerado em: {context['data_geracao']}"
+    if context.get('totais', {}).get('total_registros'):
+        data_text += f" | Total de registros: {context['totais']['total_registros']}"
+    elements.append(Paragraph(data_text, footer_style))
+    
+    # Construir PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Preparar resposta
+    filtro_str = f"_{filtro_unidade}" if filtro_unidade else ""
+    filename = f"relatorio_{tipo}{filtro_str}.pdf"
+    
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    buffer.close()
+    
+    return response
+
+
+def extrair_sigla_unidade(nome_unidade):
+    """
+    Extrai a sigla da unidade (última palavra entre parênteses ou após hífen)
+    Exemplos: 
+    'Assessoria Especial de Assuntos Parlamentares e Federativos - ASPAF' -> 'ASPAF'
+    'Consultoria Jurídica - CONJUR' -> 'CONJUR'
+    'Cerimônial - CERIMONIAL' -> 'CERIMONIAL'
+    """
+    if not nome_unidade or nome_unidade == '-':
+        return nome_unidade
+    
+    # Procurar por sigla entre parênteses no final
+    import re
+    sigla_parenteses = re.search(r'\(([A-Z]+)\)$', nome_unidade.strip())
+    if sigla_parenteses:
+        return sigla_parenteses.group(1)
+    
+    # Procurar por sigla após hífen
+    if ' - ' in nome_unidade:
+        partes = nome_unidade.split(' - ')
+        sigla_candidata = partes[-1].strip()
+        # Verificar se é uma sigla (só maiúsculas/números)
+        if re.match(r'^[A-Z0-9]+$', sigla_candidata):
+            return sigla_candidata
+    
+    # Se não encontrou sigla específica, pegar a última palavra
+    palavras = nome_unidade.strip().split()
+    if palavras:
+        ultima_palavra = palavras[-1]
+        # Remove pontuação
+        ultima_palavra = re.sub(r'[^\w]', '', ultima_palavra)
+        return ultima_palavra.upper()
+    
+    return nome_unidade
+
+
+def criar_tabela_dados_reportlab(dados, tipo):
+    """
+    Cria dados da tabela formatados para reportlab com quebra de linha automática
+    """
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph
+    
+    styles = getSampleStyleSheet()
+    # Estilo para células com quebra de linha
+    cell_style = styles['Normal']
+    cell_style.fontSize = 9
+    cell_style.leading = 11
+    
+    if tipo == 'gratificacoes':
+        headers = ['Unidade', 'Pontos', 'GSISTE/GSISP', 'NS', 'NI']
+        rows = [headers]
+        for item in dados:
+            unidade_nome = str(item.get('unidade', '-'))
+            # Extrair só a sigla da unidade
+            sigla_unidade = extrair_sigla_unidade(unidade_nome)
+            
+            row = [
+                sigla_unidade,
+                f"{item.get('pontos', 0):.2f}",
+                f"{item.get('gsist', 0) + item.get('gsisp', 0)}",
+                f"{item.get('ns', 0):.2f}",
+                f"{item.get('ni', 0):.2f}"
+            ]
+            rows.append(row)
+    
+
+    
+    elif tipo == 'iee':
+        headers = ['Unidade', 'Pontos', 'Colaboradores', 'IEE', 'Status']
+        rows = [headers]
+        for item in dados:
+            unidade_nome = str(item.get('unidade', '-'))
+            # Extrair só a sigla da unidade
+            sigla_unidade = extrair_sigla_unidade(unidade_nome)
+            
+            # Calcular status baseado no IEE
+            iee_valor = float(item.get('iee', 0))
+            if iee_valor > 1:
+                status = 'Acima da Média'
+            elif iee_valor == 1:
+                status = 'Na Média'
+            else:
+                status = 'Abaixo da Média'
+            
+            row = [
+                sigla_unidade,
+                f"{item.get('pontos', 0):.2f}",
+                str(item.get('colaboradores', 0)),
+                f"{item.get('iee', 0):.2f}",
+                status
+            ]
+            rows.append(row)
+    
+    elif tipo == 'idp':
+        headers = ['Unidade', 'Pontos', 'Colaboradores', 'IDP', 'Classificação']
+        rows = [headers]
+        
+        # Ordenar dados por IDP (maior para menor) para classificação
+        dados_ordenados = sorted(dados, key=lambda x: float(x.get('idp', 0)), reverse=True)
+        total_itens = len(dados_ordenados)
+        
+        for index, item in enumerate(dados_ordenados):
+            unidade_nome = str(item.get('unidade', '-'))
+            # Extrair só a sigla da unidade
+            sigla_unidade = extrair_sigla_unidade(unidade_nome)
+            
+            # Calcular classificação baseada na posição (terços)
+            if index < total_itens / 3:
+                classificacao = 'Alta Densidade'
+            elif index < (2 * total_itens) / 3:
+                classificacao = 'Densidade Média'
+            else:
+                classificacao = 'Baixa Densidade'
+            
+            row = [
+                sigla_unidade,
+                f"{item.get('pontos', 0):.2f}",
+                str(item.get('colaboradores', 0)),
+                f"{item.get('idp', 0):.2f}",
+                classificacao
+            ]
+            rows.append(row)
+    
+    elif tipo == 'siglario':
+        headers = ['Sigla', 'Código', 'Denominação']
+        rows = [headers]
+        for item in dados:
+            denominacao_nome = str(item.get('denominacao_unidade', '-'))
+            # Usar Paragraph para quebra automática na denominação
+            denominacao_paragraph = Paragraph(denominacao_nome, cell_style)
+            
+            row = [
+                str(item.get('sigla_unidade', '-')),
+                str(item.get('codigo_unidade', '-')),
+                denominacao_paragraph
+            ]
+            rows.append(row)
+    
+    else:
+        return None
+    
+    return rows
+
+
+def obter_nome_completo_unidade(sigla_filtro):
+    """
+    Busca o nome completo da unidade baseado na sigla do filtro
+    """
+    if not sigla_filtro:
+        return ''
+    
+    try:
+        from .models import UnidadeCargo
+        from django.db.models import Q
+        
+        # Buscar unidade pela sigla (case insensitive)
+        unidade = UnidadeCargo.objects.filter(
+            Q(sigla_unidade__iexact=sigla_filtro) |
+            Q(sigla__iexact=sigla_filtro)
+        ).first()
+        
+        if unidade and unidade.denominacao_unidade:
+            return unidade.denominacao_unidade
+        
+        # Se não encontrou, retornar a sigla em maiúsculo
+        return sigla_filtro.upper()
+        
+    except Exception:
+        return sigla_filtro.upper()
+
+
+def obter_titulo_relatorio(tipo):
+    """Retorna título do relatório baseado no tipo"""
+    titulos = {
+        'gratificacoes': 'Relatório de Pontos e Gratificações',
+
+        'idp': 'Relatório de Índice de Densidade de Pessoal',
+        'iee': 'Relatório de Índice de Eficiência por Estrutura',
+        'decretos': 'Relatório de Decretos',
+        'siglario': 'Siglário Institucional'
+    }
+    return titulos.get(tipo, f'Relatório {tipo.title()}')
+
+
+def limpar_cache_relatorios():
+    """
+    Limpa o cache de todos os relatórios.
+    Útil para forçar recálculo quando os dados mudam.
+    """
+    # Limpar cache de gratificações
+    cache.delete_pattern("gratificacoes_data_*")
+    # Limpar cache de IDP
+    cache.delete_pattern("idp_data_*")
+    # Limpar cache de IEE
+    cache.delete_pattern("iee_data_*")

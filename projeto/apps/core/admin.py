@@ -355,19 +355,13 @@ class CargoSIORGAdmin(admin.ModelAdmin):
     def scrape_siorg_view(self, request):
         if request.method == 'POST':
             try:
-                cargos = scrape_siorg()
-                for cargo_data in cargos:
-                    CargoSIORG.objects.update_or_create(
-                        cargo=cargo_data['cargo'],
-                        nivel=cargo_data['nivel'],
-                        defaults={
-                            'quantidade': cargo_data['quantidade'],
-                            'valor': cargo_data['valor'],
-                            'unitario': cargo_data['unitario']
-                        }
-                    )
-
-                self.message_user(request, f'{len(cargos)} cargos foram importados com sucesso!', messages.SUCCESS)
+                resultado = scrape_siorg()
+                
+                if resultado.get('success'):
+                    self.message_user(request, resultado['message'], messages.SUCCESS)
+                else:
+                    self.message_user(request, resultado['message'], messages.ERROR)
+                    
             except Exception as e:
                 self.message_user(request, f'Erro ao importar cargos: {str(e)}', messages.ERROR)
 

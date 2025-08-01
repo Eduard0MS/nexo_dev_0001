@@ -219,7 +219,7 @@ def exportar_html_simples(dados, componente="completo"):
         </table>
         
         <div class="footer">
-            <p>© 2023-2024 Nexo - Sistema de Gestão - Todos os direitos reservados</p>
+            <p>© 2023-2024 Nexo - Sistema de Gestão - v1.0.0</p>
         </div>
     </body>
     </html>

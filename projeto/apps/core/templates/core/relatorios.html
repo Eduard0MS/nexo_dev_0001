@@ -10,6 +10,18 @@
     overflow-y: auto;
   }
 
+  /* Centralização específica para coluna GSISTE/GSISP */
+  #tabela-gratificacoes th.text-center,
+  #tabela-gratificacoes td.text-center {
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+
+  /* Garantir que a centralização funcione mesmo com nomes pequenos */
+  #tabela-gratificacoes td.text-center {
+    min-width: 80px;
+  }
+
   /* Container principal */
   .relatorios-container {
     position: relative;
@@ -265,6 +277,25 @@
     margin-top: 10px;
   }
 
+  /* Caixa de informações */
+  .info-box {
+    background-color: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .info-box h6 {
+    color: #1976d2;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  
+  .info-box .row div {
+    margin-bottom: 5px;
+  }
+
   /* Siglário */
   .siglario-grid {
     display: grid;
@@ -370,11 +401,6 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="formularios-tab" data-bs-toggle="tab" data-bs-target="#formularios" type="button" role="tab">
-            <i class="fas fa-edit me-2"></i>Formulários
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
           <button class="nav-link" id="siglario-tab" data-bs-toggle="tab" data-bs-target="#siglario" type="button" role="tab">
             <i class="fas fa-list me-2"></i>Siglário
           </button>
@@ -410,13 +436,14 @@
                 <tr>
                   <th>Unidade</th>
                   <th>Pontos</th>
-                  <th>GSIST</th>
-                  <th>GSISP</th>
+                  <th class="text-center">GSISTE/GSISP</th>
+                  <th>NS</th>
+                  <th>NI</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colspan="4" class="text-center">
+                  <td colspan="5" class="text-center">
                     <div class="loading">
                       <i class="fas fa-spinner fa-spin me-2"></i>Carregando gratificações...
                     </div>
@@ -447,64 +474,7 @@
           </div>
         </div>
 
-        <!-- Segunda Tabela: Dimensionamento da Força de Trabalho -->
-        <div class="data-table">
-          <div class="table-header">
-            <span><i class="fas fa-users me-2"></i>Dimensionamento da Força de Trabalho</span>
-            <div class="d-flex gap-2">
-              <input type="text" id="filtro-dimensionamento" class="form-control form-control-sm" 
-                     placeholder="Filtrar por unidade..." style="width: 200px;">
-              <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltroDimensionamento()">
-                <i class="fas fa-times"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-primary" onclick="exportarDados('dimensionamento')">
-                <i class="fas fa-download me-1"></i>Exportar
-              </button>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="table" id="tabela-dimensionamento">
-              <thead>
-                <tr>
-                  <th>Unidade</th>
-                  <th>Pontos</th>
-                  <th>Colaboradores</th>
-                  <th>Consultoria</th>
-                  <th>IEE <small class="text-muted">(Servidores/Pontos)</small></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colspan="5" class="text-center">
-                    <div class="loading">
-                      <i class="fas fa-spinner fa-spin me-2"></i>Carregando dimensionamento...
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <!-- Controles de paginação para dimensionamento -->
-          <div id="pagination-dimensionamento" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
-            <div class="pagination-info">
-              <small class="text-muted" id="pagination-info-dimensionamento"></small>
-            </div>
-            <nav>
-              <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" id="prev-page-dimensionamento">
-                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaDimensionamento(currentPageDimensionamento - 1)">
-                    <i class="fas fa-chevron-left"></i>
-                  </a>
-                </li>
-                <li class="page-item" id="next-page-dimensionamento">
-                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaDimensionamento(currentPageDimensionamento + 1)">
-                    <i class="fas fa-chevron-right"></i>
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
+
       </div>
 
       <!-- Aba: IDP -->
@@ -514,7 +484,7 @@
         <!-- Explicação do IDP -->
         <div class="formula-box mb-4">
           <div class="formula-title">Como funciona o IDP</div>
-          <div class="formula-content">IDP = Servidores na Unidade / Número de Pontos</div>
+          <div class="formula-content">IDP = Número de Pontos / Servidores na Unidade</div>
           <div class="interpretation">
             <strong>Objetivo:</strong> Medir quantos servidores estão associados a cada ponto/cargo na unidade.<br>
             <strong>Exemplo de leitura:</strong> IDP = 3 significa que cada ponto está associado a 3 servidores.<br>
@@ -561,6 +531,26 @@
               </tbody>
             </table>
           </div>
+          <!-- Controles de paginação para IDP -->
+          <div id="pagination-idp" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+            <div class="pagination-info">
+              <small class="text-muted" id="pagination-info-idp"></small>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" id="prev-page-idp">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaIDP(currentPageIDP - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li class="page-item" id="next-page-idp">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaIDP(currentPageIDP + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -571,13 +561,29 @@
         <!-- Explicação do IEE -->
         <div class="formula-box mb-4">
           <div class="formula-title">Como funciona o IEE</div>
-          <div class="formula-content">IEE = (Número de Posições / Servidores na Unidade) / (Média da Instituição)</div>
+          <div class="formula-content">IEE = (Número de Pontos / Servidores na Unidade) / (Média da Instituição)</div>
           <div class="interpretation">
             <strong>Objetivo:</strong> Comparar a densidade de posições de cada unidade com a média institucional.<br>
             <strong>Interpretação:</strong><br>
             • <span class="text-success">IEE > 1</span>: Unidade tem densidade de posições <strong>acima da média</strong> institucional<br>
             • <span class="text-warning">IEE = 1</span>: Unidade está <strong>na média</strong> institucional<br>
             • <span class="text-danger">IEE < 1</span>: Unidade tem densidade de posições <strong>abaixo da média</strong> institucional
+          </div>
+        </div>
+
+        <!-- Informações da Média Institucional -->
+        <div class="info-box mb-4" id="info-media-institucional-iee" style="display: none;">
+          <h6><i class="fas fa-info-circle me-2"></i>Dados Institucionais</h6>
+          <div class="row">
+            <div class="col-md-4">
+              <strong>Total de Colaboradores:</strong> <span id="total-colaboradores-iee">-</span>
+            </div>
+            <div class="col-md-4">
+              <strong>Total de Pontos:</strong> <span id="total-pontos-iee">-</span>
+            </div>
+            <div class="col-md-4">
+              <strong>Média Institucional:</strong> <span id="media-institucional-iee">-</span>
+            </div>
           </div>
         </div>
 
@@ -618,6 +624,26 @@
               </tbody>
             </table>
           </div>
+          <!-- Controles de paginação para IEE -->
+          <div id="pagination-iee" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+            <div class="pagination-info">
+              <small class="text-muted" id="pagination-info-iee"></small>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" id="prev-page-iee">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaIEE(currentPageIEE - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li class="page-item" id="next-page-iee">
+                  <a class="page-link" href="#" onclick="event.preventDefault(); carregarPaginaIEE(currentPageIEE + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -657,91 +683,6 @@
         </div>
       </div>
 
-      <!-- Aba: Formulários -->
-      <div class="tab-pane fade" id="formularios" role="tabpanel">
-        <h2 class="mb-4">Formulários de Realocação e Permuta</h2>
-        
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-section">
-              <h3><i class="fas fa-exchange-alt me-2"></i>Formulário de Realocação</h3>
-              <form id="form-realocacao">
-                <div class="form-group">
-                  <label class="form-label">Nome do Servidor</label>
-                  <input type="text" class="form-control" name="nome_servidor" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Matrícula SIAPE</label>
-                  <input type="text" class="form-control" name="matricula" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Unidade Atual</label>
-                  <select class="form-control" name="unidade_atual" id="unidade_atual" required>
-                    <option value="">Selecione...</option>
-                    <!-- Unidades serão carregadas dinamicamente -->
-                  </select>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Unidade Destino</label>
-                  <select class="form-control" name="unidade_destino" id="unidade_destino" required>
-                    <option value="">Selecione...</option>
-                    <!-- Unidades serão carregadas dinamicamente -->
-                  </select>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Justificativa</label>
-                  <textarea class="form-control" name="justificativa" rows="3" required></textarea>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-paper-plane me-1"></i>Solicitar Realocação
-                </button>
-              </form>
-            </div>
-          </div>
-          
-          <div class="col-md-6">
-            <div class="form-section">
-              <h3><i class="fas fa-random me-2"></i>Formulário de Permuta</h3>
-              <form id="form-permuta">
-                <div class="form-group">
-                  <label class="form-label">Servidor 1</label>
-                  <input type="text" class="form-control" name="servidor1" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Matrícula Servidor 1</label>
-                  <input type="text" class="form-control" name="matricula1" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Servidor 2</label>
-                  <input type="text" class="form-control" name="servidor2" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Matrícula Servidor 2</label>
-                  <input type="text" class="form-control" name="matricula2" required>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">Observações</label>
-                  <textarea class="form-control" name="observacoes" rows="3"></textarea>
-                </div>
-                
-                <button type="submit" class="btn btn-success">
-                  <i class="fas fa-handshake me-1"></i>Solicitar Permuta
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Aba: Siglário -->
       <div class="tab-pane fade" id="siglario" role="tabpanel">
         <h2 class="mb-4">Siglário Institucional</h2>
@@ -773,14 +714,13 @@
 <script>
 // Variáveis globais para controle de paginação
 let currentPageGratificacoes = 1;
-let currentPageDimensionamento = 1;
+
 let currentPageIDP = 1;
 let currentPageIEE = 1;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Carregar dados iniciais
     carregarDadosGratificacoes();
-    carregarDadosDimensionamento();
     carregarUnidades();
     
     // Event listeners para abas
@@ -790,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
             switch(target) {
                 case '#pontos':
                     carregarDadosGratificacoes();
-                    carregarDadosDimensionamento();
                     break;
                 case '#idp':
                     carregarDadosIDP();
@@ -800,9 +739,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case '#decretos':
                     carregarDecretos();
-                    break;
-                case '#formularios':
-                    carregarUnidades();
                     break;
                 case '#siglario':
                     carregarSiglario();
@@ -817,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Filtros das tabelas - usar debounce para evitar muitas requisições
-    let timeoutGratificacoes, timeoutDimensionamento, timeoutIDP, timeoutIEE;
+    let timeoutGratificacoes, timeoutIDP, timeoutIEE;
     
     document.getElementById('filtro-gratificacoes').addEventListener('input', function() {
         clearTimeout(timeoutGratificacoes);
@@ -827,38 +763,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     });
     
-    document.getElementById('filtro-dimensionamento').addEventListener('input', function() {
-        clearTimeout(timeoutDimensionamento);
-        timeoutDimensionamento = setTimeout(() => {
-            currentPageDimensionamento = 1; // Reset para primeira página
-            carregarDadosDimensionamento(this.value, 1);
-        }, 500);
-    });
+
     
     document.getElementById('filtro-idp').addEventListener('input', function() {
         clearTimeout(timeoutIDP);
         timeoutIDP = setTimeout(() => {
-            carregarDadosIDP(this.value);
+            currentPageIDP = 1; // Reset para primeira página
+            carregarDadosIDP(this.value, 1);
         }, 500);
     });
     
     document.getElementById('filtro-iee').addEventListener('input', function() {
         clearTimeout(timeoutIEE);
         timeoutIEE = setTimeout(() => {
-            carregarDadosIEE(this.value);
+            currentPageIEE = 1; // Reset para primeira página
+            carregarDadosIEE(this.value, 1);
         }, 500);
     });
     
     // Formulários
-    document.getElementById('form-realocacao').addEventListener('submit', function(e) {
-        e.preventDefault();
-        enviarFormularioRealocacao();
-    });
+    // document.getElementById('form-realocacao').addEventListener('submit', function(e) {
+    //     e.preventDefault();
+    //     enviarFormularioRealocacao();
+    // });
     
-    document.getElementById('form-permuta').addEventListener('submit', function(e) {
-        e.preventDefault();
-        enviarFormularioPermuta();
-    });
+    // document.getElementById('form-permuta').addEventListener('submit', function(e) {
+    //     e.preventDefault();
+    //     enviarFormularioPermuta();
+    // });
 });
 
 async function carregarDadosGratificacoes(filtroUnidade = '', page = 1) {
@@ -931,9 +863,15 @@ function atualizarPaginacaoGratificacoes(pagination) {
     }
 }
 
-async function carregarDadosDimensionamento(filtroUnidade = '', page = 1) {
+
+
+
+
+
+
+async function carregarDadosIDP(filtroUnidade = '', page = 1) {
     try {
-        let url = '/api/relatorio/dimensionamento/';
+        let url = '/api/relatorio/idp/';
         const params = new URLSearchParams();
         
         if (filtroUnidade) {
@@ -950,40 +888,57 @@ async function carregarDadosDimensionamento(filtroUnidade = '', page = 1) {
         const data = await response.json();
         
         if (data.status === 'success') {
-            preencherTabelaDimensionamento(data.data);
-            atualizarPaginacaoDimensionamento(data.pagination);
-            mostrarInfoFiltro('dimensionamento', data.filtros);
+            preencherTabelaIDP(data.data);
+            atualizarPaginacaoIDP(data.pagination);
+            mostrarInfoFiltro('idp', data.filtros);
         } else {
-            mostrarErro('tabela-dimensionamento', data.message);
+            mostrarErro('tabela-idp', data.message);
         }
     } catch (error) {
-        mostrarErro('tabela-dimensionamento', 'Erro ao carregar dados de dimensionamento');
+        mostrarErro('tabela-idp', 'Erro ao carregar dados IDP');
     }
 }
 
-function carregarPaginaDimensionamento(page) {
-    if (page >= 1) {
-        // Salvar referência da tabela para manter posição
-        const tabela = document.getElementById('tabela-dimensionamento');
+async function carregarDadosIEE(filtroUnidade = '', page = 1) {
+    try {
+        let url = '/api/relatorio/iee/';
+        const params = new URLSearchParams();
         
-        currentPageDimensionamento = page;
-        const filtro = document.getElementById('filtro-dimensionamento').value;
+        if (filtroUnidade) {
+            params.append('unidade', filtroUnidade);
+        }
+        params.append('page', page);
+        params.append('per_page', 11);
         
-        // Carregar dados e depois manter a tabela visível
-        carregarDadosDimensionamento(filtro, page).then(() => {
-            // Manter a tabela visível na tela
-            setTimeout(() => {
-                tabela.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
-        });
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            preencherTabelaIEE(data.data);
+            atualizarPaginacaoIEE(data.pagination);
+            mostrarInfoFiltro('iee', data.filtros);
+            
+            // Mostrar dados institucionais se disponíveis
+            if (data.totais_instituicao) {
+                mostrarDadosInstitucionaisIEE(data.totais_instituicao);
+            }
+        } else {
+            mostrarErro('tabela-iee', data.message);
+        }
+    } catch (error) {
+        mostrarErro('tabela-iee', 'Erro ao carregar dados IEE');
     }
 }
 
-function atualizarPaginacaoDimensionamento(pagination) {
-    const paginationDiv = document.getElementById('pagination-dimensionamento');
-    const paginationInfo = document.getElementById('pagination-info-dimensionamento');
-    const prevBtn = document.getElementById('prev-page-dimensionamento');
-    const nextBtn = document.getElementById('next-page-dimensionamento');
+function atualizarPaginacaoIDP(pagination) {
+    const paginationDiv = document.getElementById('pagination-idp');
+    const paginationInfo = document.getElementById('pagination-info-idp');
+    const prevBtn = document.getElementById('prev-page-idp');
+    const nextBtn = document.getElementById('next-page-idp');
     
     if (pagination && pagination.total_pages > 1) {
         paginationDiv.style.display = 'flex';
@@ -1001,45 +956,53 @@ function atualizarPaginacaoDimensionamento(pagination) {
     }
 }
 
-async function carregarDadosIDP(filtroUnidade = '') {
-    try {
-        let url = '/api/relatorio/dimensionamento/';
-        if (filtroUnidade) {
-            url += `?unidade=${encodeURIComponent(filtroUnidade)}`;
-        }
+function atualizarPaginacaoIEE(pagination) {
+    const paginationDiv = document.getElementById('pagination-iee');
+    const paginationInfo = document.getElementById('pagination-info-iee');
+    const prevBtn = document.getElementById('prev-page-iee');
+    const nextBtn = document.getElementById('next-page-iee');
+    
+    if (pagination && pagination.total_pages > 1) {
+        paginationDiv.style.display = 'flex';
         
-        const response = await fetch(url);
-        const data = await response.json();
+        // Atualizar informação da paginação
+        const start = ((pagination.current_page - 1) * pagination.per_page) + 1;
+        const end = Math.min(pagination.current_page * pagination.per_page, pagination.total_registros);
+        paginationInfo.textContent = `Exibindo ${start} a ${end} de ${pagination.total_registros} registros`;
         
-        if (data.status === 'success') {
-            preencherTabelaIDP(data.data);
-            mostrarInfoFiltro('idp', data.filtros);
-        } else {
-            mostrarErro('tabela-idp', data.message);
-        }
-    } catch (error) {
-        mostrarErro('tabela-idp', 'Erro ao carregar dados IDP');
+        // Atualizar botões
+        prevBtn.classList.toggle('disabled', !pagination.has_previous);
+        nextBtn.classList.toggle('disabled', !pagination.has_next);
+    } else {
+        paginationDiv.style.display = 'none';
     }
 }
 
-async function carregarDadosIEE(filtroUnidade = '') {
-    try {
-        let url = '/api/relatorio/dimensionamento/';
-        if (filtroUnidade) {
-            url += `?unidade=${encodeURIComponent(filtroUnidade)}`;
-        }
+function carregarPaginaIDP(page) {
+    if (page >= 1) {
+        const tabela = document.getElementById('tabela-idp');
+        currentPageIDP = page;
+        const filtro = document.getElementById('filtro-idp').value;
         
-        const response = await fetch(url);
-        const data = await response.json();
+        carregarDadosIDP(filtro, page).then(() => {
+            setTimeout(() => {
+                tabela.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        });
+    }
+}
+
+function carregarPaginaIEE(page) {
+    if (page >= 1) {
+        const tabela = document.getElementById('tabela-iee');
+        currentPageIEE = page;
+        const filtro = document.getElementById('filtro-iee').value;
         
-        if (data.status === 'success') {
-            preencherTabelaIEE(data.data);
-            mostrarInfoFiltro('iee', data.filtros);
-        } else {
-            mostrarErro('tabela-iee', data.message);
-        }
-    } catch (error) {
-        mostrarErro('tabela-iee', 'Erro ao carregar dados IEE');
+        carregarDadosIEE(filtro, page).then(() => {
+            setTimeout(() => {
+                tabela.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        });
     }
 }
 
@@ -1077,24 +1040,6 @@ function preencherTabelaGratificacoes(dados) {
     const tbody = document.querySelector('#tabela-gratificacoes tbody');
     
     if (!dados || dados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum dado encontrado</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = dados.map(item => `
-        <tr>
-            <td><strong>${item.unidade}</strong></td>
-            <td>${item.pontos.toFixed(2)}</td>
-            <td>${item.gsist}</td>
-            <td>${item.gsisp}</td>
-        </tr>
-    `).join('');
-}
-
-function preencherTabelaDimensionamento(dados) {
-    const tbody = document.querySelector('#tabela-dimensionamento tbody');
-    
-    if (!dados || dados.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
         return;
     }
@@ -1103,12 +1048,14 @@ function preencherTabelaDimensionamento(dados) {
         <tr>
             <td><strong>${item.unidade}</strong></td>
             <td>${item.pontos.toFixed(2)}</td>
-            <td>${item.colaboradores}</td>
-            <td>${item.consultoria}</td>
-            <td><strong>${item.iee || 'N/A'}</strong></td>
+            <td class="text-center">${item.gsist + item.gsisp}</td>
+            <td>${item.ns}</td>
+            <td>${item.ni}</td>
         </tr>
     `).join('');
 }
+
+
 
 function preencherTabelaIDP(dados) {
     const tbody = document.querySelector('#tabela-idp tbody');
@@ -1146,6 +1093,20 @@ function preencherTabelaIDP(dados) {
             </tr>
         `;
     }).join('');
+}
+
+function mostrarDadosInstitucionaisIEE(totais) {
+    const infoBox = document.getElementById('info-media-institucional-iee');
+    const totalColaboradoresSpan = document.getElementById('total-colaboradores-iee');
+    const totalPontosSpan = document.getElementById('total-pontos-iee');
+    const mediaInstitucionalSpan = document.getElementById('media-institucional-iee');
+    
+    if (totais) {
+        totalColaboradoresSpan.textContent = totais.colaboradores || 0;
+        totalPontosSpan.textContent = totais.pontos ? totais.pontos.toFixed(2) : '0.00';
+        mediaInstitucionalSpan.textContent = totais.media_institucional ? totais.media_institucional.toFixed(2) : '0.00';
+        infoBox.style.display = 'block';
+    }
 }
 
 function preencherTabelaIEE(dados) {
@@ -1374,8 +1335,158 @@ function getCookie(name) {
 }
 
 function exportarDados(tipo) {
-    // Implementar exportação de dados
-    alert(`Exportação de dados: ${tipo} - Em desenvolvimento`);
+    let loadingToast;
+    try {
+        // Mostrar indicador de carregamento
+        loadingToast = showLoadingToast(`Gerando PDF do relatório ${tipo}...`);
+        
+        // Preparar parâmetros de filtro baseado no tipo
+        let filtroParam = '';
+        
+        if (tipo === 'gratificacoes') {
+            const filtroInput = document.getElementById('filtro-gratificacoes');
+            if (filtroInput && filtroInput.value.trim()) {
+                filtroParam = `?unidade=${encodeURIComponent(filtroInput.value.trim())}`;
+            }
+
+            if (filtroInput && filtroInput.value.trim()) {
+                filtroParam = `?unidade=${encodeURIComponent(filtroInput.value.trim())}`;
+            }
+        } else if (tipo === 'idp') {
+            const filtroInput = document.getElementById('filtro-idp');
+            if (filtroInput && filtroInput.value.trim()) {
+                filtroParam = `?unidade=${encodeURIComponent(filtroInput.value.trim())}`;
+            }
+        } else if (tipo === 'iee') {
+            const filtroInput = document.getElementById('filtro-iee');
+            if (filtroInput && filtroInput.value.trim()) {
+                filtroParam = `?unidade=${encodeURIComponent(filtroInput.value.trim())}`;
+            }
+        } else if (tipo === 'siglario') {
+            const filtroInput = document.getElementById('filtro-siglario');
+            if (filtroInput && filtroInput.value.trim()) {
+                filtroParam = `?filtro=${encodeURIComponent(filtroInput.value.trim())}`;
+            }
+        }
+        
+        // URL da API de exportação
+        const url = `/api/relatorio/exportar/${tipo}/${filtroParam}`;
+        
+        // Fazer download do PDF
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `relatorio_${tipo}.pdf`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Fechar loading após um delay
+        setTimeout(() => {
+            hideLoadingToast(loadingToast);
+            showSuccessToast(`PDF do relatório ${tipo} foi gerado com sucesso!`);
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Erro ao exportar dados:', error);
+        hideLoadingToast(loadingToast);
+        showErrorToast(`Erro ao gerar PDF: ${error.message}`);
+    }
+}
+
+// Funções auxiliares para toast notifications
+function showLoadingToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification loading';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            ${message}
+        </div>
+    `;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #2c5282;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 300px;
+        font-size: 14px;
+    `;
+    document.body.appendChild(toast);
+    return toast;
+}
+
+function hideLoadingToast(toast) {
+    if (toast && toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+    }
+}
+
+function showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification success';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+        </div>
+    `;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 300px;
+        font-size: 14px;
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 4000);
+}
+
+function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification error';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+    `;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #dc3545;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 300px;
+        font-size: 14px;
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
 }
 
 function mostrarInfoFiltro(tipo, filtros) {
@@ -1390,11 +1501,7 @@ function limparFiltroGratificacoes() {
     carregarDadosGratificacoes('', 1);
 }
 
-function limparFiltroDimensionamento() {
-    document.getElementById('filtro-dimensionamento').value = '';
-    currentPageDimensionamento = 1; // Reset para primeira página
-    carregarDadosDimensionamento('', 1);
-}
+
 
 function limparFiltroIDP() {
     document.getElementById('filtro-idp').value = '';
